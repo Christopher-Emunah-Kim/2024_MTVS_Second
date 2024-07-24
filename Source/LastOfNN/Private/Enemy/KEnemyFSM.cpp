@@ -2,6 +2,7 @@
 
 
 #include "Enemy/KEnemyFSM.h"
+#include "Enemy/KBaseEnemy.h"
 
 // Sets default values for this component's properties
 UKEnemyFSM::UKEnemyFSM()

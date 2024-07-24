@@ -38,14 +38,21 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+    
+    //현재 상태 저장
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     EEnemyState CurrentState;
 
+    //전달받은 상태값 전환 함수
     UFUNCTION(BlueprintCallable, Category = "FSM")
     void SetState(EEnemyState NewState);
 
+    //Tick마다 상태 업데이트 함수
     UFUNCTION(BlueprintCallable, Category = "FSM")
     void UpdateState();
-		
+	
+    //BaseEnemy 인스턴스
+    UPROPERTY(BlueprintCallable, Category = "FSM")
+    class AKBaseEnemy* BaseEnemy;
+
 };

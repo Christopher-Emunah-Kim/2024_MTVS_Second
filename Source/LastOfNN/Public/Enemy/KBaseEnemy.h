@@ -27,6 +27,7 @@ public:
 	// Called to bind functionality to input
 	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//Enemy Status관련 변수 선언
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyHealth;
 
@@ -36,8 +37,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyRunSpeed;
 
+	//Enemy 이동, 공격 사용 Vector변수
     FVector EnemyDirection;
 
+	//Enemy 공격 사용 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     float EnemyNoticeRange;
 
@@ -45,11 +48,13 @@ public:
     float EnemyDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
-    class AActor* target;
+    class AJoel* target;
 
+	//FSM 인스턴스
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
 
+	//Base기본 가상함수
     virtual void EnemyIDLE();
 
     virtual void EnemyMove();
