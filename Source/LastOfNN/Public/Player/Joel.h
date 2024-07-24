@@ -13,13 +13,13 @@ class UInputAction;
 class UInputMappingContext;
 
 UCLASS()
-class LASTOFNN_API AJoel : public ACharacter
+class LASTOFNN_API ACJHPlayer : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
 
-	AJoel();
+	ACJHPlayer();
 
 	virtual void Tick(float DeltaTime) override;
 
