@@ -26,6 +26,10 @@ public:
 
 	// Called to bind functionality to input
 	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	//FSM 인스턴스
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSMComp")
+    UKEnemyFSM* FSMComponent;
 
 	//Enemy Status 관련 변수 선언
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
@@ -37,10 +41,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyRunSpeed;
 
-	//Enemy 이동, 공격 사용 Vector변수
+	//Enemy 이동, 공격 상태 사용 Vector변수
     FVector EnemyDirection;
 
-	//Enemy 공격 사용 변수
+	//Enemy 공격 상태 사용 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     float EnemyNoticeRange;
 
@@ -50,9 +54,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     class AJPlayer* target;
 
-	//FSM 인스턴스
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSMComp")
-    UKEnemyFSM* FSMComponent;
+	UPROPERTY()
+	class AKBaseEnemy* me;
+
 
 	//Base기본 가상함수 및 필요 속성
     //대기상태처리함수
