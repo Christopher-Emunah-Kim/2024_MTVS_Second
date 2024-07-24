@@ -11,7 +11,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
-
+class UPlayerLockOn;
 
 UCLASS()
 class LASTOFNN_API AJPlayer : public ACharacter
@@ -43,6 +43,10 @@ public:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 
+
+	UCameraComponent* GetCamera();
+
+	UPlayerLockOn* LockOnComp;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

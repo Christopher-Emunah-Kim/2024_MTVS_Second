@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
-
+#include "Player/PlayerLockOn.h"
 
 enum class ECharacterState : uint8
 {
@@ -28,6 +28,9 @@ AJPlayer::AJPlayer()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
+	LockOnComp->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -40,13 +43,13 @@ void AJPlayer::BeginPlay()
 	{
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
+	LockOnComp->SetTargetLockTrue();
 }
 
 // Called every frame
 void AJPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -67,7 +70,7 @@ void AJPlayer::Move(const FInputActionValue& Value)
 	FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	AddMovementInput(ForwardDirection, Vector.X);
+	AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	AddMovementInput(RightDirection, Vector.Y);
@@ -80,4 +83,9 @@ void AJPlayer::Look(const FInputActionValue& Value)
 	FVector2D LV = Value.Get<FVector2D>();
 	AddControllerPitchInput(-LV.Y);
 	AddControllerYawInput(LV.X);
+}
+
+UCameraComponent* AJPlayer::GetCamera()
+{
+	return CameraComp;
 }
