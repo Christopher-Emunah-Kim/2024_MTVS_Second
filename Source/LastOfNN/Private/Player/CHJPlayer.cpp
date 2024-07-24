@@ -8,8 +8,15 @@
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
 
+enum class ECharacterState : uint8
+{
+	ECS_Grabbed UMETA(DisplayName = "Grabbed"),
+	ECS_Escape UMETA(DisplayName = "Escape"),
+	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
+};
+
 // Sets default values
-AJoel::AJoel()
+ACJHPlayer::ACJHPlayer()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,7 +29,7 @@ AJoel::AJoel()
 	CameraComp->SetupAttachment(SpringArmComp);
 }
 
-void AJoel::Move(const FInputActionValue& Value)
+void ACJHPlayer::Move(const FInputActionValue& Value)
 {
 	const FVector2D Vector = Value.Get<FVector2D>();
 	FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
@@ -37,16 +44,15 @@ void AJoel::Move(const FInputActionValue& Value)
 
 }
 
-void AJoel::Look(const FInputActionValue& Value)
+void ACJHPlayer::Look(const FInputActionValue& Value)
 {
 	FVector2D LV = Value.Get<FVector2D>();
 	AddControllerPitchInput(-LV.Y);
 	AddControllerYawInput(LV.X);
-
 }
 
 // Called when the game starts or when spawned
-void AJoel::BeginPlay()
+void ACJHPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	
@@ -60,19 +66,19 @@ void AJoel::BeginPlay()
 }
 
 // Called every frame
-void AJoel::Tick(float DeltaTime)
+void ACJHPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
 // Called to bind functionality to input
-void AJoel::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACJHPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked< UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AJoel::Move);
-		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJoel::Look);
+		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACJHPlayer::Move);
+		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACJHPlayer::Look);
 	}
 }
