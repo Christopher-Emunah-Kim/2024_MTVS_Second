@@ -50,19 +50,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Actions")
     virtual void EnemyIDLE();
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Actions")
     virtual void EnemyMove();
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Actions")
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Actions")
     virtual void EnemyAttack();
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Actions")
     virtual void EnemyDead();
 
 };

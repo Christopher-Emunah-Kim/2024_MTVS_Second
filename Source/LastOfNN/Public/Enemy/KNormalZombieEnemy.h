@@ -1,0 +1,38 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Enemy/KBaseEnemy.h"
+#include "KNormalZombieEnemy.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class LASTOFNN_API AKNormalZombieEnemy : public AKBaseEnemy
+{
+	GENERATED_BODY()
+	
+public:
+	AKNormalZombieEnemy();
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+    virtual void EnemyIDLE() override;
+
+    virtual void EnemyMove() override;
+
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+    virtual void EnemyAttack() override;
+
+    virtual void EnemyDead() override;
+
+};
