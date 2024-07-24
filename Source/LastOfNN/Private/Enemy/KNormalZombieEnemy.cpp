@@ -2,6 +2,7 @@
 
 
 #include "Enemy/KNormalZombieEnemy.h"
+#include "Player/JPlayer.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -16,11 +17,14 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
 	}
 
+	//Enemy Status 초기화
+	EnemyAttackRange = 150.0f;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
@@ -36,6 +40,30 @@ void AKNormalZombieEnemy::EnemyIDLE()
 void AKNormalZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
+
+	FVector dir;
+	if (target)
+	{
+		//타깃목적지
+		FVector EnemyDestination = target->GetActorLocation();
+		//방향
+		dir = EnemyDestination - GetActorLocation();
+		//이동
+		AddMovementInput(dir.GetSafeNormal());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
+	}
+	
+	//타깃과 가까워지면 공격상태 전환
+	//공격범위 안에 들어오면
+	if (dir.Size() < EnemyAttackRange)
+	{
+		//공격상태 전환
+		FSMComponent->CurrentState = EEnemyState::ATTACK;
+	}
+
 }
 
 void AKNormalZombieEnemy::EnemyDamage()

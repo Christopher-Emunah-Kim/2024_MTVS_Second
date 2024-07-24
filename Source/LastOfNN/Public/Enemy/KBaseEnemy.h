@@ -31,35 +31,15 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSMComp")
     UKEnemyFSM* FSMComponent;
 
-	//Enemy Status 관련 변수 선언
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
-    float EnemyHealth;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
-    float EnemyWalkSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
-    float EnemyRunSpeed;
-
-	//Enemy 이동, 공격 상태 사용 Vector변수
-    FVector EnemyDirection;
-
-	//Enemy 공격 상태 사용 변수
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
-    float EnemyNoticeRange;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
-    float EnemyAttackDamage;
-
+	//플레이어 Target 정보 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     class AJPlayer* target;
 
-	UPROPERTY()
-	class AKBaseEnemy* me;
-
-
-	//Base기본 가상함수 및 필요 속성
-    //대기상태처리함수
+#pragma region virtual function with properties
+	
+	//기본 가상함수 및 필요 속성
+	
+    //**대기상태처리함수
 	virtual void EnemyIDLE();
 	//대기시간
 	UPROPERTY(EditDefaultsOnly, Category = "FSMComp")
@@ -67,12 +47,41 @@ public:
 	//경과시간
 	float CurrentTime = 0;
 
+
+	//**이동상태처리함수
     virtual void EnemyMove();
+	//걷기속도
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
+    float EnemyWalkSpeed;
+	//뛰기속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
+    float EnemyRunSpeed;
+	//방향
+    FVector EnemyDirection;
 
+
+	//**피격상태처리함수
 	virtual void EnemyDamage();
+	//Enemy HP
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
+    float EnemyHP;
 
+
+	//**공격상태처리함수
     virtual void EnemyAttack();
+	//Enemy탐지범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+    float EnemyNoticeRange;
+	//Enemy데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+    float EnemyAttackDamage;
+	//Enemy공격범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+    float EnemyAttackRange;
 
+
+	//**죽음상태처리함수
     virtual void EnemyDead();
 
+#pragma endregion
 };

@@ -3,6 +3,8 @@
 
 #include "Enemy/KBaseEnemy.h"
 #include "Enemy/KEnemyFSM.h"
+#include "Player/JPlayer.h"
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -18,6 +20,12 @@ AKBaseEnemy::AKBaseEnemy()
 void AKBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	//이동상태 구현을 위한 target 변수 초기화
+	//월드에서 플레이어 액터찾기
+	auto FirstPlayer = UGameplayStatics::GetActorOfClass(GetWorld(),AJPlayer::StaticClass());
+	//target을 해당 플레이어타입으로 캐스팅
+	target = Cast<AJPlayer>(FirstPlayer);
 	
 }
 
@@ -51,7 +59,7 @@ void AKBaseEnemy::EnemyIDLE()
 
 void AKBaseEnemy::EnemyMove()
 {
-
+	
 }
 
 
