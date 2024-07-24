@@ -27,7 +27,7 @@ public:
 	// Called to bind functionality to input
 	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//Enemy Status°ü·Ã º¯¼ö ¼±¾ð
+	//Enemy Statusï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyHealth;
 
@@ -37,10 +37,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyRunSpeed;
 
-	//Enemy ÀÌµ¿, °ø°Ý »ç¿ë Vectorº¯¼ö
+	//Enemy ï¿½Ìµï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Vectorï¿½ï¿½ï¿½ï¿½
     FVector EnemyDirection;
 
-	//Enemy °ø°Ý »ç¿ë º¯¼ö
+	//Enemy ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     float EnemyNoticeRange;
 
@@ -48,13 +48,13 @@ public:
     float EnemyDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
-    class AJoel* target;
+    class AJPlayer* target;
 
-	//FSM ÀÎ½ºÅÏ½º
+	//FSM ï¿½Î½ï¿½ï¿½Ï½ï¿½
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
 
-	//Base±âº» °¡»óÇÔ¼ö
+	//Baseï¿½âº» ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½
     virtual void EnemyIDLE();
 
     virtual void EnemyMove();

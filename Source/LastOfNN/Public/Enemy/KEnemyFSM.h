@@ -39,20 +39,20 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     
-    //ÇöÀç »óÅÂ ÀúÀå
+    //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     EEnemyState CurrentState;
 
-    //Àü´Þ¹ÞÀº »óÅÂ°ª ÀüÈ¯ ÇÔ¼ö
+    //ï¿½ï¿½ï¿½Þ¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ ï¿½ï¿½È¯ ï¿½Ô¼ï¿½
     UFUNCTION(BlueprintCallable, Category = "FSM")
     void SetState(EEnemyState NewState);
 
-    //Tick¸¶´Ù »óÅÂ ¾÷µ¥ÀÌÆ® ÇÔ¼ö
+    //Tickï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ô¼ï¿½
     UFUNCTION(BlueprintCallable, Category = "FSM")
     void UpdateState();
 	
-    //BaseEnemy ÀÎ½ºÅÏ½º
-    UPROPERTY(BlueprintCallable, Category = "FSM")
+    //BaseEnemy ï¿½Î½ï¿½ï¿½Ï½ï¿½
+    UPROPERTY(VisibleAnywhere, Category = "FSM")
     class AKBaseEnemy* BaseEnemy;
 
 };

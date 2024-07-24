@@ -11,7 +11,7 @@ UKEnemyFSM::UKEnemyFSM()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	//±âº»»óÅÂ´Â IDLE·Î ÇÑ´Ù.
+	//ï¿½âº»ï¿½ï¿½ï¿½Â´ï¿½ IDLEï¿½ï¿½ ï¿½Ñ´ï¿½.
 	CurrentState = EEnemyState::IDLE;
 }
 
@@ -31,13 +31,13 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	//°è¼ÓÇØ¼­ »óÅÂ¸¦ ¾÷µ¥ÀÌÆ®
+	//ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	UpdateState();
 }
 
 void UKEnemyFSM::SetState(EEnemyState NewState)
 {
-	//ÀÔ·Â¹ÞÀº »óÅÂ°ªÀ¸·Î ÀüÈ¯
+	//ï¿½Ô·Â¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
 	CurrentState = NewState;
 }
 
@@ -46,37 +46,37 @@ void UKEnemyFSM::UpdateState()
     switch (CurrentState)
     {
     case EEnemyState::IDLE:
-        // Idle »óÅÂ Çàµ¿ Ã³¸®...
+        // Idle ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::PATROL:
-        // Patrol »óÅÂ Çàµ¿ Ã³¸®...
+        // Patrol ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::DETECT:
-        // Detect »óÅÂ Çàµ¿ Ã³¸®...
+        // Detect ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::MOVE:
-        // Move »óÅÂ Çàµ¿ Ã³¸®...
+        // Move ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::ATTACK:
-        // Attack »óÅÂ Çàµ¿ Ã³¸®...
+        // Attack ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::EVADE:
-        // Evade »óÅÂ Çàµ¿ Ã³¸®...
+        // Evade ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::HIDE:
-        // Hide »óÅÂ Çàµ¿ Ã³¸®...
+        // Hide ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::TAKEDAMAGE:
-        // TakeDamage »óÅÂ Çàµ¿ Ã³¸®...
+        // TakeDamage ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::KNOCKBACK:
-        // Finishing »óÅÂ Çàµ¿ Ã³¸®...
+        // Finishing ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::FINISHING:
-        // Finishing »óÅÂ Çàµ¿ Ã³¸®...
+        // Finishing ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     case EEnemyState::DEAD:
-        // Dead »óÅÂ Çàµ¿ Ã³¸®...
+        // Dead ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ Ã³ï¿½ï¿½...
         break;
     }
 }

@@ -5,21 +5,22 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-#include "Joel.generated.h"
+#include "JPlayer.generated.h"
 
 class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
 
+
 UCLASS()
-class LASTOFNN_API ACJHPlayer : public ACharacter
+class LASTOFNN_API AJPlayer : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-
-	ACJHPlayer();
+	// Sets default values for this character's properties
+	AJPlayer();
 
 	virtual void Tick(float DeltaTime) override;
 
@@ -42,11 +43,9 @@ public:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
 
 };

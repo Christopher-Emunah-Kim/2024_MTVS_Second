@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/Joel.h"
+#include "Player/JPlayer.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+
 
 enum class ECharacterState : uint8
 {
@@ -16,9 +17,9 @@ enum class ECharacterState : uint8
 };
 
 // Sets default values
-ACJHPlayer::ACJHPlayer()
+AJPlayer::AJPlayer()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+
 	PrimaryActorTick.bCanEverTick = true;
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
@@ -29,7 +30,37 @@ ACJHPlayer::ACJHPlayer()
 	CameraComp->SetupAttachment(SpringArmComp);
 }
 
-void ACJHPlayer::Move(const FInputActionValue& Value)
+// Called when the game starts or when spawned
+void AJPlayer::BeginPlay()
+{
+	Super::BeginPlay();
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	if (Subsystem)
+	{
+		Subsystem->AddMappingContext(IMC_Joel, 0);
+	}
+}
+
+// Called every frame
+void AJPlayer::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+// Called to bind functionality to input
+void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked< UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AJPlayer::Move);
+		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJPlayer::Look);
+	}
+}
+
+void AJPlayer::Move(const FInputActionValue& Value)
 {
 	const FVector2D Vector = Value.Get<FVector2D>();
 	FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
@@ -44,41 +75,9 @@ void ACJHPlayer::Move(const FInputActionValue& Value)
 
 }
 
-void ACJHPlayer::Look(const FInputActionValue& Value)
+void AJPlayer::Look(const FInputActionValue& Value)
 {
 	FVector2D LV = Value.Get<FVector2D>();
 	AddControllerPitchInput(-LV.Y);
 	AddControllerYawInput(LV.X);
-}
-
-// Called when the game starts or when spawned
-void ACJHPlayer::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
-	if (Subsystem)
-	{
-		Subsystem->AddMappingContext(IMC_Joel, 0);
-	}
-
-}
-
-// Called every frame
-void ACJHPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-// Called to bind functionality to input
-void ACJHPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked< UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACJHPlayer::Move);
-		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACJHPlayer::Look);
-	}
 }
