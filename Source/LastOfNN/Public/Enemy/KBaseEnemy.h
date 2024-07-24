@@ -27,7 +27,7 @@ public:
 	// Called to bind functionality to input
 	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//Enemy Status���� ���� ����
+	//Enemy Status 관련 변수 선언
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyHealth;
 
@@ -37,29 +37,35 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
     float EnemyRunSpeed;
 
-	//Enemy �̵�, ���� ��� Vector����
+	//Enemy 이동, 공격 사용 Vector변수
     FVector EnemyDirection;
 
-	//Enemy ���� ��� ����
+	//Enemy 공격 사용 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     float EnemyNoticeRange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
-    float EnemyDamage;
+    float EnemyAttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     class AJPlayer* target;
 
-	//FSM �ν��Ͻ�
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
+	//FSM 인스턴스
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSMComp")
     UKEnemyFSM* FSMComponent;
 
-	//Base�⺻ �����Լ�
-    virtual void EnemyIDLE();
+	//Base기본 가상함수 및 필요 속성
+    //대기상태처리함수
+	virtual void EnemyIDLE();
+	//대기시간
+	UPROPERTY(EditDefaultsOnly, Category = "FSMComp")
+	float IdleDelayTime = 2.0f;
+	//경과시간
+	float CurrentTime = 0;
 
     virtual void EnemyMove();
 
-	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void EnemyDamage();
 
     virtual void EnemyAttack();
 

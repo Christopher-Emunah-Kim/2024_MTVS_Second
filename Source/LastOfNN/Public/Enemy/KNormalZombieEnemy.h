@@ -28,8 +28,8 @@ public:
     virtual void EnemyIDLE() override;
 
     virtual void EnemyMove() override;
-
-	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	virtual void EnemyDamage() override;
 	
     virtual void EnemyAttack() override;
 

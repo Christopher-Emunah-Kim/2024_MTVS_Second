@@ -5,6 +5,17 @@
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	//외관 세팅
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Mesh/NormalZombie/01/T-Pose.T-Pose'"));
+	if (tempMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(tempMesh.Object);
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
+	}
+
 }
 
 void AKNormalZombieEnemy::BeginPlay()
@@ -27,11 +38,9 @@ void AKNormalZombieEnemy::EnemyMove()
 	Super::EnemyMove();
 }
 
-float AKNormalZombieEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void AKNormalZombieEnemy::EnemyDamage()
 {
-	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
-
-	return Damage;
+	Super::EnemyDamage();
 }
 
 void AKNormalZombieEnemy::EnemyAttack()

@@ -2,6 +2,7 @@
 
 
 #include "Enemy/KBaseEnemy.h"
+#include "Enemy/KEnemyFSM.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -9,6 +10,8 @@ AKBaseEnemy::AKBaseEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//EnemyFSM 컴포넌트 추가
+	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
 }
 
 // Called when the game starts or when spawned
@@ -34,7 +37,16 @@ void AKBaseEnemy::Tick(float DeltaTime)
 
 void AKBaseEnemy::EnemyIDLE()
 {
-
+	//시간이 흐르면
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+	//경과시간이 대기시간을 지나면
+	if (CurrentTime > IdleDelayTime)
+	{
+		//이동상태로 전환한다.
+		FSMComponent->CurrentState = EEnemyState::MOVE;
+		//경과시간 초기화
+		CurrentTime = 0;
+	}
 }
 
 void AKBaseEnemy::EnemyMove()
@@ -43,58 +55,9 @@ void AKBaseEnemy::EnemyMove()
 }
 
 
-float AKBaseEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void AKBaseEnemy::EnemyDamage()
 {
-	float FinalDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
-
-	/*if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
-	{
-		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-		FHitResult result = PointDamageEvent->HitInfo;
-		if (result.Component.IsValid())
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = nullptr;
-
-			if (EnemyHPStat != nullptr && !IsDead())
-			{
-				if (result.Component->ComponentHasTag("Head"))
-				{
-					auto* DamageAmt = GetWorld()->SpawnActor<ADamageAmt>(CriticalDamageAmtFactory, result.Component->GetComponentLocation(), FRotator::ZeroRotator);
-					FinalDamage *= 2;
-					DamageAmt->SetDamageText(FinalDamage, true);
-				}
-				else
-				{
-					auto* DamageAmt = GetWorld()->SpawnActor<ADamageAmt>(DamageAmtFactory, GetActorLocation(), FRotator::ZeroRotator);
-					DamageAmt->SetDamageText(FinalDamage, false);
-				}
-
-				HPBarWidget->SetVisibility(true);
-				EnemyHPStat->SetDamage(FinalDamage);
-			}
-		}
-		else
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = nullptr;
-			auto* DamageAmt = GetWorld()->SpawnActor<ADamageAmt>(DamageAmtFactory, GetActorLocation(), FRotator::ZeroRotator);
-			HPBarWidget->SetVisibility(true);
-			EnemyHPStat->SetDamage(FinalDamage);
-			DamageAmt->SetDamageText(FinalDamage, false);
-		}
-	}
-	else
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = nullptr;
-		auto* DamageAmt = GetWorld()->SpawnActor<ADamageAmt>(DamageAmtFactory, GetActorLocation(), FRotator::ZeroRotator);
-		HPBarWidget->SetVisibility(true);
-		EnemyHPStat->SetDamage(FinalDamage);
-		DamageAmt->SetDamageText(FinalDamage, false);
-	}*/
-
-	return FinalDamage;
+	
 }
 
 void AKBaseEnemy::EnemyAttack()
