@@ -5,6 +5,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/DamageEvents.h"
 
 // Sets default values
 APlayerGun::APlayerGun()
@@ -12,18 +13,57 @@ APlayerGun::APlayerGun()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	SceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	SceneComp = RootComponent;
+	SetRootComponent(SceneComp);
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	MeshComp->SetupAttachment(SceneComp); 
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void APlayerGun::PullTrigger()
 {
+	//걸린 액터에게 데미지??
+	FHitResult Hit;
+	FVector ShotDirection;
 
+	UE_LOG(LogTemp, Error, TEXT("NotSuccess"));
+	bool bSuccess = GunTrace(Hit, ShotDirection);
+	if (bSuccess)
+	{
+		AActor* HitActor = Hit.GetActor();
+		FPointDamageEvent DamageEvent(GunDamage, Hit, ShotDirection, nullptr); //데미지 이벤트 발생
+		AController* OwnerController = GetWorld()->GetFirstPlayerController();
+		Hit.GetActor()->TakeDamage(GunDamage, DamageEvent, OwnerController, this);
+		UE_LOG(LogTemp, Error, TEXT("%f, %s"), GunDamage, *HitActor->GetName());
+	}
 }
 
-void APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
+bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
 {
+	Hit;
+	FVector Location;
+	FRotator Rotation;
+	//뷰포인트 얻어오기
+	AController* OwnerController = GetWorld()->GetFirstPlayerController();
+	if (OwnerController)
+	{
+		OwnerController->GetPlayerViewPoint(Location, Rotation);
+	}
+
+	ShotDirection = -Rotation.Vector();
+	FVector EndLocation = Location + Rotation.Vector() * MaxRange;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this); //총알이 총에 안맞게
+	Params.AddIgnoredActor(GetOwner()); //총 주인이 총에 안맞게
+	//라인트레이스 해서 걸리는 타겟 리턴
+	DrawDebugPoint(GetWorld(), Hit.Location, 20, FColor::Red, true);
+	return GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Location,
+		EndLocation,
+		ECollisionChannel::ECC_Pawn,
+		Params
+	);
 }
 
 // Called when the game starts or when spawned

@@ -15,11 +15,19 @@ public:
 	// Sets default values for this actor's properties
 	APlayerGun();
 
+	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* MeshComp;
+
 	class USceneComponent* SceneComp;
 
 	void PullTrigger();
-	void GunTrace(FHitResult &Hit, FVector& ShotDirection);
+	bool GunTrace(FHitResult& Hit, FVector& ShotDirection);
+
+	float MaxRange = 1000;
+
+	UPROPERTY(EditAnywhere)
+	float GunDamage = 10;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
