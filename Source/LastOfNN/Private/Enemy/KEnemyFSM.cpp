@@ -79,7 +79,7 @@ void UKEnemyFSM::UpdateState()
         break;
     case EEnemyState::TAKEDAMAGE:
         // TakeDamage 상태 행동 처리...
-        BaseEnemy->EnemyDamage();
+        BaseEnemy->EnemyTakeDamage();
         break;
     case EEnemyState::KNOCKBACK:
         // Finishing 상태 행동 처리...

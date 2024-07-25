@@ -5,6 +5,7 @@
 #include "Enemy/KEnemyFSM.h"
 #include "Player/JPlayer.h"
 #include <Kismet/GameplayStatics.h>
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -62,13 +63,32 @@ void AKBaseEnemy::EnemyMove()
 	
 }
 
-
-void AKBaseEnemy::EnemyDamage()
+void AKBaseEnemy::EnemyAttack()
 {
 	
 }
 
-void AKBaseEnemy::EnemyAttack()
+void AKBaseEnemy::OnEnemyDamageProcess(float damage)
+{
+	//HP가 감소한다.(데미지만큼)
+	EnemyHP -= damage;
+	//만약 체력이 남았다면
+	if (EnemyHP > 0)
+	{
+		//피격상태 전환
+		FSMComponent->CurrentState = EEnemyState::TAKEDAMAGE;
+	}
+	else
+	{
+		//죽음상태 전환
+		FSMComponent->CurrentState = EEnemyState::DEAD;
+		//충돌체비활성화
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+}
+
+void AKBaseEnemy::EnemyTakeDamage()
 {
 	
 }
