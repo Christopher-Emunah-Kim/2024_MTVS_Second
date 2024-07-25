@@ -29,9 +29,11 @@ public:
 
     virtual void EnemyMove() override;
 	
-	virtual void EnemyDamage() override;
-	
     virtual void EnemyAttack() override;
+
+	virtual void OnEnemyDamageProcess(float damage) override;
+
+	virtual void EnemyTakeDamage() override;
 
     virtual void EnemyDead() override;
 

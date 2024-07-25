@@ -20,6 +20,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	//Enemy Status 초기화
 	EnemyAttackRange = 150.0f;
 	EnemyAttackDelayTime = 2.0f;
+	EnemyHP = 10;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
@@ -67,10 +68,6 @@ void AKNormalZombieEnemy::EnemyMove()
 
 }
 
-void AKNormalZombieEnemy::EnemyDamage()
-{
-	Super::EnemyDamage();
-}
 
 void AKNormalZombieEnemy::EnemyAttack()
 {
@@ -81,9 +78,37 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//공격시간이 되면
 	if (CurrentTime>EnemyAttackDelayTime)
 	{
-		//공격한다.
-		
+		//공격한다.(내용은 나중에 구현)
+		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
 		//대기시간 초기화
+		CurrentTime = 0;
+	}
+	//타깃과의 거리를 구하고
+	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
+	//거리가 공격범위를 벗어나면
+	if (TargetDistance > EnemyAttackRange)
+	{
+		//이동상태 전환
+		FSMComponent->CurrentState = EEnemyState::MOVE;
+	}
+}
+
+void AKNormalZombieEnemy::OnEnemyDamageProcess(float damage)
+{
+	Super::OnEnemyDamageProcess(damage);
+}
+
+void AKNormalZombieEnemy::EnemyTakeDamage()
+{
+	Super::EnemyTakeDamage();
+
+	//시간이 흐르다가
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+	//전환대기시간이 지나면
+	if (CurrentTime > EnemyTDamageDelayTime)
+	{
+		//IDLE상태로 전환
+		FSMComponent->CurrentState = EEnemyState::IDLE;
 		CurrentTime = 0;
 	}
 }
@@ -91,4 +116,13 @@ void AKNormalZombieEnemy::EnemyAttack()
 void AKNormalZombieEnemy::EnemyDead()
 {
 	Super::EnemyDead();
+
+	//죽으면아래로 내려간다.
+	FVector P = GetActorLocation() + FVector::DownVector * DieDownfallSpeed * GetWorld()->DeltaTimeSeconds;
+	SetActorLocation(P);
+	//2미터 이상 내려가면
+	if (P.Z < -200.0f)
+	{
+		Destroy();
+	}
 }

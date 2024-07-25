@@ -28,11 +28,11 @@ public:
 	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	//FSM 인스턴스
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSMComp")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
 
 	//플레이어 Target 정보 인스턴스
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     class AJPlayer* target;
 
 #pragma region virtual function with properties
@@ -42,7 +42,7 @@ public:
     //**대기상태처리함수
 	virtual void EnemyIDLE();
 	//대기시간
-	UPROPERTY(EditDefaultsOnly, Category = "FSMComp")
+	UPROPERTY(EditDefaultsOnly, Category = "FSM")
 	float IdleDelayTime = 2.0f;
 	//경과시간
 	float CurrentTime = 0;
@@ -51,39 +51,48 @@ public:
 	//**이동상태처리함수
     virtual void EnemyMove();
 	//걷기속도
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyWalkSpeed;
 	//뛰기속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyRunSpeed;
 	//방향
     FVector EnemyDirection;
 
-
-	//**피격상태처리함수
-	virtual void EnemyDamage();
-	//Enemy HP
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Stats")
-    float EnemyHP;
-
-
 	//**공격상태처리함수
     virtual void EnemyAttack();
 	//Enemy탐지범위
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyNoticeRange;
 	//Enemy데미지
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDamage;
 	//Enemy공격범위
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackRange;
 	//Enemy공격대기시간
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDelayTime;
+
+
+	//피격알림이벤트함수
+	virtual void OnEnemyDamageProcess(float damage);
+	//Enemy HP
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    int32 EnemyHP;
+
+	//**피격상태처리함수
+	virtual void EnemyTakeDamage();
+	//피격 후 IDLE전환 대기시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemyTDamageDelayTime = 1.5f;
 
 	//**죽음상태처리함수
     virtual void EnemyDead();
+	//죽음 후 메시 내려가는 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float DieDownfallSpeed = 50.0f;
+
 
 #pragma endregion
 };
