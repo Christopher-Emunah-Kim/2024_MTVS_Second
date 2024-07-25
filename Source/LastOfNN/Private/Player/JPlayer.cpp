@@ -66,6 +66,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AJPlayer::Move);
 		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJPlayer::Look);
 		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &AJPlayer::Fire);
+		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AJPlayer::Zoom);
 	}
 }
 
@@ -93,6 +94,10 @@ void AJPlayer::Look(const FInputActionValue& Value)
 void AJPlayer::Fire(const FInputActionValue& Value)
 {
 	Gun->PullTrigger();
+}
+void AJPlayer::Zoom(const FInputActionValue& Value)
+{
+	SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));
 }
 UCameraComponent* AJPlayer::GetCamera()
 {

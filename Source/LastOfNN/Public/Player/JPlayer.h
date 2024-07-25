@@ -43,11 +43,13 @@ public:
 	UInputAction* IA_Look;	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Fire;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Zoom;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
-
+	void Zoom(const FInputActionValue& Value);
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()

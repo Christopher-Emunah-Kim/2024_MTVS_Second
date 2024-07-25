@@ -25,6 +25,7 @@ void APlayerGun::PullTrigger()
 	FHitResult Hit;
 	FVector ShotDirection;
 
+	UE_LOG(LogTemp, Error, TEXT("NotSuccess"));
 	bool bSuccess = GunTrace(Hit, ShotDirection);
 	if (bSuccess)
 	{
@@ -32,7 +33,7 @@ void APlayerGun::PullTrigger()
 		FPointDamageEvent DamageEvent(GunDamage, Hit, ShotDirection, nullptr); //데미지 이벤트 발생
 		AController* OwnerController = GetWorld()->GetFirstPlayerController();
 		Hit.GetActor()->TakeDamage(GunDamage, DamageEvent, OwnerController, this);
-		//UE_LOG(LogTemp, Error, TEXT("%d"), GunDamage));
+		UE_LOG(LogTemp, Error, TEXT("%f, %s"), GunDamage, *HitActor->GetName());
 	}
 }
 
@@ -55,11 +56,12 @@ bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
 	Params.AddIgnoredActor(this); //총알이 총에 안맞게
 	Params.AddIgnoredActor(GetOwner()); //총 주인이 총에 안맞게
 	//라인트레이스 해서 걸리는 타겟 리턴
+	DrawDebugPoint(GetWorld(), Hit.Location, 20, FColor::Red, true);
 	return GetWorld()->LineTraceSingleByChannel(
 		Hit,
-		GetActorLocation(),
+		Location,
 		EndLocation,
-		ECC_Visibility,
+		ECollisionChannel::ECC_Pawn,
 		Params
 	);
 }

@@ -32,9 +32,14 @@ void UPlayerLockOn::LockOnTarget()
 	{
 		FHitResult HitResult;
 
+
 		Player = Cast<AJPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		FVector StartLocation = Player->GetActorLocation();
 
+		FVector ViewLocation;
+		FRotator ViewRotate;
+		Player->GetController()->GetPlayerViewPoint(ViewLocation, ViewRotate);
+		
 		PlayerCam = Player->GetComponentByClass<UCameraComponent>();
 		FVector EndLocation = StartLocation + VectorCaculationNum * (PlayerCam->GetForwardVector());
 
@@ -59,8 +64,8 @@ void UPlayerLockOn::LockOnTarget()
 		if (bHit)
 		{
 			HitActor = HitResult.GetActor();
-			UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), *HitActor->GetName());
-			FRotator Rotate = UKismetMathLibrary::FindLookAtRotation(Player->GetActorLocation(), HitActor->GetActorLocation());;
+			//UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), *HitActor->GetName());
+			FRotator Rotate = UKismetMathLibrary::FindLookAtRotation(ViewLocation, HitActor->GetActorLocation());;
 			Player->GetController()->SetControlRotation(Rotate);
 		}
 	}
