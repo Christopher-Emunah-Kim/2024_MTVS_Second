@@ -76,6 +76,8 @@ public:
 
 
 	//피격알림이벤트함수
+	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 	virtual void OnEnemyDamageProcess(float damage);
 	//Enemy HP
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")

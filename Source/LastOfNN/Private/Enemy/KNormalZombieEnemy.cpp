@@ -20,7 +20,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	//Enemy Status 초기화
 	EnemyAttackRange = 150.0f;
 	EnemyAttackDelayTime = 2.0f;
-	EnemyHP = 10;
+	EnemyHP = 200;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
@@ -91,6 +91,13 @@ void AKNormalZombieEnemy::EnemyAttack()
 		//이동상태 전환
 		FSMComponent->CurrentState = EEnemyState::MOVE;
 	}
+}
+
+float AKNormalZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	return FinalDamage;
 }
 
 void AKNormalZombieEnemy::OnEnemyDamageProcess(float damage)

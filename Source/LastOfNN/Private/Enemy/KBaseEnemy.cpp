@@ -68,6 +68,15 @@ void AKBaseEnemy::EnemyAttack()
 	
 }
 
+float AKBaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	
+	OnEnemyDamageProcess(FinalDamage);
+
+	return FinalDamage;
+}
+
 void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 {
 	//HP가 감소한다.(데미지만큼)
