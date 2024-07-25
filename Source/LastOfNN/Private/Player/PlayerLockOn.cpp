@@ -52,7 +52,7 @@ void UPlayerLockOn::LockOnTarget()
 			ObjectTypes,
 			false,
 			ActorsToIgnore,
-			EDrawDebugTrace::ForDuration,
+			EDrawDebugTrace::None,
 			HitResult,
 			false);
 

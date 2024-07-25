@@ -8,6 +8,9 @@
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
 #include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
 #include "Player/PlayerLockOn.h"
+#include "Enemy/KEnemyFSM.h"
+#include "Enemy/KBaseEnemy.h"
+#include "Player/PlayerGun.h"
 
 enum class ECharacterState : uint8
 {
@@ -32,7 +35,6 @@ AJPlayer::AJPlayer()
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
 }
-
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
@@ -44,6 +46,9 @@ void AJPlayer::BeginPlay()
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
 	LockOnComp->SetTargetLockTrue();
+
+	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_r"));
 }
 
 // Called every frame
@@ -60,6 +65,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AJPlayer::Move);
 		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJPlayer::Look);
+		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &AJPlayer::Fire);
 	}
 }
 
@@ -84,7 +90,10 @@ void AJPlayer::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(-LV.Y);
 	AddControllerYawInput(LV.X);
 }
-
+void AJPlayer::Fire(const FInputActionValue& Value)
+{
+	Gun->PullTrigger();
+}
 UCameraComponent* AJPlayer::GetCamera()
 {
 	return CameraComp;

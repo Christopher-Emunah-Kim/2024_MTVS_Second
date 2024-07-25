@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
 class UPlayerLockOn;
+class APlayerGun;
 
 UCLASS()
 class LASTOFNN_API AJPlayer : public ACharacter
@@ -26,6 +27,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	FVector direction;
+
 	UPROPERTY(EditAnywhere)
 	UCameraComponent* CameraComp;	
 	UPROPERTY(EditAnywhere)
@@ -36,17 +39,23 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Move;
 
-	FVector direction;
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Look;
+	UInputAction* IA_Look;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Fire;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-
+	void Fire(const FInputActionValue& Value);
 
 	UCameraComponent* GetCamera();
 
+	UPROPERTY()
+	APlayerGun* Gun;
+
 	UPlayerLockOn* LockOnComp;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class APlayerGun> GunClass;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
