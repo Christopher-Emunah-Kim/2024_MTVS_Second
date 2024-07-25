@@ -78,7 +78,9 @@ public:
 	//Enemy공격범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
     float EnemyAttackRange;
-
+	//Enemy공격대기시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Attack")
+    float EnemyAttackDelayTime;
 
 	//**죽음상태처리함수
     virtual void EnemyDead();

@@ -19,6 +19,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 
 	//Enemy Status 초기화
 	EnemyAttackRange = 150.0f;
+	EnemyAttackDelayTime = 2.0f;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
@@ -74,6 +75,17 @@ void AKNormalZombieEnemy::EnemyDamage()
 void AKNormalZombieEnemy::EnemyAttack()
 {
 	Super::EnemyAttack();
+
+	//시간이 흐르다가
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+	//공격시간이 되면
+	if (CurrentTime>EnemyAttackDelayTime)
+	{
+		//공격한다.
+		
+		//대기시간 초기화
+		CurrentTime = 0;
+	}
 }
 
 void AKNormalZombieEnemy::EnemyDead()
