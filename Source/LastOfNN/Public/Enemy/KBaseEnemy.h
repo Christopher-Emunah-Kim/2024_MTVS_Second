@@ -39,6 +39,15 @@ public:
 	UPROPERTY()
 	class UKEnemyAnim* anim;
 
+	//Enemy를 소유한 AI Controller 설정
+	UPROPERTY()
+	class AAIController* ai;
+
+	//길찾기 수행시 랜덤 위치
+	FVector EnemyRandomPos;
+	//랜덤위치가져오기 함수
+	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
+
 #pragma region virtual function with properties
 	
 	//기본 가상함수 및 필요 속성

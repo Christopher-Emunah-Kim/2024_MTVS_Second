@@ -4,6 +4,9 @@
 #include "Enemy/KNormalZombieEnemy.h"
 #include "Player/JPlayer.h"
 #include "Enemy/KEnemyAnim.h"
+#include "Runtime/AIModule/Classes/AIController.h"
+#include "NavigationSystem.h"
+#include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -60,7 +63,40 @@ void AKNormalZombieEnemy::EnemyMove()
 		//방향
 		dir = EnemyDestination - GetActorLocation();
 		//이동
-		AddMovementInput(dir.GetSafeNormal());
+		//AddMovementInput(dir.GetSafeNormal());
+		//ai->MoveToLocation(EnemyDestination);
+
+		//(1단계) 길찾기 결과 얻어오기
+		//Navigation 객체 얻어오기
+		auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+		//목적지 길찾기 경로 데이터 탐색
+		FPathFindingQuery query;
+		FAIMoveRequest req;
+		//목적지 인지 가능 범위
+		req.SetAcceptanceRadius(3);
+		req.SetGoalLocation(EnemyDestination);
+		//길찾기 위한 쿼리 생성
+		ai->BuildPathfindingQuery(req, query);
+		//길찾기 결과 가져오기
+		FPathFindingResult FindingResult = ns->FindPathSync(query);
+
+		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
+		if (FindingResult.Result == ENavigationQueryResult::Success)
+		{
+			//타깃에게 이동
+			ai->MoveToLocation(EnemyDestination);
+		}
+		else
+		{
+			//랜덤하게 이동
+			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+			//목적지에 도차하면
+			if (RanResult == EPathFollowingRequestResult::AlreadyAtGoal)
+			{
+				//새로운 랜덤위치 가져오기
+				GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+			}
+		}
 	}
 	else
 	{
@@ -71,6 +107,8 @@ void AKNormalZombieEnemy::EnemyMove()
 	//공격범위 안에 들어오면
 	if (dir.Size() < EnemyAttackRange)
 	{
+		//AI의 길찾기 기능을 정지한다.
+		ai->StopMovement();
 		//공격상태 전환
 		FSMComponent->CurrentState = EEnemyState::ATTACK;
 		//애니메이션 상태 동기화
@@ -109,6 +147,8 @@ void AKNormalZombieEnemy::EnemyAttack()
 		FSMComponent->CurrentState = EEnemyState::MOVE;
 		//애니메이션 상태 동기화
 		anim->EnemyAnimState = FSMComponent->CurrentState;
+		//랜덤위치값을 이때도 다시 설정
+		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
 
