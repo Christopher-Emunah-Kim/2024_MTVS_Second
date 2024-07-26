@@ -10,7 +10,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//외관 세팅
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Mesh/NormalZombie/01/T-Pose.T-Pose'"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Clicker/Idle/Clicker_idle__1_.Clicker_idle__1_'"));
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
