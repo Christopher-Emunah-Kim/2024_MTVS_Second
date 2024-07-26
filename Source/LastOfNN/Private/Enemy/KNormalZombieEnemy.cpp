@@ -15,6 +15,14 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
+		GetMesh()->SetRelativeScale3D(FVector(0.1f));
+	}
+
+	//애니메이션 BP 할당
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Enemy/ABP_NormalZombieAnim.ABP_NormalZombieAnim_C'"));
+	if (tempClass.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
 
 	//Enemy Status 초기화
