@@ -7,6 +7,9 @@
 #include <Kismet/GameplayStatics.h>
 #include "Components/CapsuleComponent.h"
 #include "Enemy/KEnemyAnim.h"
+#include "Runtime/AIModule/Classes/AIController.h"
+#include "NavigationSystem.h"  
+#include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h" 
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -31,6 +34,9 @@ void AKBaseEnemy::BeginPlay()
 	
 	//UKEnemyAnim 할당
 	anim = Cast<UKEnemyAnim>(GetMesh()->GetAnimInstance());
+
+	//AAIController 할당
+	ai = Cast<AAIController>(GetController());
 }
 
 // Called every frame
@@ -47,6 +53,21 @@ void AKBaseEnemy::Tick(float DeltaTime)
 //
 //}
 
+bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
+{
+	//내비게이션 시스템 인스턴스를 얻어온다.
+	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	//객체 멤버함수호출하여 매개변수에 값 전달
+	//centerLocation을 기준으로 radius영역 안에 랜덤으로 loc 변수에 담아주는 역할의 함수
+	//정상적으로 값이 호출되면 true, 아니면 false반환.
+	FNavLocation loc;
+	bool result = ns->GetRandomReachablePointInRadius(centerLocation, radius, loc);
+	//이 값을 함수의 반환 값으로 사용 후 랜덤함 위치를 dest변수에 할당
+	dest = loc.Location;
+	
+	return result;
+}
+
 void AKBaseEnemy::EnemyIDLE()
 {
 	//시간이 흐르면
@@ -61,6 +82,8 @@ void AKBaseEnemy::EnemyIDLE()
 
 		//애니메이션 상태 동기화
 		anim->EnemyAnimState = FSMComponent->CurrentState;
+		//랜덤위치값 최초설정
+		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
 
@@ -102,6 +125,8 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	}
 	//애니메이션 상태 동기화
 	anim->EnemyAnimState = FSMComponent->CurrentState;
+	//이땐 AI길찾기 기능 정지시켜두기
+	ai->StopMovement();
 }
 
 void AKBaseEnemy::EnemyTakeDamage()
