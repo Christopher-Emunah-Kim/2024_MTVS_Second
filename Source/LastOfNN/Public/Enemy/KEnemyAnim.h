@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "KEnemyFSM.h" //추가
 #include "KEnemyAnim.generated.h"
 
 /**
@@ -14,4 +15,14 @@ class LASTOFNN_API UKEnemyAnim : public UAnimInstance
 {
 	GENERATED_BODY()
 	
+public:
+	
+	//FSM 열거형 타입 인스턴스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
+	EEnemyState EnemyAnimState;
+
+	//공격상태 재생할지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
+	bool bEnemyAttackPlay = false;
+
 };

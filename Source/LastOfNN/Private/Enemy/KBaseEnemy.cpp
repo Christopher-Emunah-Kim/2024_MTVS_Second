@@ -6,6 +6,7 @@
 #include "Player/JPlayer.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/CapsuleComponent.h"
+#include "Enemy/KEnemyAnim.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -28,6 +29,8 @@ void AKBaseEnemy::BeginPlay()
 	//target을 해당 플레이어타입으로 캐스팅
 	target = Cast<AJPlayer>(FirstPlayer);
 	
+	//UKEnemyAnim 할당
+	anim = Cast<UKEnemyAnim>(GetMesh()->GetAnimInstance());
 }
 
 // Called every frame
@@ -55,6 +58,9 @@ void AKBaseEnemy::EnemyIDLE()
 		FSMComponent->CurrentState = EEnemyState::MOVE;
 		//경과시간 초기화
 		CurrentTime = 0;
+
+		//애니메이션 상태 동기화
+		anim->EnemyAnimState = FSMComponent->CurrentState;
 	}
 }
 
@@ -94,7 +100,8 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 		//충돌체비활성화
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-
+	//애니메이션 상태 동기화
+	anim->EnemyAnimState = FSMComponent->CurrentState;
 }
 
 void AKBaseEnemy::EnemyTakeDamage()

@@ -35,6 +35,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     class AJPlayer* target;
 
+	//사용중인 에니메이션 BP 인스턴스
+	UPROPERTY()
+	class UKEnemyAnim* anim;
+
 #pragma region virtual function with properties
 	
 	//기본 가상함수 및 필요 속성

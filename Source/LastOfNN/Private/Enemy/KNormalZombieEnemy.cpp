@@ -3,6 +3,7 @@
 
 #include "Enemy/KNormalZombieEnemy.h"
 #include "Player/JPlayer.h"
+#include "Enemy/KEnemyAnim.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -72,6 +73,12 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		//공격상태 전환
 		FSMComponent->CurrentState = EEnemyState::ATTACK;
+		//애니메이션 상태 동기화
+		anim->EnemyAnimState = FSMComponent->CurrentState;
+		//공격 애니메이션 재생 활성화
+		anim->bEnemyAttackPlay = true;
+		//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+		CurrentTime = EnemyAttackDelayTime;
 	}
 
 }
@@ -90,6 +97,8 @@ void AKNormalZombieEnemy::EnemyAttack()
 		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
 		//대기시간 초기화
 		CurrentTime = 0;
+		//공격 애니메이션 재생 활성화
+		anim->bEnemyAttackPlay = true;
 	}
 	//타깃과의 거리를 구하고
 	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
@@ -98,6 +107,8 @@ void AKNormalZombieEnemy::EnemyAttack()
 	{
 		//이동상태 전환
 		FSMComponent->CurrentState = EEnemyState::MOVE;
+		//애니메이션 상태 동기화
+		anim->EnemyAnimState = FSMComponent->CurrentState;
 	}
 }
 
@@ -125,6 +136,9 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 		//IDLE상태로 전환
 		FSMComponent->CurrentState = EEnemyState::IDLE;
 		CurrentTime = 0;
+
+		//애니메이션 상태 동기화
+		anim->EnemyAnimState = FSMComponent->CurrentState;
 	}
 }
 
