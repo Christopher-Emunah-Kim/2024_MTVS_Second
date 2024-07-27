@@ -14,7 +14,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//외관 세팅
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny'"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Clicker/Can_Use/SkeletalMesh/Clicker_Skeletal.Clicker_Skeletal'"));
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
@@ -23,15 +23,15 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	}
 
 	//애니메이션 BP 할당
-	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Enemy/ABP_NormalZombieAnim.ABP_NormalZombieAnim_C'"));
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_NormalZombieEnemyAnim.ABP_NormalZombieEnemyAnim_C'"));
 	if (tempClass.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
 
 	//Enemy Status 초기화
-	EnemyAttackRange = 150.0f;
-	EnemyAttackDelayTime = 2.0f;
+	EnemyAttackRange = 200.0f;
+	EnemyAttackDelayTime = 3.0f;
 	EnemyHP = 200;
 }
 

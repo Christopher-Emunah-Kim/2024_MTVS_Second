@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "KEnemyFSM.h" //Ãß°¡
+#include "KEnemyFSM.h" //ì¶”ê°€
 #include "KEnemyAnim.generated.h"
 
 /**
@@ -17,12 +17,20 @@ class LASTOFNN_API UKEnemyAnim : public UAnimInstance
 	
 public:
 	
-	//FSM ¿­°ÅÇü Å¸ÀÔ ÀÎ½ºÅÏ½º
+	//FSM ì—´ê±°í˜• íƒ€ì… ì¸ìŠ¤í„´ìŠ¤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
 	EEnemyState EnemyAnimState;
 
-	//°ø°İ»óÅÂ Àç»ıÇÒÁö ¿©ºÎ
+	//ê³µê²©ìƒíƒœ ì¬ìƒí• ì§€ ì—¬ë¶€
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
 	bool bEnemyAttackPlay = false;
+
+	//AttackEnd ë…¸í‹°íŒŒì´ ì´ë²¤íŠ¸ í•¨ìˆ˜
+	UFUNCTION(BlueprintCallable, Category = FSMEvent)
+	void OnEnemyEndAttackAnimation();
+
+	//í”¼ê²© ì• ë‹ˆë©”ì´ì…˜ ëª½íƒ€ì£¼ ì¬ìƒ í•¨ìˆ˜
+	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
+	void PlayEnemyTDamageAnim(FName sectionName);
 
 };

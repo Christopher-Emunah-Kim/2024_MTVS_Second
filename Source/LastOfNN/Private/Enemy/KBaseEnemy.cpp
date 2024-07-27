@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Enemy/KBaseEnemy.h"
@@ -17,7 +17,7 @@ AKBaseEnemy::AKBaseEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//EnemyFSM ÄÄÆ÷³ÍÆ® Ãß°¡
+	//EnemyFSM ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
 }
 
@@ -26,16 +26,16 @@ void AKBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	//ÀÌµ¿»óÅÂ ±¸ÇöÀ» À§ÇÑ target º¯¼ö ÃÊ±âÈ­
-	//¿ùµå¿¡¼­ ÇÃ·¹ÀÌ¾î ¾×ÅÍÃ£±â
+	//ì´ë™ìƒíƒœ êµ¬í˜„ì„ ìœ„í•œ target ë³€ìˆ˜ ì´ˆê¸°í™”
+	//ì›”ë“œì—ì„œ í”Œë ˆì´ì–´ ì•¡í„°ì°¾ê¸°
 	auto FirstPlayer = UGameplayStatics::GetActorOfClass(GetWorld(),AJPlayer::StaticClass());
-	//targetÀ» ÇØ´ç ÇÃ·¹ÀÌ¾îÅ¸ÀÔÀ¸·Î Ä³½ºÆÃ
+	//targetì„ í•´ë‹¹ í”Œë ˆì´ì–´íƒ€ì…ìœ¼ë¡œ ìºìŠ¤íŒ…
 	target = Cast<AJPlayer>(FirstPlayer);
 	
-	//UKEnemyAnim ÇÒ´ç
+	//UKEnemyAnim í• ë‹¹
 	anim = Cast<UKEnemyAnim>(GetMesh()->GetAnimInstance());
 
-	//AAIController ÇÒ´ç
+	//AAIController í• ë‹¹
 	ai = Cast<AAIController>(GetController());
 }
 
@@ -55,14 +55,14 @@ void AKBaseEnemy::Tick(float DeltaTime)
 
 bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
 {
-	//³»ºñ°ÔÀÌ¼Ç ½Ã½ºÅÛ ÀÎ½ºÅÏ½º¸¦ ¾ò¾î¿Â´Ù.
+	//ë‚´ë¹„ê²Œì´ì…˜ ì‹œìŠ¤í…œ ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì–»ì–´ì˜¨ë‹¤.
 	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-	//°´Ã¼ ¸â¹öÇÔ¼öÈ£ÃâÇÏ¿© ¸Å°³º¯¼ö¿¡ °ª Àü´Ş
-	//centerLocationÀ» ±âÁØÀ¸·Î radius¿µ¿ª ¾È¿¡ ·£´ıÀ¸·Î loc º¯¼ö¿¡ ´ã¾ÆÁÖ´Â ¿ªÇÒÀÇ ÇÔ¼ö
-	//Á¤»óÀûÀ¸·Î °ªÀÌ È£ÃâµÇ¸é true, ¾Æ´Ï¸é false¹İÈ¯.
+	//ê°ì²´ ë©¤ë²„í•¨ìˆ˜í˜¸ì¶œí•˜ì—¬ ë§¤ê°œë³€ìˆ˜ì— ê°’ ì „ë‹¬
+	//centerLocationì„ ê¸°ì¤€ìœ¼ë¡œ radiusì˜ì—­ ì•ˆì— ëœë¤ìœ¼ë¡œ loc ë³€ìˆ˜ì— ë‹´ì•„ì£¼ëŠ” ì—­í• ì˜ í•¨ìˆ˜
+	//ì •ìƒì ìœ¼ë¡œ ê°’ì´ í˜¸ì¶œë˜ë©´ true, ì•„ë‹ˆë©´ falseë°˜í™˜.
 	FNavLocation loc;
 	bool result = ns->GetRandomReachablePointInRadius(centerLocation, radius, loc);
-	//ÀÌ °ªÀ» ÇÔ¼öÀÇ ¹İÈ¯ °ªÀ¸·Î »ç¿ë ÈÄ ·£´ıÇÔ À§Ä¡¸¦ destº¯¼ö¿¡ ÇÒ´ç
+	//ì´ ê°’ì„ í•¨ìˆ˜ì˜ ë°˜í™˜ ê°’ìœ¼ë¡œ ì‚¬ìš© í›„ ëœë¤í•¨ ìœ„ì¹˜ë¥¼ destë³€ìˆ˜ì— í• ë‹¹
 	dest = loc.Location;
 	
 	return result;
@@ -70,19 +70,19 @@ bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radiu
 
 void AKBaseEnemy::EnemyIDLE()
 {
-	//½Ã°£ÀÌ Èå¸£¸é
+	//ì‹œê°„ì´ íë¥´ë©´
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	//°æ°ú½Ã°£ÀÌ ´ë±â½Ã°£À» Áö³ª¸é
+	//ê²½ê³¼ì‹œê°„ì´ ëŒ€ê¸°ì‹œê°„ì„ ì§€ë‚˜ë©´
 	if (CurrentTime > IdleDelayTime)
 	{
-		//ÀÌµ¿»óÅÂ·Î ÀüÈ¯ÇÑ´Ù.
+		//ì´ë™ìƒíƒœë¡œ ì „í™˜í•œë‹¤.
 		FSMComponent->CurrentState = EEnemyState::MOVE;
-		//°æ°ú½Ã°£ ÃÊ±âÈ­
+		//ê²½ê³¼ì‹œê°„ ì´ˆê¸°í™”
 		CurrentTime = 0;
 
-		//¾Ö´Ï¸ŞÀÌ¼Ç »óÅÂ µ¿±âÈ­
+		//ì• ë‹ˆë©”ì´ì…˜ ìƒíƒœ ë™ê¸°í™”
 		anim->EnemyAnimState = FSMComponent->CurrentState;
-		//·£´ıÀ§Ä¡°ª ÃÖÃÊ¼³Á¤
+		//ëœë¤ìœ„ì¹˜ê°’ ìµœì´ˆì„¤ì •
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
@@ -108,24 +108,31 @@ float AKBaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 
 void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 {
-	//HP°¡ °¨¼ÒÇÑ´Ù.(µ¥¹ÌÁö¸¸Å­)
+	//HPê°€ ê°ì†Œí•œë‹¤.(ë°ë¯¸ì§€ë§Œí¼)
 	EnemyHP -= damage;
-	//¸¸¾à Ã¼·ÂÀÌ ³²¾Ò´Ù¸é
+	//ë§Œì•½ ì²´ë ¥ì´ ë‚¨ì•˜ë‹¤ë©´
 	if (EnemyHP > 0)
 	{
-		//ÇÇ°İ»óÅÂ ÀüÈ¯
+		//í”¼ê²©ìƒíƒœ ì „í™˜
 		FSMComponent->CurrentState = EEnemyState::TAKEDAMAGE;
+
+		CurrentTime = 0;
+
+		//í”¼ê²©ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ
+		int32 index = FMath::RandRange(0,1);
+		FString SectionName = FString::Printf(TEXT("EnemyTDamage%d"), index);
+		anim->PlayEnemyTDamageAnim(FName(*SectionName));
 	}
 	else
 	{
-		//Á×À½»óÅÂ ÀüÈ¯
+		//ì£½ìŒìƒíƒœ ì „í™˜
 		FSMComponent->CurrentState = EEnemyState::DEAD;
-		//Ãæµ¹Ã¼ºñÈ°¼ºÈ­
+		//ì¶©ëŒì²´ë¹„í™œì„±í™”
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	//¾Ö´Ï¸ŞÀÌ¼Ç »óÅÂ µ¿±âÈ­
+	//ì• ë‹ˆë©”ì´ì…˜ ìƒíƒœ ë™ê¸°í™”
 	anim->EnemyAnimState = FSMComponent->CurrentState;
-	//ÀÌ¶© AI±æÃ£±â ±â´É Á¤Áö½ÃÄÑµÎ±â
+	//ì´ë• AIê¸¸ì°¾ê¸° ê¸°ëŠ¥ ì •ì§€ì‹œì¼œë‘ê¸°
 	ai->StopMovement();
 }
 
