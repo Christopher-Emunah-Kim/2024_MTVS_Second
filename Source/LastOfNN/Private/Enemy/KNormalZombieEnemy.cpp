@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Enemy/KNormalZombieEnemy.h"
@@ -13,8 +13,8 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//¿Ü°ü ¼¼ÆÃ
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Clicker/Idle/Clicker_idle__1_.Clicker_idle__1_'"));
+	//ì™¸ê´€ ì„¸íŒ…
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny'"));
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
@@ -22,14 +22,14 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetRelativeScale3D(FVector(0.1f));
 	}
 
-	//¾Ö´Ï¸ŞÀÌ¼Ç BP ÇÒ´ç
+	//ì• ë‹ˆë©”ì´ì…˜ BP í• ë‹¹
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Enemy/ABP_NormalZombieAnim.ABP_NormalZombieAnim_C'"));
 	if (tempClass.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
 
-	//Enemy Status ÃÊ±âÈ­
+	//Enemy Status ì´ˆê¸°í™”
 	EnemyAttackRange = 150.0f;
 	EnemyAttackDelayTime = 2.0f;
 	EnemyHP = 200;
@@ -58,42 +58,42 @@ void AKNormalZombieEnemy::EnemyMove()
 	FVector dir;
 	if (target)
 	{
-		//Å¸±ê¸ñÀûÁö
+		//íƒ€ê¹ƒëª©ì ì§€
 		FVector EnemyDestination = target->GetActorLocation();
-		//¹æÇâ
+		//ë°©í–¥
 		dir = EnemyDestination - GetActorLocation();
-		//ÀÌµ¿
+		//ì´ë™
 		//AddMovementInput(dir.GetSafeNormal());
 		//ai->MoveToLocation(EnemyDestination);
 
-		//(1´Ü°è) ±æÃ£±â °á°ú ¾ò¾î¿À±â
-		//Navigation °´Ã¼ ¾ò¾î¿À±â
+		//(1ë‹¨ê³„) ê¸¸ì°¾ê¸° ê²°ê³¼ ì–»ì–´ì˜¤ê¸°
+		//Navigation ê°ì²´ ì–»ì–´ì˜¤ê¸°
 		auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-		//¸ñÀûÁö ±æÃ£±â °æ·Î µ¥ÀÌÅÍ Å½»ö
+		//ëª©ì ì§€ ê¸¸ì°¾ê¸° ê²½ë¡œ ë°ì´í„° íƒìƒ‰
 		FPathFindingQuery query;
 		FAIMoveRequest req;
-		//¸ñÀûÁö ÀÎÁö °¡´É ¹üÀ§
+		//ëª©ì ì§€ ì¸ì§€ ê°€ëŠ¥ ë²”ìœ„
 		req.SetAcceptanceRadius(3);
 		req.SetGoalLocation(EnemyDestination);
-		//±æÃ£±â À§ÇÑ Äõ¸® »ı¼º
+		//ê¸¸ì°¾ê¸° ìœ„í•œ ì¿¼ë¦¬ ìƒì„±
 		ai->BuildPathfindingQuery(req, query);
-		//±æÃ£±â °á°ú °¡Á®¿À±â
+		//ê¸¸ì°¾ê¸° ê²°ê³¼ ê°€ì ¸ì˜¤ê¸°
 		FPathFindingResult FindingResult = ns->FindPathSync(query);
 
-		//(2´Ü°è) ±æÃ£±â µ¥ÀÌÅÍ °á°ú¿¡ µû¸¥ ÀÌµ¿ ¼öÇàÇÏ±â
+		//(2ë‹¨ê³„) ê¸¸ì°¾ê¸° ë°ì´í„° ê²°ê³¼ì— ë”°ë¥¸ ì´ë™ ìˆ˜í–‰í•˜ê¸°
 		if (FindingResult.Result == ENavigationQueryResult::Success)
 		{
-			//Å¸±ê¿¡°Ô ÀÌµ¿
+			//íƒ€ê¹ƒì—ê²Œ ì´ë™
 			ai->MoveToLocation(EnemyDestination);
 		}
 		else
 		{
-			//·£´ıÇÏ°Ô ÀÌµ¿
+			//ëœë¤í•˜ê²Œ ì´ë™
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-			//¸ñÀûÁö¿¡ µµÂ÷ÇÏ¸é
+			//ëª©ì ì§€ì— ë„ì°¨í•˜ë©´
 			if (RanResult == EPathFollowingRequestResult::AlreadyAtGoal)
 			{
-				//»õ·Î¿î ·£´ıÀ§Ä¡ °¡Á®¿À±â
+				//ìƒˆë¡œìš´ ëœë¤ìœ„ì¹˜ ê°€ì ¸ì˜¤ê¸°
 				GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 			}
 		}
@@ -103,19 +103,19 @@ void AKNormalZombieEnemy::EnemyMove()
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
 	
-	//Å¸±ê°ú °¡±î¿öÁö¸é °ø°İ»óÅÂ ÀüÈ¯
-	//°ø°İ¹üÀ§ ¾È¿¡ µé¾î¿À¸é
+	//íƒ€ê¹ƒê³¼ ê°€ê¹Œì›Œì§€ë©´ ê³µê²©ìƒíƒœ ì „í™˜
+	//ê³µê²©ë²”ìœ„ ì•ˆì— ë“¤ì–´ì˜¤ë©´
 	if (dir.Size() < EnemyAttackRange)
 	{
-		//AIÀÇ ±æÃ£±â ±â´ÉÀ» Á¤ÁöÇÑ´Ù.
+		//AIì˜ ê¸¸ì°¾ê¸° ê¸°ëŠ¥ì„ ì •ì§€í•œë‹¤.
 		ai->StopMovement();
-		//°ø°İ»óÅÂ ÀüÈ¯
+		//ê³µê²©ìƒíƒœ ì „í™˜
 		FSMComponent->CurrentState = EEnemyState::ATTACK;
-		//¾Ö´Ï¸ŞÀÌ¼Ç »óÅÂ µ¿±âÈ­
+		//ì• ë‹ˆë©”ì´ì…˜ ìƒíƒœ ë™ê¸°í™”
 		anim->EnemyAnimState = FSMComponent->CurrentState;
-		//°ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı È°¼ºÈ­
+		//ê³µê²© ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ í™œì„±í™”
 		anim->bEnemyAttackPlay = true;
-		//°ø°İ »óÅÂ ÀüÈ¯ ÈÄ ´ë±â½Ã°£ÀÌ ¹Ù·Î ³¡³ªµµ·Ï Ã³¸®
+		//ê³µê²© ìƒíƒœ ì „í™˜ í›„ ëŒ€ê¸°ì‹œê°„ì´ ë°”ë¡œ ëë‚˜ë„ë¡ ì²˜ë¦¬
 		CurrentTime = EnemyAttackDelayTime;
 	}
 
@@ -126,28 +126,28 @@ void AKNormalZombieEnemy::EnemyAttack()
 {
 	Super::EnemyAttack();
 
-	//½Ã°£ÀÌ Èå¸£´Ù°¡
+	//ì‹œê°„ì´ íë¥´ë‹¤ê°€
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	//°ø°İ½Ã°£ÀÌ µÇ¸é
+	//ê³µê²©ì‹œê°„ì´ ë˜ë©´
 	if (CurrentTime>EnemyAttackDelayTime)
 	{
-		//°ø°İÇÑ´Ù.(³»¿ëÀº ³ªÁß¿¡ ±¸Çö)
+		//ê³µê²©í•œë‹¤.(ë‚´ìš©ì€ ë‚˜ì¤‘ì— êµ¬í˜„)
 		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
-		//´ë±â½Ã°£ ÃÊ±âÈ­
+		//ëŒ€ê¸°ì‹œê°„ ì´ˆê¸°í™”
 		CurrentTime = 0;
-		//°ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı È°¼ºÈ­
+		//ê³µê²© ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ í™œì„±í™”
 		anim->bEnemyAttackPlay = true;
 	}
-	//Å¸±ê°úÀÇ °Å¸®¸¦ ±¸ÇÏ°í
+	//íƒ€ê¹ƒê³¼ì˜ ê±°ë¦¬ë¥¼ êµ¬í•˜ê³ 
 	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
-	//°Å¸®°¡ °ø°İ¹üÀ§¸¦ ¹ş¾î³ª¸é
+	//ê±°ë¦¬ê°€ ê³µê²©ë²”ìœ„ë¥¼ ë²—ì–´ë‚˜ë©´
 	if (TargetDistance > EnemyAttackRange)
 	{
-		//ÀÌµ¿»óÅÂ ÀüÈ¯
+		//ì´ë™ìƒíƒœ ì „í™˜
 		FSMComponent->CurrentState = EEnemyState::MOVE;
-		//¾Ö´Ï¸ŞÀÌ¼Ç »óÅÂ µ¿±âÈ­
+		//ì• ë‹ˆë©”ì´ì…˜ ìƒíƒœ ë™ê¸°í™”
 		anim->EnemyAnimState = FSMComponent->CurrentState;
-		//·£´ıÀ§Ä¡°ªÀ» ÀÌ¶§µµ ´Ù½Ã ¼³Á¤
+		//ëœë¤ìœ„ì¹˜ê°’ì„ ì´ë•Œë„ ë‹¤ì‹œ ì„¤ì •
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
@@ -168,16 +168,16 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 {
 	Super::EnemyTakeDamage();
 
-	//½Ã°£ÀÌ Èå¸£´Ù°¡
+	//ì‹œê°„ì´ íë¥´ë‹¤ê°€
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	//ÀüÈ¯´ë±â½Ã°£ÀÌ Áö³ª¸é
+	//ì „í™˜ëŒ€ê¸°ì‹œê°„ì´ ì§€ë‚˜ë©´
 	if (CurrentTime > EnemyTDamageDelayTime)
 	{
-		//IDLE»óÅÂ·Î ÀüÈ¯
+		//IDLEìƒíƒœë¡œ ì „í™˜
 		FSMComponent->CurrentState = EEnemyState::IDLE;
 		CurrentTime = 0;
 
-		//¾Ö´Ï¸ŞÀÌ¼Ç »óÅÂ µ¿±âÈ­
+		//ì• ë‹ˆë©”ì´ì…˜ ìƒíƒœ ë™ê¸°í™”
 		anim->EnemyAnimState = FSMComponent->CurrentState;
 	}
 }
@@ -186,10 +186,10 @@ void AKNormalZombieEnemy::EnemyDead()
 {
 	Super::EnemyDead();
 
-	//Á×À¸¸é¾Æ·¡·Î ³»·Á°£´Ù.
+	//ì£½ìœ¼ë©´ì•„ë˜ë¡œ ë‚´ë ¤ê°„ë‹¤.
 	FVector P = GetActorLocation() + FVector::DownVector * DieDownfallSpeed * GetWorld()->DeltaTimeSeconds;
 	SetActorLocation(P);
-	//2¹ÌÅÍ ÀÌ»ó ³»·Á°¡¸é
+	//2ë¯¸í„° ì´ìƒ ë‚´ë ¤ê°€ë©´
 	if (P.Z < -200.0f)
 	{
 		Destroy();
