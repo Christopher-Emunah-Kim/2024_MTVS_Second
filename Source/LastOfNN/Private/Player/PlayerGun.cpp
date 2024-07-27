@@ -21,11 +21,12 @@ APlayerGun::APlayerGun()
 
 void APlayerGun::PullTrigger()
 {
-	//걸린 액터에게 데미지??
+	//걸린 액터에게 데미지
 	FHitResult Hit;
 	FVector ShotDirection;
 
 	UE_LOG(LogTemp, Error, TEXT("NotSuccess"));
+
 	bool bSuccess = GunTrace(Hit, ShotDirection);
 	if (bSuccess)
 	{
