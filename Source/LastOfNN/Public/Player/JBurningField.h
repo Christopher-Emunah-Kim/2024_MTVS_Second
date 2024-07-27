@@ -19,6 +19,8 @@ public:
 	class UParticleSystemComponent* FireParticle;
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* Box;
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* Root;
 
 	//데미지를 받을 액터들
 	TArray<AActor*> HitActors;
@@ -42,8 +44,7 @@ public:
 	//타이머관련
 	FTimerHandle DamageTimerHandle;
 
-	//데미지 주기 위한 컨트롤러 얻어오기
-	AController* GetController() const;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

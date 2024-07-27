@@ -14,18 +14,27 @@ AJBurningField::AJBurningField()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
 	FireParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FireParticle"));
 	FireParticle->SetupAttachment(GetRootComponent());
 	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
 	Box->SetupAttachment(GetRootComponent());
-
+	Box->SetBoxExtent(FVector(50, 50, 20));
 }
 
 // Called when the game starts or when spawned
 void AJBurningField::BeginPlay()
 {
+	SetLifeSpan(2);
+	//이걸해야 인식함-> 모지???
+	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+
 	Super::BeginPlay();
-	
+	//던졌을때 그 위에 있는애들
+	Box->GetOverlappingActors(HitActors);
+
 	//불필드 안에 들어온 애들 배열 만들어서
 	Box->OnComponentBeginOverlap.AddDynamic(this, &AJBurningField::BeginOverlap);
 	//불필드 밖으로 나가면 배열에서 빼주고
@@ -36,6 +45,7 @@ void AJBurningField::BeginPlay()
 
 void AJBurningField::DamageTick()
 {
+	UE_LOG(LogTemp, Log, TEXT("DamageTick called. Number of actors in HitActors: %d"), HitActors.Num());
 	for ( AActor* Actor : HitActors )
 	{
 		if ( Actor )
@@ -60,6 +70,7 @@ void AJBurningField::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	if ( OtherActor && OtherActor != this )
 	{
 		HitActors.AddUnique(OtherActor); //데미지를 입을 액터들
+		UE_LOG(LogTemp, Log, TEXT("Applied"));
 	}
 }
 
@@ -74,6 +85,7 @@ void AJBurningField::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 			HitActors.RemoveAt(Index); 
 		}
 	}
+
 }
 // Called every frame
 void AJBurningField::Tick(float DeltaTime)
