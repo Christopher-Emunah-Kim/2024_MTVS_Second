@@ -29,8 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)
 	void OnEnemyEndAttackAnimation();
 
-	//피격 애니메이션 몽타주 재생 함수
+	//피격, 죽음 애니메이션 몽타주 재생 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayEnemyTDamageAnim(FName sectionName);
+
+	//죽음애니메이션 종료여부 판단
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
+	bool bEnemyDieDone = false;
 
 };

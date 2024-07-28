@@ -129,6 +129,8 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 		FSMComponent->CurrentState = EEnemyState::DEAD;
 		//충돌체비활성화
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		//죽음애니메이션 재생
+		anim->PlayEnemyTDamageAnim(TEXT("EnemyDie"));
 	}
 	//애니메이션 상태 동기화
 	anim->EnemyAnimState = FSMComponent->CurrentState;
