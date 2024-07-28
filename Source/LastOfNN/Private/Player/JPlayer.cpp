@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/JPlayer.h"
@@ -18,6 +18,15 @@ enum class ECharacterState : uint8
 	ECS_Escape UMETA(DisplayName = "Escape"),
 	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
 };
+
+enum class ECharacterEquipState : uint8
+{
+	ECES_UnEquipped UMETA(DisplayName = "UnEquipped"),
+	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
+	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
+	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
+};
+
 
 // Sets default values
 AJPlayer::AJPlayer()
@@ -48,7 +57,7 @@ void AJPlayer::BeginPlay()
 	LockOnComp->SetTargetLockTrue();
 
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_r"));
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHandRing2"));
 }
 
 // Called every frame
