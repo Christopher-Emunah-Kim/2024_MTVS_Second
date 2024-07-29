@@ -30,8 +30,8 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	}
 
 	//Enemy Status 초기화
-	EnemyAttackRange = 200.0f;
-	EnemyAttackDelayTime = 3.0f;
+	EnemyAttackRange = 300.0f;
+	EnemyAttackDelayTime = 1.0f;
 	EnemyHP = 200;
 }
 
@@ -185,6 +185,13 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 void AKNormalZombieEnemy::EnemyDead()
 {
 	Super::EnemyDead();
+
+	//아직 죽음애니메이션 처리가 완료되지않았다면
+	//바닥으로 내려가지않도록 처리
+	if ( anim->bEnemyDieDone == false )
+	{
+		return;
+	}
 
 	//죽으면아래로 내려간다.
 	FVector P = GetActorLocation() + FVector::DownVector * DieDownfallSpeed * GetWorld()->DeltaTimeSeconds;
