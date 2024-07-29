@@ -115,7 +115,9 @@ protected:
 
 	UFUNCTION()
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
 	void AttackStartComboState();
+	UFUNCTION()
 	void AttackEndComboState();
 
 };

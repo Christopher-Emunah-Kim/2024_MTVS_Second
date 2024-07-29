@@ -24,12 +24,15 @@ void UJCharacterAnimInstance::NativeInitializeAnimation()
 
 void UJCharacterAnimInstance::JumpToAttackMontageSection(int32 NewSection)
 {
+	UE_LOG(LogTemp, Error, TEXT("Jumptoattack"));
 	Montage_JumpToSection(GetAttackMontageSectionName(NewSection), AttackMontage);
 }
 
 FName UJCharacterAnimInstance::GetAttackMontageSectionName(int32 Section)
 {
-	return FName(*FString::Printf(TEXT("Attack%d"), Section));
+	FName SectionName = FName(*FString::Printf(TEXT("Attack%d"), Section));
+	UE_LOG(LogTemp, Log, TEXT("Section Name: %s"), *SectionName.ToString());
+	return SectionName; 
 }
 
 void UJCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
@@ -41,6 +44,11 @@ void UJCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		GroundSpeed = UKismetMathLibrary::VSizeXY(CharacterMovement->Velocity);
 		bIsFalling = CharacterMovement->IsFalling();
 	}
+}
+
+void UJCharacterAnimInstance::PlayAttackMontage()
+{
+	Montage_Play(AttackMontage, 1.0f);
 }
 
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()

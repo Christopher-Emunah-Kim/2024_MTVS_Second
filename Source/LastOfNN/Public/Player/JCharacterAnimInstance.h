@@ -35,14 +35,18 @@ public:
 	//연속공격
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
 
+	UFUNCTION()
 	void JumpToAttackMontageSection(int32 NewSection);
 
+	UFUNCTION()
 	FName GetAttackMontageSectionName(int32 Section);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* AttackMontage;
+
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
+	void PlayAttackMontage();
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();

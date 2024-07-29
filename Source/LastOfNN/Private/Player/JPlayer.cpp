@@ -51,7 +51,9 @@ void AJPlayer::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	CharacterAnimInstance = Cast<UJCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+
 	CharacterAnimInstance->OnMontageEnded.AddDynamic(this, &AJPlayer::OnAttackMontageEnded);
+
 	CharacterAnimInstance->OnNextAttackCheck.AddLambda([this]() -> void
 	{
 		bCanNextCombo = false;
@@ -59,6 +61,7 @@ void AJPlayer::PostInitializeComponents()
 		if ( bIsComboInputOn )
 		{
 			AttackStartComboState();
+			UE_LOG(LogTemp, Error, TEXT("Lamda Currentcombo %f"), CurrentCombo);
 			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
 		}
 	});
@@ -83,7 +86,7 @@ void AJPlayer::BeginPlay()
 
 	// 소리 발생 소스로 등록
 	PerceptionStimuliSource->RegisterWithPerceptionSystem();
-
+	AttackEndComboState();
 }
 
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -172,13 +175,11 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 
 			if ( bCanNextCombo )
 			{
-				UE_LOG(LogTemp, Error, TEXT("Canceled"));
 				bIsComboInputOn = true;
 			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Canceled2"));
 			AttackStartComboState();
 			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
 			CharacterAnimInstance->Montage_Play(AttackMontage);
