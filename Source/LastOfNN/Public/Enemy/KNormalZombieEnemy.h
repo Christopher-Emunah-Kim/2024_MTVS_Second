@@ -29,6 +29,8 @@ public:
 
     virtual void EnemyMove() override;
 	
+	virtual void OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors) override;
+
     virtual void EnemyAttack() override;
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;

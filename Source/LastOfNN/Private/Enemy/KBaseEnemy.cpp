@@ -11,6 +11,8 @@
 #include "NavigationSystem.h"  
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h" 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -18,8 +20,33 @@ AKBaseEnemy::AKBaseEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//팀타입 초기화
+	TeamType = ETeamType::FRIENDLY;
+
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
+
+	//AI Perception Component 초기화
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+	if ( HearingConfig )
+	{
+		//소리감지 설정
+		HearingConfig->HearingRange = 1500.0f;
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+		
+		//PerceptionComp에 Hearing Config 전달받은 값 연결
+		AIPerceptionComp->ConfigureSense(*HearingConfig);
+		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
+	}
+	//노이즈 발생시 처리내용 초기화
+	//소리감지처리함수 바인딩
+	AIPerceptionComp->OnPerceptionUpdated.AddDynamic(this, &AKBaseEnemy::OnEnemyNoiseHeard);
+	//소음 발생위치 이동여부 초기화
+	bShouldMoveToSound = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -96,6 +123,30 @@ void AKBaseEnemy::EnemyIDLE()
 void AKBaseEnemy::EnemyMove()
 {
 	
+}
+
+
+
+void AKBaseEnemy::OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors)
+{
+	for ( AActor* Actor : UpdatedActors )
+	{
+		// 플레이어의 소리만 감지하도록 필터링
+		AJPlayer* Player = Cast<AJPlayer>(Actor);
+
+		//if ( Player && Player->GetTeamType() == ETeamType::ENEMY )
+		//{
+		//	// 소리 발생 위치와 강도 저장
+		//	SoundLocation = Actor->GetActorLocation();
+		//	CurrentSoundIntensity = 1.0f;  // 소리 강도 설정 (임의)
+
+		//	// 소리 강도에 따라 이동 플래그 설정
+		//	if ( CurrentSoundIntensity > 0.5f ) // 특정 소리 강도 기준
+		//	{
+		//		bShouldMoveToSound = true;
+		//	}
+		//}
+	}
 }
 
 void AKBaseEnemy::EnemyAttack()

@@ -8,6 +8,8 @@
 #include "NavigationSystem.h"
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -60,12 +62,35 @@ void AKNormalZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
 
-
 	FVector dir;
-	if (target)
+	FVector EnemyDestination;
+
+	if ( bShouldMoveToSound )
+	{
+		// 소음에 의해 이동해야 하는 경우
+		EnemyDestination = SoundLocation;
+		dir = EnemyDestination - GetActorLocation();
+
+		// 소리 방향으로 이동할 위치 계산
+		FVector Direction = dir.GetSafeNormal();
+		FVector NewLocation = GetActorLocation() + Direction * EnemyMoveDistanceOnSound;
+
+		//속도를 뛰기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		// AI를 이용하여 계산된 위치로 이동
+		ai->MoveToLocation(NewLocation);
+
+		// 소리 강도 및 이동 플래그 초기화
+		CurrentSoundIntensity = 0;
+		bShouldMoveToSound = false;
+	}
+	else if (target)
 	{
 		//타깃목적지
-		FVector EnemyDestination = target->GetActorLocation();
+		EnemyDestination = target->GetActorLocation();
 		//방향
 		dir = EnemyDestination - GetActorLocation();
 
@@ -115,7 +140,6 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
-	
 	//타깃과 가까워지면 공격상태 전환
 	//공격범위 안에 들어오면
 	if (dir.Size() < EnemyAttackRange)
@@ -131,7 +155,11 @@ void AKNormalZombieEnemy::EnemyMove()
 		//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
 		CurrentTime = EnemyAttackDelayTime;
 	}
+}
 
+void AKNormalZombieEnemy::OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors)
+{
+	Super::OnEnemyNoiseHeard(UpdatedActors);
 }
 
 
