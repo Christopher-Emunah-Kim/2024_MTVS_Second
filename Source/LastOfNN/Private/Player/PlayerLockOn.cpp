@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/PlayerLockOn.h"
@@ -67,7 +67,7 @@ void UPlayerLockOn::LockOnTarget()
 			//UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), *HitActor->GetName());
 			FRotator Rotate = UKismetMathLibrary::FindLookAtRotation(ViewLocation, HitActor->GetActorLocation());;
 			Player->GetController()->SetControlRotation(Rotate);
-		}
+		}  
 	}
 }
 

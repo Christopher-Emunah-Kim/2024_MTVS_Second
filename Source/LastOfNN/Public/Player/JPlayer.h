@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -44,12 +44,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Fire;
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Zoom;
+	UInputAction* IA_Zoom;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Run;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
+	void Run(const FInputActionValue& Value);
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()
@@ -58,6 +61,9 @@ public:
 	UPlayerLockOn* LockOnComp;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerGun> GunClass;
+
+	UCharacterMovementComponent* CharacterMovement;
+	bool bIsRunning = false;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
