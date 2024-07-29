@@ -7,6 +7,7 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -30,15 +31,19 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	}
 
 	//Enemy Status 초기화
+	EnemyWalkSpeed = 300.0f;
+	EnemyRunSpeed = 600.0f;
 	EnemyAttackRange = 300.0f;
-	EnemyAttackDelayTime = 1.0f;
-	EnemyHP = 200;
+	EnemyAttackDelayTime = 0.5f;
+	EnemyHP = 100;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//초기속도를 걷기로 설정
+	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
@@ -55,6 +60,7 @@ void AKNormalZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
 
+
 	FVector dir;
 	if (target)
 	{
@@ -62,9 +68,6 @@ void AKNormalZombieEnemy::EnemyMove()
 		FVector EnemyDestination = target->GetActorLocation();
 		//방향
 		dir = EnemyDestination - GetActorLocation();
-		//이동
-		//AddMovementInput(dir.GetSafeNormal());
-		//ai->MoveToLocation(EnemyDestination);
 
 		//(1단계) 길찾기 결과 얻어오기
 		//Navigation 객체 얻어오기
@@ -83,6 +86,11 @@ void AKNormalZombieEnemy::EnemyMove()
 		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
 		if (FindingResult.Result == ENavigationQueryResult::Success)
 		{
+			//속도를 뛰기속도로 변경
+			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+			//BlendSpace Anim에 액터의 속도 할당
+			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 			//타깃에게 이동
 			ai->MoveToLocation(EnemyDestination);
 		}
@@ -90,7 +98,12 @@ void AKNormalZombieEnemy::EnemyMove()
 		{
 			//랜덤하게 이동
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-			//목적지에 도차하면
+			//속도를 걷기속도로 변경
+			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+			//BlendSpace Anim에 액터의 속도 할당
+			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+			//목적지에 도착하면
 			if (RanResult == EPathFollowingRequestResult::AlreadyAtGoal)
 			{
 				//새로운 랜덤위치 가져오기

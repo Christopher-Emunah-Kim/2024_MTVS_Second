@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -69,6 +69,7 @@ public:
 	//뛰기속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyRunSpeed;
+	
 	//방향
     FVector EnemyDirection;
 

@@ -10,6 +10,7 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"  
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h" 
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -77,6 +78,11 @@ void AKBaseEnemy::EnemyIDLE()
 	{
 		//이동상태로 전환한다.
 		FSMComponent->CurrentState = EEnemyState::MOVE;
+		//속도를 걷기속도로 설정
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 		//경과시간 초기화
 		CurrentTime = 0;
 
