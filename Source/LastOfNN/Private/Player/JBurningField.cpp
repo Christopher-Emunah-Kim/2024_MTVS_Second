@@ -28,7 +28,6 @@ void AJBurningField::BeginPlay()
 {
 	SetLifeSpan(2);
 	//이걸해야 인식함-> 모지???
-	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
 	Super::BeginPlay();

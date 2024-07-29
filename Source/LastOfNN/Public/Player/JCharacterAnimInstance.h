@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE(FOnNextAttackCheckDelegate);
+
 UCLASS()
 class LASTOFNN_API UJCharacterAnimInstance : public UAnimInstance
 {
@@ -19,14 +21,29 @@ public:
 
 	virtual void NativeInitializeAnimation() override;
 
+	//캐릭터 움직임
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	class UCharacterMovementComponent* CharacterMovement;
-	UPROPERTY(EditAnywhere)
+
+
 	class AJPlayer* Player;
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	float GroundSpeed;
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	bool bIsFalling;
 
+	//연속공격
+	FOnNextAttackCheckDelegate OnNextAttackCheck;
+
+	void JumpToAttackMontageSection(int32 NewSection);
+
+	FName GetAttackMontageSectionName(int32 Section);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* AttackMontage;
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
+
+private:
+	UFUNCTION()
+	void AnimNotify_NextAttackCheck();
 };

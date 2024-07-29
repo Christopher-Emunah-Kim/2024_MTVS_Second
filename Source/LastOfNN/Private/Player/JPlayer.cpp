@@ -12,22 +12,7 @@
 #include "Enemy/KBaseEnemy.h"
 #include "Player/PlayerGun.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
-enum class ECharacterState : uint8
-{
-	ECS_Grabbed UMETA(DisplayName = "Grabbed"),
-	ECS_Escape UMETA(DisplayName = "Escape"),
-	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
-};
-
-enum class ECharacterEquipState : uint8
-{
-	ECES_UnEquipped UMETA(DisplayName = "UnEquipped"),
-	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
-	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
-	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
-};
-
+#include "Player/JCharacterAnimInstance.h"
 
 // Sets default values
 AJPlayer::AJPlayer()
@@ -46,6 +31,23 @@ AJPlayer::AJPlayer()
 	LockOnComp->SetupAttachment(RootComponent);
 
 }
+void AJPlayer::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	CharacterAnimInstance = Cast<UJCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+	CharacterAnimInstance->OnMontageEnded.AddDynamic(this, &AJPlayer::OnAttackMontageEnded);
+	CharacterAnimInstance->OnNextAttackCheck.AddLambda([this]() -> void
+	{
+		bCanNextCombo = false;
+
+		if ( bIsComboInputOn )
+		{
+			AttackStartComboState();
+			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
+		}
+	});
+}
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
@@ -59,10 +61,41 @@ void AJPlayer::BeginPlay()
 	LockOnComp->SetTargetLockTrue();
 
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHandRing2"));
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
 
 	CharacterMovement = GetCharacterMovement();
 	CharacterMovement->MaxWalkSpeed = 400;
+}
+
+void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	UE_LOG(LogTemp, Error, TEXT(" Montage Ended"));
+	if ( CurrentCombo >= MaxCombo )
+	{
+		bIsAttacking = false;
+		AttackEndComboState();
+
+	}
+	else if ( bCanNextCombo == false || bIsComboInputOn == false )
+	{
+		bIsAttacking = false;
+		AttackEndComboState();
+	}
+}
+
+void AJPlayer::AttackStartComboState()
+{
+	bCanNextCombo = true;
+	bIsComboInputOn = false;
+	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
+	UE_LOG(LogTemp, Error, TEXT(" Currentcombo = %f"), CurrentCombo);
+}
+
+void AJPlayer::AttackEndComboState()
+{
+	bIsComboInputOn = false;
+	bCanNextCombo = false;
+	CurrentCombo = 0;
 }
 
 // Called every frame
@@ -109,7 +142,31 @@ void AJPlayer::Look(const FInputActionValue& Value)
 }
 void AJPlayer::Fire(const FInputActionValue& Value)
 {
-	Gun->PullTrigger();
+	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped )
+	{
+		Gun->PullTrigger();
+	}
+	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped )
+	{
+		if ( bIsAttacking )
+		{
+
+			if ( bCanNextCombo )
+			{
+				UE_LOG(LogTemp, Error, TEXT("Canceled"));
+				bIsComboInputOn = true;
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Canceled2"));
+			AttackStartComboState();
+			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
+			CharacterAnimInstance->Montage_Play(AttackMontage);
+			bIsAttacking = true;
+		}
+
+	}
 }
 void AJPlayer::Zoom(const FInputActionValue& Value)
 {

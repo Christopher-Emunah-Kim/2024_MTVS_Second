@@ -22,12 +22,28 @@ void UJCharacterAnimInstance::NativeInitializeAnimation()
 	}
 }
 
+void UJCharacterAnimInstance::JumpToAttackMontageSection(int32 NewSection)
+{
+	Montage_JumpToSection(GetAttackMontageSectionName(NewSection), AttackMontage);
+}
+
+FName UJCharacterAnimInstance::GetAttackMontageSectionName(int32 Section)
+{
+	return FName(*FString::Printf(TEXT("Attack%d"), Section));
+}
+
 void UJCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
 	Super::NativeUpdateAnimation(DeltaTime);
+
 	if (CharacterMovement )
 	{
 		GroundSpeed = UKismetMathLibrary::VSizeXY(CharacterMovement->Velocity);
 		bIsFalling = CharacterMovement->IsFalling();
 	}
+}
+
+void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
+{
+	OnNextAttackCheck.Broadcast();
 }
