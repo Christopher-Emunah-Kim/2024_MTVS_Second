@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Enemy/KBaseEnemy.h"
 #include "JPlayer.generated.h"
+
 
 class UCameraComponent;
 class USpringArmComponent;
@@ -36,6 +38,16 @@ class LASTOFNN_API AJPlayer : public ACharacter
 	GENERATED_BODY()
 
 public:
+	// AI Perception Stimuli Source Component
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+    class UAIPerceptionStimuliSourceComponent* PerceptionStimuliSource;
+
+    // 팀 타입
+    ETeamType TeamType;
+    
+    // 팀 타입 반환 함수
+    ETeamType GetTeamType() const;
+
 
 	ECharacterEquipState CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
 	// Sets default values for this character's properties

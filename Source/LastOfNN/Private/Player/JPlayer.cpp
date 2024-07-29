@@ -12,7 +12,14 @@
 #include "Enemy/KBaseEnemy.h"
 #include "Player/PlayerGun.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Player/JCharacterAnimInstance.h"
+#include "Perception/AISense_Hearing.h"
+
+ETeamType AJPlayer::GetTeamType() const
+{
+	return TeamType;
+}
 
 // Sets default values
 AJPlayer::AJPlayer()
@@ -29,6 +36,14 @@ AJPlayer::AJPlayer()
 
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
+
+	// AI Perception Stimuli Source Component 생성 및 초기화
+	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
+	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
+
+	// 팀 타입 설정 (플레이어는 적)
+	TeamType = ETeamType::ENEMY;
+
 
 }
 void AJPlayer::PostInitializeComponents()
@@ -65,6 +80,10 @@ void AJPlayer::BeginPlay()
 
 	CharacterMovement = GetCharacterMovement();
 	CharacterMovement->MaxWalkSpeed = 400;
+
+	// 소리 발생 소스로 등록
+	PerceptionStimuliSource->RegisterWithPerceptionSystem();
+
 }
 
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
