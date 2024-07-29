@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/JPlayer.h"
@@ -11,6 +11,7 @@
 #include "Enemy/KEnemyFSM.h"
 #include "Enemy/KBaseEnemy.h"
 #include "Player/PlayerGun.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 enum class ECharacterState : uint8
 {
@@ -18,6 +19,15 @@ enum class ECharacterState : uint8
 	ECS_Escape UMETA(DisplayName = "Escape"),
 	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
 };
+
+enum class ECharacterEquipState : uint8
+{
+	ECES_UnEquipped UMETA(DisplayName = "UnEquipped"),
+	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
+	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
+	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
+};
+
 
 // Sets default values
 AJPlayer::AJPlayer()
@@ -34,6 +44,7 @@ AJPlayer::AJPlayer()
 
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
+
 }
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
@@ -48,7 +59,10 @@ void AJPlayer::BeginPlay()
 	LockOnComp->SetTargetLockTrue();
 
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_r"));
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHandRing2"));
+
+	CharacterMovement = GetCharacterMovement();
+	CharacterMovement->MaxWalkSpeed = 400;
 }
 
 // Called every frame
@@ -67,6 +81,8 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJPlayer::Look);
 		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &AJPlayer::Fire);
 		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AJPlayer::Zoom);
+		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Started, this, &AJPlayer::Run);
+		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Completed, this, &AJPlayer::Run);
 	}
 }
 
@@ -98,6 +114,21 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 void AJPlayer::Zoom(const FInputActionValue& Value)
 {
 	SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));
+}
+void AJPlayer::Run(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Error, TEXT("DFDF"));
+	//안 달리는 중이면
+	if ( !bIsRunning )
+	{
+		CharacterMovement->MaxWalkSpeed = 600;
+	}
+	//달리는 중이면
+	else
+	{
+		CharacterMovement->MaxWalkSpeed = 400;
+	}
+	bIsRunning = !bIsRunning;
 }
 UCameraComponent* AJPlayer::GetCamera()
 {
