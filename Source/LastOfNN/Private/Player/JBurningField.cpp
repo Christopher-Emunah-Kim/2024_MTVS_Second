@@ -8,6 +8,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Perception/AISense_Hearing.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Enemy/KBaseEnemy.h"
 
 // Sets default values
 AJBurningField::AJBurningField()
@@ -22,12 +24,28 @@ AJBurningField::AJBurningField()
 	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
 	Box->SetupAttachment(GetRootComponent());
 	Box->SetBoxExtent(FVector(50, 50, 20));
+
+	// AI Perception Stimuli Source Component 생성 및 초기화
+	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
+	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
+
+	// 팀 타입 설정 (플레이어는 적)
+	TeamType = ETeamType::ENEMY;
+}
+
+ETeamType AJBurningField::GetTeamType() const
+{
+	return TeamType;
 }
 
 // Called when the game starts or when spawned
 void AJBurningField::BeginPlay()
 {
+	// 소리 발생 소스로 등록
+	PerceptionStimuliSource->RegisterWithPerceptionSystem();
+
 	MakeSound();
+
 	SetLifeSpan(2);
 	//이걸해야 인식함-> 모지???
 	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);

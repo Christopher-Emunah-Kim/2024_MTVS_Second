@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Enemy//KBaseEnemy.h"
 #include "JBurningField.generated.h"
 
 UCLASS()
@@ -44,7 +45,14 @@ public:
 	//타이머관련
 	FTimerHandle DamageTimerHandle;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+    class UAIPerceptionStimuliSourceComponent* PerceptionStimuliSource;
+
+	// 팀 타입
+	ETeamType TeamType;
+
+	// 팀 타입 반환 함수
+	ETeamType GetTeamType() const;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
