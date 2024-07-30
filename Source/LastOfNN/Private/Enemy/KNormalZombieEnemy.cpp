@@ -57,8 +57,8 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 
 	//Enemy Status 초기화
 	EnemySoundDetectionRadius = 2000.0f;
-	EnemyWalkSpeed = 300.0f;
-	EnemyRunSpeed = 600.0f;
+	EnemyWalkSpeed = 200.0f;
+	EnemyRunSpeed = 400.0f;
 	EnemyAttackRange = 300.0f;
 	EnemyAttackDelayTime = 0.5f;
 	EnemyMoveDistanceOnSound = 100.0f;
@@ -120,7 +120,7 @@ void AKNormalZombieEnemy::EnemyMove()
 		FVector NewLocation = GetActorLocation() + Direction * EnemyMoveDistanceOnSound;
 
 		//속도를 뛰기속도로 변경
-		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -132,8 +132,7 @@ void AKNormalZombieEnemy::EnemyMove()
 		if ( dir.Size() < 350.0f )
 		{
 			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
-			// 소리 강도 및 이동 플래그 초기화
-			CurrentSoundIntensity = 0;
+			//이동 플래그 초기화
 			bShouldMoveToSound = false;
 		}
 	}
