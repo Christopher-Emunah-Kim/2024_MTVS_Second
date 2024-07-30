@@ -7,6 +7,7 @@
 #include "Kismet/KismetArrayLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "Perception/AISense_Hearing.h"
 
 // Sets default values
 AJBurningField::AJBurningField()
@@ -26,6 +27,7 @@ AJBurningField::AJBurningField()
 // Called when the game starts or when spawned
 void AJBurningField::BeginPlay()
 {
+	MakeSound();
 	SetLifeSpan(2);
 	//이걸해야 인식함-> 모지???
 	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
@@ -93,3 +95,11 @@ void AJBurningField::Tick(float DeltaTime)
 
 }
 
+void AJBurningField::MakeSound()
+{
+	// 소리 자극 발생시키기
+	FVector NoiseLocation = GetActorLocation();
+	float Loudness = 102.f;  // 소리 강도 (예시 값)
+	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
+	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.f, TEXT("ObjectLanding"));
+}

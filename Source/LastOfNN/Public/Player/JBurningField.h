@@ -53,4 +53,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void MakeSound();
+	UPROPERTY(EditAnyWhere)
+	USoundBase* LandingSound;
 };
