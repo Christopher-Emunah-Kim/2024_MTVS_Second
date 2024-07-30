@@ -29,7 +29,7 @@ public:
 
     virtual void EnemyMove() override;
 	
-	virtual void OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors) override;
+	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus) override;
 
     virtual void EnemyAttack() override;
 

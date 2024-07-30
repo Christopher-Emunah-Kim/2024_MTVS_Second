@@ -110,7 +110,8 @@ public:
 	//AI Hearing 정보 Config
 	class UAISenseConfig_Hearing* HearingConfig;
 	//소리 감지 처리함수
-	virtual void OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors);
+	UFUNCTION()
+	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus);
 
 	//**공격상태처리함수
     virtual void EnemyAttack();

@@ -32,7 +32,7 @@ AKBaseEnemy::AKBaseEnemy()
 	if ( HearingConfig )
 	{
 		//소리감지 설정
-		HearingConfig->HearingRange = 1500.0f;
+		HearingConfig->HearingRange = 2000.0f;
 		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
 		HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
 		HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
@@ -43,7 +43,7 @@ AKBaseEnemy::AKBaseEnemy()
 	}
 	//노이즈 발생시 처리내용 초기화
 	//소리감지처리함수 바인딩
-	AIPerceptionComp->OnPerceptionUpdated.AddDynamic(this, &AKBaseEnemy::OnEnemyNoiseHeard);
+	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBaseEnemy::OnEnemyNoiseHeard);
 	//소음 발생위치 이동여부 초기화
 	bShouldMoveToSound = false;
 
@@ -127,25 +127,21 @@ void AKBaseEnemy::EnemyMove()
 
 
 
-void AKBaseEnemy::OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors)
+void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
-	for ( AActor* Actor : UpdatedActors )
+	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
-		// 플레이어의 소리만 감지하도록 필터링
-		AJPlayer* Player = Cast<AJPlayer>(Actor);
+		// 소리 발생 위치와 강도 저장
+		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
+		float Loudness = Stimulus.Strength; //소리강도
 
-		//if ( Player && Player->GetTeamType() == ETeamType::ENEMY )
-		//{
-		//	// 소리 발생 위치와 강도 저장
-		//	SoundLocation = Actor->GetActorLocation();
-		//	CurrentSoundIntensity = 1.0f;  // 소리 강도 설정 (임의)
-
-		//	// 소리 강도에 따라 이동 플래그 설정
-		//	if ( CurrentSoundIntensity > 0.5f ) // 특정 소리 강도 기준
-		//	{
-		//		bShouldMoveToSound = true;
-		//	}
-		//}
+		// 소리 강도에 따라 이동 플래그 설정
+		if ( Loudness > 100.0f ) // 특정 소리 강도 기준
+		{
+			bShouldMoveToSound = true;
+			SoundLocation = NoiseLocation;
+			CurrentSoundIntensity = Loudness;
+		}
 	}
 }
 

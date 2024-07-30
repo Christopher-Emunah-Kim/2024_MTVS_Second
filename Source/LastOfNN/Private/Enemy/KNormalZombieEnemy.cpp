@@ -157,9 +157,9 @@ void AKNormalZombieEnemy::EnemyMove()
 	}
 }
 
-void AKNormalZombieEnemy::OnEnemyNoiseHeard(const TArray<AActor*>& UpdatedActors)
+void AKNormalZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
-	Super::OnEnemyNoiseHeard(UpdatedActors);
+	Super::OnEnemyNoiseHeard(Actor, Stimulus);
 }
 
 
