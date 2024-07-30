@@ -26,27 +26,6 @@ AKBaseEnemy::AKBaseEnemy()
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
 
-	//AI Perception Component 초기화
-	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
-	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-	if ( HearingConfig )
-	{
-		//소리감지 설정
-		HearingConfig->HearingRange = 2000.0f;
-		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
-		HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
-		HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
-		
-		//PerceptionComp에 Hearing Config 전달받은 값 연결
-		AIPerceptionComp->ConfigureSense(*HearingConfig);
-		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
-	}
-	//노이즈 발생시 처리내용 초기화
-	//소리감지처리함수 바인딩
-	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBaseEnemy::OnEnemyNoiseHeard);
-	//소음 발생위치 이동여부 초기화
-	bShouldMoveToSound = false;
-
 }
 
 // Called when the game starts or when spawned
@@ -131,6 +110,7 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
 	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
+		UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
 		// 소리 발생 위치와 강도 저장
 		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
 		float Loudness = Stimulus.Strength; //소리강도

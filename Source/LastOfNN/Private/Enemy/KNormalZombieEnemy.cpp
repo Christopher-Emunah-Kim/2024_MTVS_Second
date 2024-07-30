@@ -32,6 +32,28 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
 
+	//팀타입 초기화
+	TeamType = ETeamType::FRIENDLY;
+
+	//AI Perception Component 초기화
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+	if ( HearingConfig )
+	{
+		//소리감지 설정
+		HearingConfig->HearingRange = 2000.0f;
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+
+		//PerceptionComp에 Hearing Config 전달받은 값 연결
+		AIPerceptionComp->ConfigureSense(*HearingConfig);
+		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
+	}
+	//노이즈 발생시 처리내용 초기화
+	//소음 발생위치 이동여부 초기화
+	bShouldMoveToSound = false;
+
 	//Enemy Status 초기화
 	EnemyWalkSpeed = 300.0f;
 	EnemyRunSpeed = 600.0f;
@@ -46,6 +68,13 @@ void AKNormalZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+
+	//소리감지처리함수 바인딩
+	if ( AIPerceptionComp )
+	{
+		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKNormalZombieEnemy::OnEnemyNoiseHeard);
+		UE_LOG(LogTemp, Log, TEXT("Perception Component 초기화 완료"));
+	}
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
