@@ -65,6 +65,11 @@ void AJPlayer::PostInitializeComponents()
 			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
 		}
 	});
+	CharacterAnimInstance->OnAttackHitCheck.AddLambda([this]() -> void
+	{
+
+	});
+
 }
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()

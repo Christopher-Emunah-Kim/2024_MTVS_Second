@@ -48,7 +48,7 @@ void AJBurningField::BeginPlay()
 
 	SetLifeSpan(2);
 	//이걸해야 인식함-> 모지???
-	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	//Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
 	Super::BeginPlay();
 	//던졌을때 그 위에 있는애들
@@ -59,7 +59,11 @@ void AJBurningField::BeginPlay()
 	//불필드 밖으로 나가면 배열에서 빼주고
 	Box->OnComponentEndOverlap.AddDynamic(this, &AJBurningField::EndOverlap);
 	//배열 안에 있는 액터들 데미지 가함
-	GetWorld()->GetTimerManager().SetTimer(DamageTimerHandle, this, &AJBurningField::DamageTick, DamageInterval, true);
+	if ( HitActors.Num() != 0 )
+	{
+		GetWorld()->GetTimerManager().SetTimer(DamageTimerHandle, this, &AJBurningField::DamageTick, DamageInterval, true);
+
+	}
 }
 
 void AJBurningField::DamageTick()
@@ -120,4 +124,6 @@ void AJBurningField::MakeSound()
 	float Loudness = 102.f;  // 소리 강도 (예시 값)
 	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.f, TEXT("ObjectLanding"));
+	// 로그를 통해 이벤트 발생 확인
+	UE_LOG(LogTemp, Warning, TEXT("Noise event reported at location: %s with loudness: %f"), *NoiseLocation.ToString(), Loudness);
 }

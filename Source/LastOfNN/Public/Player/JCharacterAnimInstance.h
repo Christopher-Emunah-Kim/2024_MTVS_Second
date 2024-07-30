@@ -10,6 +10,7 @@
  * 
  */
 DECLARE_MULTICAST_DELEGATE(FOnNextAttackCheckDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnAttackHitCheckDelegate);
 
 UCLASS()
 class LASTOFNN_API UJCharacterAnimInstance : public UAnimInstance
@@ -34,6 +35,7 @@ public:
 
 	//연속공격
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
+	FOnNextAttackCheckDelegate OnAttackHitCheck;
 
 	UFUNCTION()
 	void JumpToAttackMontageSection(int32 NewSection);
@@ -49,5 +51,8 @@ public:
 	void PlayAttackMontage();
 private:
 	UFUNCTION()
-	void AnimNotify_NextAttackCheck();
+	void AnimNotify_NextAttackCheck();	
+	UFUNCTION()
+	void AnimNotify_AttackHitCheck();
+
 };
