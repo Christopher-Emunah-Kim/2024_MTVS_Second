@@ -111,6 +111,7 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
 		UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
+		
 		// 소리 발생 위치와 강도 저장
 		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
 		float Loudness = Stimulus.Strength; //소리강도
@@ -118,6 +119,8 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 		// 소리 강도에 따라 이동 플래그 설정
 		if ( Loudness > 100.0f ) // 특정 소리 강도 기준
 		{
+			UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), Loudness);
+
 			bShouldMoveToSound = true;
 			SoundLocation = NoiseLocation;
 			CurrentSoundIntensity = Loudness;

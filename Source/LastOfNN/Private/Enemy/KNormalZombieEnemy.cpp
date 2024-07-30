@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include <Kismet/GameplayStatics.h>
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -41,10 +42,10 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	if ( HearingConfig )
 	{
 		//소리감지 설정
-		HearingConfig->HearingRange = 2000.0f;
+		HearingConfig->HearingRange = EnemySoundDetectionRadius;
 		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
-		HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
-		HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
 		//PerceptionComp에 Hearing Config 전달받은 값 연결
 		AIPerceptionComp->ConfigureSense(*HearingConfig);
@@ -55,10 +56,12 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	bShouldMoveToSound = false;
 
 	//Enemy Status 초기화
+	EnemySoundDetectionRadius = 2000.0f;
 	EnemyWalkSpeed = 300.0f;
 	EnemyRunSpeed = 600.0f;
 	EnemyAttackRange = 300.0f;
 	EnemyAttackDelayTime = 0.5f;
+	EnemyMoveDistanceOnSound = 100.0f;
 	EnemyHP = 100;
 }
 
@@ -73,7 +76,13 @@ void AKNormalZombieEnemy::BeginPlay()
 	if ( AIPerceptionComp )
 	{
 		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKNormalZombieEnemy::OnEnemyNoiseHeard);
-		UE_LOG(LogTemp, Log, TEXT("Perception Component 초기화 완료"));
+		UE_LOG(LogTemp, Warning, TEXT("Perception Component 초기화 완료"));
+
+		if ( HearingConfig )
+		{
+			HearingConfig->HearingRange = EnemySoundDetectionRadius;
+			AIPerceptionComp->ConfigureSense(*HearingConfig);
+		}
 	}
 }
 
@@ -87,6 +96,12 @@ void AKNormalZombieEnemy::EnemyIDLE()
 	Super::EnemyIDLE();
 }
 
+void AKNormalZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
+{
+	Super::OnEnemyNoiseHeard(Actor, Stimulus);
+	UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: %s"), *Stimulus.Tag.ToString());
+}
+
 void AKNormalZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
@@ -98,7 +113,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		// 소음에 의해 이동해야 하는 경우
 		EnemyDestination = SoundLocation;
-		dir = EnemyDestination - GetActorLocation();
+		dir = EnemyDestination - GetActorLocation();		
 
 		// 소리 방향으로 이동할 위치 계산
 		FVector Direction = dir.GetSafeNormal();
@@ -109,12 +124,18 @@ void AKNormalZombieEnemy::EnemyMove()
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+
 		// AI를 이용하여 계산된 위치로 이동
 		ai->MoveToLocation(NewLocation);
-
-		// 소리 강도 및 이동 플래그 초기화
-		CurrentSoundIntensity = 0;
-		bShouldMoveToSound = false;
+		UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		//만약 목적지에 도착했다면
+		if ( dir.Size() < 350.0f )
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
+			// 소리 강도 및 이동 플래그 초기화
+			CurrentSoundIntensity = 0;
+			bShouldMoveToSound = false;
+		}
 	}
 	else if (target)
 	{
@@ -186,10 +207,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	}
 }
 
-void AKNormalZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
-{
-	Super::OnEnemyNoiseHeard(Actor, Stimulus);
-}
+
 
 
 void AKNormalZombieEnemy::EnemyAttack()

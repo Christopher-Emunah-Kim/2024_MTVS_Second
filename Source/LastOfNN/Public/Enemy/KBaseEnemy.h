@@ -98,6 +98,9 @@ public:
 	//소음 발생시 이동거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
 	float EnemyMoveDistanceOnSound;
+	//소음 발생시 이동타이머
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	float EnemyMoveTimerOnSound = 4.0f;
 	//현재 소음 강도
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
 	float CurrentSoundIntensity;

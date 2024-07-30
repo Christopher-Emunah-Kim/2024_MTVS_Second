@@ -27,9 +27,9 @@ public:
 
     virtual void EnemyIDLE() override;
 
-    virtual void EnemyMove() override;
-	
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus) override;
+
+    virtual void EnemyMove() override;
 
     virtual void EnemyAttack() override;
 
