@@ -16,6 +16,7 @@ class UInputAction;
 class UInputMappingContext;
 class UPlayerLockOn;
 class APlayerGun;
+class UAnimMontage;
 
 UCLASS()
 class LASTOFNN_API AJPlayer : public ACharacter
@@ -98,7 +99,7 @@ public:
 	float CurrentCombo;
 	float MaxCombo = 4;
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* AttackMontage;
+	UAnimMontage* AttackMontage;
 
 	void PostInitializeComponents() override;
 	
