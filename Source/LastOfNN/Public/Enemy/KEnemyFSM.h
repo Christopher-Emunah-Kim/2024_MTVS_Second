@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -14,6 +14,7 @@ enum class EEnemyState : uint8
     DETECT UMETA(DisplayName = "Detect"),
     MOVE UMETA(DisplayName = "Move"),
     ATTACK UMETA(DisplayName = "Attack"),
+    GRAB UMETA(DisplayName = "Grab"),
     EVADE UMETA(DisplayName = "Evade"),
     HIDE UMETA(DisplayName = "Hide"),
     TAKEDAMAGE UMETA(DisplayName = "TakeDamage"),
@@ -56,5 +57,7 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "FSM")
     class AKBaseEnemy* BaseEnemy;
 
+    //QTE이벤트 진행 여부 확인 플래그
+    static bool bIsQTEActive;
 
 };

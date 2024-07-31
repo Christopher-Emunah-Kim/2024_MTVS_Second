@@ -69,6 +69,8 @@ public:
 	UInputAction* IA_Run;	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Crouch;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Grab;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -107,6 +109,33 @@ public:
 	ECharacterState GetCharaterState() const;
 	UFUNCTION(BlueprintCallable)
 	ECharacterEquipState GetCharacterEquipState() const;
+
+
+	//Grab QTE이벤트 사용내용
+	bool bIsGrabbed = false;
+	int32 RequiredKeyPresses = 5; // 플레이어가 QTE에서 벗어나기 위해 필요한 E키 입력 횟수
+	int32 CurrentKeyPresses = 0;
+
+	// 현재 Player를 잡고 있는 Enemy의 참조
+	class AKBaseEnemy* GrabbedEnemy;
+
+	void StartGrabbedState(class AKNormalZombieEnemy* Enemy); // Grab 상태 시작 함수
+	void StopGrabbedState(bool bSuccess);  // Grab 상태 종료 함수, 성공 여부에 따라 다르게 처리
+	void HandleQTEInput();    // QTE 입력 처리 함수
+
+	// QTE UI 시작 및 종료 함수
+	void StartQTEGrabEvent();
+	void StopQTEGrabEvent(bool bSuccess);
+
+	UPROPERTY(EditDefaultsOnly, Category=UI)
+	TSubclassOf<class UUserWidget> QTEUIFactory;
+
+	UPROPERTY()
+	class UUserWidget* QTEWidget;
+	
+
+	// 현재 Player를 잡고 있는 Enemy의 참조 반환 함수
+	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
 
 protected:
 	// Called when the game starts or when spawned

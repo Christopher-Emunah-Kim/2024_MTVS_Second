@@ -61,6 +61,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ECharacterEquipState AnimCharacterEquipState;
 
+	void PlayResistanceMontage();
+	void StopResistanceMontage();
+
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	

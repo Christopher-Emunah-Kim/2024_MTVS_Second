@@ -13,6 +13,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -129,6 +131,16 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 }
 
 void AKBaseEnemy::EnemyAttack()
+{
+	
+}
+
+void AKBaseEnemy::EnemyGrab()
+{
+	
+}
+
+void AKBaseEnemy::SetAllEnemiesToIdle()
 {
 	
 }

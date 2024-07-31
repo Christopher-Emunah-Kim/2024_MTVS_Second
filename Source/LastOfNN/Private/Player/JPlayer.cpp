@@ -10,11 +10,14 @@
 #include "Player/PlayerLockOn.h"
 #include "Enemy/KEnemyFSM.h"
 #include "Enemy/KBaseEnemy.h"
+#include "Enemy/KNormalZombieEnemy.h"
+#include "Enemy/KEnemyAnim.h"
 #include "Player/PlayerGun.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Player/JCharacterAnimInstance.h"
 #include "Perception/AISense_Hearing.h"
+#include "Blueprint/UserWidget.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -44,6 +47,8 @@ AJPlayer::AJPlayer()
 	// 팀 타입 설정 (플레이어는 적)
 	TeamType = ETeamType::ENEMY;
 
+	//GrabEnemy초기화
+	GrabbedEnemy = nullptr;
 }
 void AJPlayer::PostInitializeComponents()
 {
@@ -91,6 +96,11 @@ void AJPlayer::BeginPlay()
 	// 소리 발생 소스로 등록
 	PerceptionStimuliSource->RegisterWithPerceptionSystem();
 	AttackEndComboState();
+
+	QTEWidget = CreateWidget<UUserWidget>(GetWorld(), QTEUIFactory);
+	QTEWidget->AddToViewport();
+	QTEWidget->SetPositionInViewport(FVector2D(700, 400));
+	QTEWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -143,6 +153,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Started, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Completed, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AJPlayer::Crouching);
+		EnhancedInputComponent->BindAction(IA_Grab, ETriggerEvent::Triggered, this, &AJPlayer::HandleQTEInput);
 	}
 }
 
@@ -234,3 +245,132 @@ ECharacterEquipState AJPlayer::GetCharacterEquipState() const
 {
 	return CharacterEquipState;
 }
+
+#pragma region Grab QTE Event Function
+
+void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
+{
+	bIsGrabbed = true;
+	CurrentKeyPresses = 0;
+	GrabbedEnemy = Enemy;
+
+	// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
+	if ( CharacterAnimInstance )
+	{
+		CharacterAnimInstance->PlayResistanceMontage();
+	}
+
+	//// E키 이외의 모든 입력을 차단
+	//APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	//if ( PlayerController )
+	//{
+	//	PlayerController->SetIgnoreMoveInput(true);
+	//	PlayerController->SetIgnoreLookInput(true);
+	//}
+
+	// QTE UI 표시
+	StartQTEGrabEvent();
+}
+
+void AJPlayer::StopGrabbedState(bool bSuccess)
+{
+	bIsGrabbed = false;
+
+	// 입력 제어 해제
+	/*APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if ( PlayerController )
+	{
+		PlayerController->SetIgnoreMoveInput(false);
+		PlayerController->SetIgnoreLookInput(false);
+	}*/
+
+	// 저항 애니메이션 정지
+	if ( CharacterAnimInstance )
+	{
+		CharacterAnimInstance->StopResistanceMontage();
+	}
+
+	// QTE UI 제거 및 성공/실패 애니메이션 재생
+	StopQTEGrabEvent(bSuccess);
+
+	// QTE 실패 시 추가 로직 (예: Player가 피해를 입음)
+	if ( !bSuccess )
+	{
+		// 실패 시 처리할 로직을 여기에 추가 (예: Player의 HP 감소)
+		//필요하면 하셈
+	}
+
+	// Enemy의 상태를 IDLE로 전환하고, QTE가 끝났음을 알림
+	if ( GrabbedEnemy )
+	{
+		GrabbedEnemy->FSMComponent->SetState(EEnemyState::IDLE);
+		GrabbedEnemy->bIsPlayerGrabbed = false;
+		if ( GrabbedEnemy->anim )
+		{
+			FString SectionName = FString::Printf(TEXT("Release"));
+			GrabbedEnemy->anim->PlayEnemyGrabAnim(FName(*SectionName));
+		}
+	}
+
+	// QTE 이벤트가 끝났음을 전역 변수에 표시
+	UKEnemyFSM::bIsQTEActive = false;
+}
+
+void AJPlayer::HandleQTEInput()
+{
+	if ( bIsGrabbed )
+	{
+		CurrentKeyPresses++;
+		if ( CurrentKeyPresses >= RequiredKeyPresses )
+		{
+			// QTE 성공, Grab 상태 해제
+			StopGrabbedState(true);
+			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, TEXT("Escaped from Grab!"));
+		}
+	}
+}
+
+void AJPlayer::StartQTEGrabEvent()
+{
+	if ( QTEWidget )
+	{
+		QTEWidget->SetVisibility(ESlateVisibility::Visible);
+
+		// ScaleFlash 애니메이션 재생
+		//UWidgetAnimation* ScaleFlashAnim = QTEWidget->GetAnimationByName(TEXT("ScaleFlash"));
+
+		/*UWidgetAnimation* ScaleFlashAnim = FindObject<UWidgetAnimation>(this, TEXT("ScaleFlash"));
+		if ( ScaleFlashAnim )
+		{
+			QTEWidget->PlayAnimation(ScaleFlashAnim, 0, 0);
+		}*/
+	}
+}
+
+void AJPlayer::StopQTEGrabEvent(bool bSuccess)
+{
+	if ( QTEWidget )
+	{
+		//// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
+		//UWidgetAnimation* ResultAnim = nullptr;
+
+		//if ( bSuccess )
+		//{
+		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Passed"));
+		//}
+		//else
+		//{
+		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Failed"));
+		//}
+
+		//if ( ResultAnim )
+		//{
+		//	QTEWidget->PlayAnimation(ResultAnim, 0, 1);
+		//}
+
+		// 일정 시간 후 UI 제거
+		QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+#pragma endregion
