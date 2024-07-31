@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "CharacterTypes.h"
 #include "JCharacterAnimInstance.generated.h"
 
 /**
@@ -32,6 +33,8 @@ public:
 	float GroundSpeed;
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	bool bIsFalling;
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	float Angle;
 
 	//연속공격
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
@@ -49,6 +52,12 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
 	void PlayAttackMontage();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ECharacterState AnimCharacterState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ECharacterEquipState AnimCharacterEquipState;
+
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	
