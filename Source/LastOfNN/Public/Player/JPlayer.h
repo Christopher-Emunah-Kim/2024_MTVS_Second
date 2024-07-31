@@ -96,7 +96,7 @@ public:
 	bool bIsAttacking;
 	bool bCanNextCombo;
 	float CurrentCombo;
-	float MaxCombo = 2;
+	float MaxCombo = 4;
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* AttackMontage;
 
