@@ -16,6 +16,7 @@
 #include "Player/JCharacterAnimInstance.h"
 #include "Perception/AISense_Hearing.h"
 
+
 ETeamType AJPlayer::GetTeamType() const
 {
 	return TeamType;
@@ -24,7 +25,6 @@ ETeamType AJPlayer::GetTeamType() const
 // Sets default values
 AJPlayer::AJPlayer()
 {
-
 	PrimaryActorTick.bCanEverTick = true;
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
@@ -43,7 +43,6 @@ AJPlayer::AJPlayer()
 
 	// 팀 타입 설정 (플레이어는 적)
 	TeamType = ETeamType::ENEMY;
-
 
 }
 void AJPlayer::PostInitializeComponents()
@@ -143,6 +142,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AJPlayer::Zoom);
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Started, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Completed, this, &AJPlayer::Run);
+		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AJPlayer::Crouching);
 	}
 }
 
@@ -195,24 +195,42 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 }
 void AJPlayer::Zoom(const FInputActionValue& Value)
 {
-	SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));
+	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
 }
 void AJPlayer::Run(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Error, TEXT("DFDF"));
-	//안 달리는 중이면
-	if ( !bIsRunning )
+	//크라우칭중이 아니라면
+	if ( CharaterState != ECharacterState::ECS_Crouching )
 	{
-		CharacterMovement->MaxWalkSpeed = 600;
+		//안 달리는 중이면
+		if ( !bIsRunning )
+		{
+			CharacterMovement->MaxWalkSpeed = 600;
+		}
+		//달리는 중이면
+		else
+		{
+			CharacterMovement->MaxWalkSpeed = 400;
+		}
+		bIsRunning = !bIsRunning;
 	}
-	//달리는 중이면
-	else
-	{
-		CharacterMovement->MaxWalkSpeed = 400;
-	}
-	bIsRunning = !bIsRunning;
+}
+
+void AJPlayer::Crouching(const FInputActionValue& Value)
+{
+	CharaterState = ECharacterState::ECS_Crouching;
+	CharacterMovement->MaxWalkSpeed = 200;
 }
 UCameraComponent* AJPlayer::GetCamera()
 {
 	return CameraComp;
+}
+ECharacterState AJPlayer::GetCharaterState() const
+{
+	return CharaterState;
+}
+
+ECharacterEquipState AJPlayer::GetCharacterEquipState() const
+{
+	return CharacterEquipState;
 }

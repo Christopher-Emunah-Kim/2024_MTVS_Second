@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "Enemy/KBaseEnemy.h"
+#include "CharacterTypes.h"
 #include "JPlayer.generated.h"
 
 
@@ -16,28 +17,13 @@ class UInputMappingContext;
 class UPlayerLockOn;
 class APlayerGun;
 
-enum class ECharacterState : uint8
-{
-	ECS_Grabbed UMETA(DisplayName = "Grabbed"),
-	ECS_Escape UMETA(DisplayName = "Escape"),
-	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
-};
-
-enum class ECharacterEquipState : uint8
-{
-	ECES_UnEquipped UMETA(DisplayName = "UnEquipped"),
-	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
-	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
-	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
-};
-
-
 UCLASS()
 class LASTOFNN_API AJPlayer : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
+
 	// AI Perception Stimuli Source Component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
     class UAIPerceptionStimuliSourceComponent* PerceptionStimuliSource;
@@ -48,8 +34,11 @@ public:
     // 팀 타입 반환 함수
     ETeamType GetTeamType() const;
 
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	ECharacterState CharaterState = ECharacterState::ECS_UnGrabbed;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	ECharacterEquipState CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+
 	// Sets default values for this character's properties
 	AJPlayer();
 
@@ -76,13 +65,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Zoom;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Run;
+	UInputAction* IA_Run;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Crouch;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
+	void Crouching(const FInputActionValue& Value);
+
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()
@@ -108,6 +101,11 @@ public:
 	class UAnimMontage* AttackMontage;
 
 	void PostInitializeComponents() override;
+	
+	UFUNCTION(BlueprintCallable)
+	ECharacterState GetCharaterState() const;
+	UFUNCTION(BlueprintCallable)
+	ECharacterEquipState GetCharacterEquipState() const;
 
 protected:
 	// Called when the game starts or when spawned
