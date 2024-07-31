@@ -10,6 +10,9 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"  
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h" 
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Hearing.h"
 
 // Sets default values
 AKBaseEnemy::AKBaseEnemy()
@@ -17,8 +20,12 @@ AKBaseEnemy::AKBaseEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//팀타입 초기화
+	TeamType = ETeamType::FRIENDLY;
+
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
+
 }
 
 // Called when the game starts or when spawned
@@ -29,6 +36,7 @@ void AKBaseEnemy::BeginPlay()
 	//이동상태 구현을 위한 target 변수 초기화
 	//월드에서 플레이어 액터찾기
 	auto FirstPlayer = UGameplayStatics::GetActorOfClass(GetWorld(),AJPlayer::StaticClass());
+
 	//target을 해당 플레이어타입으로 캐스팅
 	target = Cast<AJPlayer>(FirstPlayer);
 	
@@ -77,6 +85,11 @@ void AKBaseEnemy::EnemyIDLE()
 	{
 		//이동상태로 전환한다.
 		FSMComponent->CurrentState = EEnemyState::MOVE;
+		//속도를 걷기속도로 설정
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 		//경과시간 초기화
 		CurrentTime = 0;
 
@@ -90,6 +103,29 @@ void AKBaseEnemy::EnemyIDLE()
 void AKBaseEnemy::EnemyMove()
 {
 	
+}
+
+
+
+void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
+{
+	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
+	{
+		UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
+		
+		// 소리 발생 위치와 강도 저장
+		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
+		float Loudness = Stimulus.Strength; //소리강도
+
+		// 소리 강도에 따라 이동 플래그 설정
+		if ( Loudness > 100.0f ) // 특정 소리 강도 기준
+		{
+			UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), Loudness);
+
+			bShouldMoveToSound = true;
+			SoundLocation = NoiseLocation;
+		}
+	}
 }
 
 void AKBaseEnemy::EnemyAttack()

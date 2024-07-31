@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/PlayerGun.h"
@@ -6,6 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "Perception/AISense_Hearing.h"
 
 // Sets default values
 APlayerGun::APlayerGun()
@@ -25,8 +26,6 @@ void APlayerGun::PullTrigger()
 	FHitResult Hit;
 	FVector ShotDirection;
 
-	UE_LOG(LogTemp, Error, TEXT("NotSuccess"));
-
 	bool bSuccess = GunTrace(Hit, ShotDirection);
 	if (bSuccess)
 	{
@@ -36,6 +35,11 @@ void APlayerGun::PullTrigger()
 		Hit.GetActor()->TakeDamage(GunDamage, DamageEvent, OwnerController, this);
 		UE_LOG(LogTemp, Error, TEXT("%f, %s"), GunDamage, *HitActor->GetName());
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Actor")); 
+	}
+	MakeSound();
 }
 
 bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
@@ -79,5 +83,14 @@ void APlayerGun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void APlayerGun::MakeSound()
+{
+	// 소리 자극 발생시키기
+	FVector NoiseLocation = GetActorLocation();
+	float Loudness = 101.f;  // 소리 강도 (예시 값)
+	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
+	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.0f, TEXT("ObjectLanding"));
 }
 

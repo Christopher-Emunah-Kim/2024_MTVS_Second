@@ -37,4 +37,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
 	bool bEnemyDieDone = false;
 
+	//BlendSpace Horizontal Speed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemyHSpeed;
+	//BlendSpace Vertical Speed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemyVSpeed;
 };

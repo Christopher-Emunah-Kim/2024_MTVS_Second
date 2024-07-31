@@ -27,8 +27,10 @@ public:
 
     virtual void EnemyIDLE() override;
 
+	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus) override;
+
     virtual void EnemyMove() override;
-	
+
     virtual void EnemyAttack() override;
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;

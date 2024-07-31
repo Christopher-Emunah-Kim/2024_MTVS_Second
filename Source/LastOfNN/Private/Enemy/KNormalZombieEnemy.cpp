@@ -7,6 +7,10 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Hearing.h"
+#include <Kismet/GameplayStatics.h>
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -29,16 +33,57 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
 
+	//팀타입 초기화
+	TeamType = ETeamType::FRIENDLY;
+
+	//AI Perception Component 초기화
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+	if ( HearingConfig )
+	{
+		//소리감지 설정
+		HearingConfig->HearingRange = EnemySoundDetectionRadius;
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
+		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
+
+		//PerceptionComp에 Hearing Config 전달받은 값 연결
+		AIPerceptionComp->ConfigureSense(*HearingConfig);
+		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
+	}
+	//노이즈 발생시 처리내용 초기화
+	//소음 발생위치 이동여부 초기화
+	bShouldMoveToSound = false;
+
 	//Enemy Status 초기화
-	EnemyAttackRange = 300.0f;
-	EnemyAttackDelayTime = 1.0f;
-	EnemyHP = 200;
+	EnemySoundDetectionRadius = 2000.0f;
+	EnemyWalkSpeed = 200.0f;
+	EnemyRunSpeed = 400.0f;
+	EnemyAttackRange = 150.0f;
+	EnemyAttackDelayTime = 0.5f;
+	EnemyMoveDistanceOnSound = 100.0f;
+	EnemyHP = 100;
 }
 
 void AKNormalZombieEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//초기속도를 걷기로 설정
+	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+
+	//소리감지처리함수 바인딩
+	if ( AIPerceptionComp )
+	{
+		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKNormalZombieEnemy::OnEnemyNoiseHeard);
+		UE_LOG(LogTemp, Warning, TEXT("Perception Component 초기화 완료"));
+
+		if ( HearingConfig )
+		{
+			HearingConfig->HearingRange = EnemySoundDetectionRadius;
+			AIPerceptionComp->ConfigureSense(*HearingConfig);
+		}
+	}
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
@@ -51,20 +96,52 @@ void AKNormalZombieEnemy::EnemyIDLE()
 	Super::EnemyIDLE();
 }
 
+void AKNormalZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
+{
+	Super::OnEnemyNoiseHeard(Actor, Stimulus);
+	UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: %s"), *Stimulus.Tag.ToString());
+}
+
 void AKNormalZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
 
 	FVector dir;
-	if (target)
+	FVector EnemyDestination;
+
+	if ( bShouldMoveToSound )
+	{
+		// 소음에 의해 이동해야 하는 경우
+		EnemyDestination = SoundLocation;
+		dir = EnemyDestination - GetActorLocation();		
+
+		// 소리 방향으로 이동할 위치 계산
+		FVector Direction = dir.GetSafeNormal();
+		FVector NewLocation = GetActorLocation() + Direction * EnemyMoveDistanceOnSound;
+
+		//속도를 뛰기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+
+		// AI를 이용하여 계산된 위치로 이동
+		ai->MoveToLocation(NewLocation);
+		UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		//만약 목적지에 도착했다면
+		if ( dir.Size() < 350.0f )
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
+			//이동 플래그 초기화
+			bShouldMoveToSound = false;
+		}
+	}
+	else if (target)
 	{
 		//타깃목적지
-		FVector EnemyDestination = target->GetActorLocation();
+		EnemyDestination = target->GetActorLocation();
 		//방향
 		dir = EnemyDestination - GetActorLocation();
-		//이동
-		//AddMovementInput(dir.GetSafeNormal());
-		//ai->MoveToLocation(EnemyDestination);
 
 		//(1단계) 길찾기 결과 얻어오기
 		//Navigation 객체 얻어오기
@@ -83,6 +160,11 @@ void AKNormalZombieEnemy::EnemyMove()
 		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
 		if (FindingResult.Result == ENavigationQueryResult::Success)
 		{
+			//속도를 뛰기속도로 변경
+			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+			//BlendSpace Anim에 액터의 속도 할당
+			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 			//타깃에게 이동
 			ai->MoveToLocation(EnemyDestination);
 		}
@@ -90,7 +172,12 @@ void AKNormalZombieEnemy::EnemyMove()
 		{
 			//랜덤하게 이동
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-			//목적지에 도차하면
+			//속도를 걷기속도로 변경
+			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+			//BlendSpace Anim에 액터의 속도 할당
+			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+			//목적지에 도착하면
 			if (RanResult == EPathFollowingRequestResult::AlreadyAtGoal)
 			{
 				//새로운 랜덤위치 가져오기
@@ -102,7 +189,6 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
-	
 	//타깃과 가까워지면 공격상태 전환
 	//공격범위 안에 들어오면
 	if (dir.Size() < EnemyAttackRange)
@@ -118,8 +204,9 @@ void AKNormalZombieEnemy::EnemyMove()
 		//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
 		CurrentTime = EnemyAttackDelayTime;
 	}
-
 }
+
+
 
 
 void AKNormalZombieEnemy::EnemyAttack()

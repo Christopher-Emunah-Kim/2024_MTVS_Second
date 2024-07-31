@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,6 +6,16 @@
 #include "GameFramework/Character.h"
 #include "Enemy/KEnemyFSM.h"
 #include "KBaseEnemy.generated.h"
+
+//팀타입설정 Enum
+UENUM(BlueprintType)
+enum class ETeamType : uint8
+{
+	ENEMY UMETA(DisplayName = "Enemy"),
+	FRIENDLY UMETA(DisplayName = "Friendly"),
+	NEUTRAL UMETA(DisplayName = "Neutral")
+};
+
 
 UCLASS()
 class LASTOFNN_API AKBaseEnemy : public ACharacter
@@ -31,6 +41,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
 
+	//AI Perception 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+	class UAIPerceptionComponent* AIPerceptionComp;
+
 	//플레이어 Target 정보 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     class AJPlayer* target;
@@ -43,10 +57,9 @@ public:
 	UPROPERTY()
 	class AAIController* ai;
 
-	//길찾기 수행시 랜덤 위치
-	FVector EnemyRandomPos;
-	//랜덤위치가져오기 함수
-	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
+	//팀타입 추가 인스턴스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
+	ETeamType TeamType;
 
 #pragma region virtual function with properties
 	
@@ -69,8 +82,33 @@ public:
 	//뛰기속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyRunSpeed;
+	
 	//방향
     FVector EnemyDirection;
+
+	//길찾기 수행시 랜덤 위치
+	FVector EnemyRandomPos;
+	//랜덤위치가져오기 함수
+	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
+
+	//사운드 인식 길찾기 변수
+	//소음 감지거리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	float EnemySoundDetectionRadius;
+	//소음 발생시 이동거리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	float EnemyMoveDistanceOnSound;
+	//소음 발생위치
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	FVector SoundLocation;
+	//소음에 의한 위치이동여부
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	bool bShouldMoveToSound;
+	//AI Hearing 정보 Config
+	class UAISenseConfig_Hearing* HearingConfig;
+	//소리 감지 처리함수
+	UFUNCTION()
+	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus);
 
 	//**공격상태처리함수
     virtual void EnemyAttack();
