@@ -69,6 +69,6 @@ Content/ThirdPerson/*
 # Compiled source files for the engine to use
 Intermediate/*
 Plugins/*/Intermediate/*
-Content/Assests/Player/Joel/FromYoutube/*
+
 # Cache files for the editor to use
 DerivedDataCache/*
