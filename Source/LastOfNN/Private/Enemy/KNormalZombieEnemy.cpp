@@ -59,7 +59,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemySoundDetectionRadius = 2000.0f;
 	EnemyWalkSpeed = 200.0f;
 	EnemyRunSpeed = 400.0f;
-	EnemyAttackRange = 300.0f;
+	EnemyAttackRange = 150.0f;
 	EnemyAttackDelayTime = 0.5f;
 	EnemyMoveDistanceOnSound = 100.0f;
 	EnemyHP = 100;
