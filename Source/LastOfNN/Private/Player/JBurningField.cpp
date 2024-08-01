@@ -46,7 +46,7 @@ void AJBurningField::BeginPlay()
 
 	MakeSound();
 
-	SetLifeSpan(2);
+	SetLifeSpan(5);
 	//이걸해야 인식함-> 모지???
 	//Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 

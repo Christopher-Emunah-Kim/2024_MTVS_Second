@@ -68,6 +68,17 @@ void UJCharacterAnimInstance::StopResistanceMontage()
 	Montage_Stop(0.2f, ResistanceMontage);
 }
 
+void UJCharacterAnimInstance::PlayExecuteMontage()
+{
+	Montage_Play(ExecuteMontage);
+}
+
+void UJCharacterAnimInstance::PlayGunShotMontage()
+{
+	Montage_Play(GunShotMontage);
+}
+
+
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 {
 	OnNextAttackCheck.Broadcast();

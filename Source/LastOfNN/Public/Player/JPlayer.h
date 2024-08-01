@@ -73,16 +73,39 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Crouch;
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Grab;
+	UInputAction* IA_Grab;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_TakeDown;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_EquipGun;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_EquipThrowWeapon;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_UnEquipped;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
-	void Crouching(const FInputActionValue& Value);
-	void TakeDown(const FInputActionValue& Value);
 
+	void Crouching(const FInputActionValue& Value);
+	//토글 체크 변수
+	bool bCrouched = false;
+
+	//암살 함수
+	//플레이어 컨트롤러
+	APlayerController* PlayerController;
+	
+	void TakeDown(const FInputActionValue& Value);
+	//암살 후에
+	void AfterTakeDown();
+	FTimerHandle TakeDownTimer;
+
+	//상태변경함수
+	void SetStateEquipGun();
+	void SetStateEquipThrowWeapon();
+	void SetStateUnEquipped();
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()
@@ -150,7 +173,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	//암살가능
 	class AKNormalZombieEnemy* ExecutionTarget;
+	bool bCanExecute;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
