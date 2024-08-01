@@ -61,6 +61,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	ETeamType TeamType;
 
+
 #pragma region virtual function with properties
 	
 	//기본 가상함수 및 필요 속성

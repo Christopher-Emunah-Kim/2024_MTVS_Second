@@ -13,6 +13,8 @@
 #include <Kismet/GameplayStatics.h>
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Components/BoxComponent.h"
+#include "Components/SceneComponent.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -27,7 +29,24 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
 		GetMesh()->SetRelativeScale3D(FVector(0.1f));
 	}
+	//암살 이벤트를 위한 충돌체 세팅
+	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
+	if ( AssassinBox )
+	{
+		AssassinBox->SetupAttachment(GetRootComponent());
+		AssassinBox->SetRelativeLocation(FVector(-105.f, 0.f, 0.f));
+	}
 
+	AssassinSceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("AttackerLocation"));
+	if ( AssassinSceneComp )
+	{
+		AssassinSceneComp->SetupAttachment(GetRootComponent());
+		AssassinSceneComp->SetRelativeLocation(FVector(-177.f, 5.f, 0.f));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to create AssassinSceneComp."));
+	}
 	//애니메이션 BP 할당
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_NormalZombieEnemyAnim.ABP_NormalZombieEnemyAnim_C'"));
 	if (tempClass.Succeeded())
@@ -160,7 +179,7 @@ void AKNormalZombieEnemy::EnemyMove()
 		FPathFindingResult FindingResult = ns->FindPathSync(query);
 
 		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
-		if (FindingResult.Result == ENavigationQueryResult::Success)
+		if (FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 		{
 			//속도를 뛰기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
@@ -193,7 +212,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	}
 	//타깃과 가까워지면 공격상태 전환
 	//공격범위 안에 들어오면
-	if (dir.Size() < EnemyAttackRange)
+	if (dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 	{
 		//AI의 길찾기 기능을 정지한다.
 		ai->StopMovement();
@@ -351,4 +370,9 @@ void AKNormalZombieEnemy::EnemyDead()
 	{
 		Destroy();
 	}
+}
+
+FTransform AKNormalZombieEnemy::GetAttackerTransform()
+{
+	return AssassinSceneComp->GetComponentToWorld();
 }

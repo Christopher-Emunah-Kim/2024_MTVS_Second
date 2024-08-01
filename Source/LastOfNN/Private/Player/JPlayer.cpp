@@ -18,6 +18,8 @@
 #include "Player/JCharacterAnimInstance.h"
 #include "Perception/AISense_Hearing.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -105,8 +107,14 @@ void AJPlayer::BeginPlay()
 	QTEWidget->AddToViewport();
 	QTEWidget->SetPositionInViewport(FVector2D(700, 400));
 	QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
 }
 
+void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+}
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	UE_LOG(LogTemp, Error, TEXT(" Montage Ended"));

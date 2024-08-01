@@ -45,4 +45,11 @@ public:
 
     virtual void EnemyDead() override;
 
+	//암살 이벤트 사용 함수 변수
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* AssassinBox;
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* AssassinSceneComp;
+
+	FTransform GetAttackerTransform();
 };
