@@ -20,6 +20,8 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include "Components/BoxComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -42,6 +44,9 @@ AJPlayer::AJPlayer()
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
 
+	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
+	Box->SetupAttachment(RootComponent);
+
 	// AI Perception Stimuli Source Component 생성 및 초기화
 	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
 	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
@@ -51,6 +56,7 @@ AJPlayer::AJPlayer()
 
 	//GrabEnemy초기화
 	GrabbedEnemy = nullptr;
+
 }
 void AJPlayer::PostInitializeComponents()
 {
@@ -75,7 +81,6 @@ void AJPlayer::PostInitializeComponents()
 	{
 
 	});
-
 }
 float AJPlayer::GetKeyProcessPercent()
 {
@@ -108,12 +113,16 @@ void AJPlayer::BeginPlay()
 	QTEWidget->SetPositionInViewport(FVector2D(700, 400));
 	QTEWidget->SetVisibility(ESlateVisibility::Hidden);
 
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
+	if ( Box )
+	{
+		Box->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
+	}
 }
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("DFDF"));
+	ExecutionTarget = Cast<AKNormalZombieEnemy>(OtherComp->GetOwner());
 }
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
@@ -248,7 +257,19 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 }
 void AJPlayer::TakeDown(const FInputActionValue& Value)
 {
+	CharaterState = ECharacterState::ECS_Crouching;
+	CharacterAnimInstance->PlayResistanceMontage();
+	FTransform t = ExecutionTarget->GetAttackerTransform();
 
+	//UKismetSystemLibrary::MoveComponentTo(
+	//	GetCapsuleComponent(),              // 이동할 컴포넌트
+	//	t.GetLocation(),                   // 목표 위치
+	//	t.GetRotation().Rotator(),         // 목표 회전
+	//	true,                              // 즉시 스냅
+	//	false,                             // 텔레포트하지 않음
+	//	0.2,                             // 고정 프레임 속도 사용하지 않음
+	//	false                              // 텔레포트 거리 임계값                             // 초당 보간 속도
+	//);
 }
 UCameraComponent* AJPlayer::GetCamera()
 {

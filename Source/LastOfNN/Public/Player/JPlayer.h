@@ -53,6 +53,9 @@ public:
 	UCameraComponent* CameraComp;	
 	UPROPERTY(EditAnywhere)
 	USpringArmComponent* SpringArmComp;
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* Box;
+
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputMappingContext* IMC_Joel;
@@ -144,7 +147,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetKeyProcessPercent();
 
+	UFUNCTION(BlueprintCallable)
 	void ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	class AKNormalZombieEnemy* ExecutionTarget;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
