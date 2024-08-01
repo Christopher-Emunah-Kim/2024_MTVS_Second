@@ -33,6 +33,10 @@ public:
 
     virtual void EnemyAttack() override;
 
+	virtual void EnemyGrab() override;
+
+	virtual void SetAllEnemiesToIdle() override;
+
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void OnEnemyDamageProcess(float damage) override;

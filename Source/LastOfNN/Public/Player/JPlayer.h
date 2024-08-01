@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "Enemy/KBaseEnemy.h"
+#include "CharacterTypes.h"
 #include "JPlayer.generated.h"
 
 
@@ -15,22 +16,7 @@ class UInputAction;
 class UInputMappingContext;
 class UPlayerLockOn;
 class APlayerGun;
-
-enum class ECharacterState : uint8
-{
-	ECS_Grabbed UMETA(DisplayName = "Grabbed"),
-	ECS_Escape UMETA(DisplayName = "Escape"),
-	ECS_NoGrabbed UMETA(DisplayName = "NoGrabbed")
-};
-
-enum class ECharacterEquipState : uint8
-{
-	ECES_UnEquipped UMETA(DisplayName = "UnEquipped"),
-	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
-	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
-	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
-};
-
+class UAnimMontage;
 
 UCLASS()
 class LASTOFNN_API AJPlayer : public ACharacter
@@ -38,6 +24,7 @@ class LASTOFNN_API AJPlayer : public ACharacter
 	GENERATED_BODY()
 
 public:
+
 	// AI Perception Stimuli Source Component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
     class UAIPerceptionStimuliSourceComponent* PerceptionStimuliSource;
@@ -48,8 +35,11 @@ public:
     // 팀 타입 반환 함수
     ETeamType GetTeamType() const;
 
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	ECharacterState CharaterState = ECharacterState::ECS_UnGrabbed;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	ECharacterEquipState CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+
 	// Sets default values for this character's properties
 	AJPlayer();
 
@@ -76,13 +66,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Zoom;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Run;
+	UInputAction* IA_Run;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Crouch;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Grab;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
+	void Crouching(const FInputActionValue& Value);
+
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()
@@ -103,11 +99,43 @@ public:
 	bool bIsAttacking;
 	bool bCanNextCombo;
 	float CurrentCombo;
-	float MaxCombo = 2;
+	float MaxCombo = 4;
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* AttackMontage;
+	UAnimMontage* AttackMontage;
 
 	void PostInitializeComponents() override;
+	
+	UFUNCTION(BlueprintCallable)
+	ECharacterState GetCharaterState() const;
+	UFUNCTION(BlueprintCallable)
+	ECharacterEquipState GetCharacterEquipState() const;
+
+
+	//Grab QTE이벤트 사용내용
+	bool bIsGrabbed = false;
+	int32 RequiredKeyPresses = 5; // 플레이어가 QTE에서 벗어나기 위해 필요한 E키 입력 횟수
+	int32 CurrentKeyPresses = 0;
+
+	// 현재 Player를 잡고 있는 Enemy의 참조
+	class AKBaseEnemy* GrabbedEnemy;
+
+	void StartGrabbedState(class AKNormalZombieEnemy* Enemy); // Grab 상태 시작 함수
+	void StopGrabbedState(bool bSuccess);  // Grab 상태 종료 함수, 성공 여부에 따라 다르게 처리
+	void HandleQTEInput();    // QTE 입력 처리 함수
+
+	// QTE UI 시작 및 종료 함수
+	void StartQTEGrabEvent();
+	void StopQTEGrabEvent(bool bSuccess);
+
+	UPROPERTY(EditDefaultsOnly, Category=UI)
+	TSubclassOf<class UUserWidget> QTEUIFactory;
+
+	UPROPERTY()
+	class UUserWidget* QTEWidget;
+	
+
+	// 현재 Player를 잡고 있는 Enemy의 참조 반환 함수
+	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
 
 protected:
 	// Called when the game starts or when spawned

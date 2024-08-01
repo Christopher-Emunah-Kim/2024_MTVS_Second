@@ -1,8 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Enemy/KEnemyFSM.h"
 #include "Enemy/KBaseEnemy.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
+
+//QTE이벤트 진행 여부 초기화
+bool UKEnemyFSM::bIsQTEActive = false;
 
 // Sets default values for this component's properties
 UKEnemyFSM::UKEnemyFSM()
@@ -39,8 +44,17 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     FString logMsg = UEnum::GetValueAsString(CurrentState);
     GEngine->AddOnScreenDebugMessage(0,1, FColor::Blue, logMsg);
 
-    //계속해서 상태를 업데이트
-    UpdateState();
+
+    // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지
+    if ( bIsQTEActive && CurrentState != EEnemyState::GRAB )
+    {
+        SetState(EEnemyState::IDLE);
+    }
+    else
+    {
+        //그외엔 계속 상태 업데이트
+        UpdateState();
+    }
 }
 
 void UKEnemyFSM::SetState(EEnemyState NewState)
@@ -70,6 +84,10 @@ void UKEnemyFSM::UpdateState()
     case EEnemyState::ATTACK:
         // Attack 상태 행동 처리...
         BaseEnemy->EnemyAttack();
+        break;
+    case EEnemyState::GRAB:
+        // Grab 상태 행동 처리...
+        BaseEnemy->EnemyGrab();
         break;
     case EEnemyState::EVADE:
         // Evade 상태 행동 처리...

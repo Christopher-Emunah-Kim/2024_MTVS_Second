@@ -33,6 +33,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayEnemyTDamageAnim(FName sectionName);
 
+	//Grab 애니메이션 몽타주 재생 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
+	void PlayEnemyGrabAnim(FName sectionName);
+
 	//죽음애니메이션 종료여부 판단
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
 	bool bEnemyDieDone = false;

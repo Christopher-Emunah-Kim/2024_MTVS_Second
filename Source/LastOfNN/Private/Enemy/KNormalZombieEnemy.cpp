@@ -11,6 +11,8 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include <Kismet/GameplayStatics.h>
+#include "Engine/World.h"
+#include "EngineUtils.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -218,12 +220,24 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//공격시간이 되면
 	if (CurrentTime>EnemyAttackDelayTime)
 	{
-		//공격한다.(내용은 나중에 구현)
-		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
-		//대기시간 초기화
+		// 일정 확률로 Grab 상태로 전환
+		float RandomChance = FMath::FRand();
+		if ( RandomChance < 0.3f ) // 30% 확률로 Grab
+		{
+			EnemyGrab();
+		}
+		else
+		{
+			//공격한다.(내용은 나중에 구현)
+			GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
+
+			//공격 애니메이션 재생 활성화
+			anim->bEnemyAttackPlay = true;
+		}
+
+		// 대기 시간 초기화
 		CurrentTime = 0;
-		//공격 애니메이션 재생 활성화
-		anim->bEnemyAttackPlay = true;
+		
 	}
 	//타깃과의 거리를 구하고
 	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
@@ -236,6 +250,55 @@ void AKNormalZombieEnemy::EnemyAttack()
 		anim->EnemyAnimState = FSMComponent->CurrentState;
 		//랜덤위치값을 이때도 다시 설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+	}
+}
+
+void AKNormalZombieEnemy::EnemyGrab()
+{
+	Super::EnemyGrab();
+
+	// GRAB 상태로 전환
+	//FSMComponent->SetState(EEnemyState::GRAB);
+
+	// Grab 애니메이션 재생
+	if ( anim )
+	{
+		FString SectionName = FString::Printf(TEXT("Grab"));
+		anim->PlayEnemyGrabAnim(FName(*SectionName));
+	}
+
+	// Player에게 Grab 상태 알림 및 QTE 이벤트 시작
+	if ( target && !bIsPlayerGrabbed )
+	{
+		AJPlayer* Player = Cast<AJPlayer>(target);
+		if ( Player )
+		{
+			// Player를 잡았음을 표시
+			bIsPlayerGrabbed = true;
+			// Player의 Grab 상태 시작 및 QTE 이벤트 시작
+			Player->StartGrabbedState(this);
+		}
+	}
+
+	// QTE 이벤트가 시작되었음을 전역 변수에 표시
+	UKEnemyFSM::bIsQTEActive = true;
+
+	// 모든 Enemy를 IDLE 상태로 유지
+	SetAllEnemiesToIdle();
+}
+
+void AKNormalZombieEnemy::SetAllEnemiesToIdle()
+{
+	Super::SetAllEnemiesToIdle();
+
+	// 월드에 존재하는 모든 Enemy를 IDLE 상태로 전환
+	for ( TActorIterator<AKNormalZombieEnemy> It(GetWorld()); It; ++It )
+	{
+		AKNormalZombieEnemy* Enemy = *It;
+		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY && Enemy != this )
+		{
+			Enemy->FSMComponent->SetState(EEnemyState::IDLE);
+		}
 	}
 }
 

@@ -125,6 +125,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDelayTime;
 
+	//Grab이벤트함수
+	virtual void EnemyGrab();
+	// QTE 이벤트 시작 시 Player를 잡았는지 확인하기 위한 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+	bool bIsPlayerGrabbed = false;
+	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
+	virtual void SetAllEnemiesToIdle();
+
 
 	//피격알림이벤트함수
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
