@@ -75,6 +75,10 @@ void AJPlayer::PostInitializeComponents()
 	});
 
 }
+float AJPlayer::GetKeyProcessPercent()
+{
+	return CurrentKeyPresses / RequiredKeyPresses;
+}
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
@@ -85,7 +89,7 @@ void AJPlayer::BeginPlay()
 	{
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
-	LockOnComp->SetTargetLockTrue();
+	//LockOnComp->SetTargetLockTrue();
 
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
@@ -159,16 +163,18 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AJPlayer::Move(const FInputActionValue& Value)
 {
-	const FVector2D Vector = Value.Get<FVector2D>();
-	FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
-	FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
+	if ( !bIsGrabbed )                                                                   
+	{
+		const FVector2D Vector = Value.Get<FVector2D>();
+		FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
+		FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
 
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
 
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	AddMovementInput(RightDirection, Vector.Y);
-
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(RightDirection, Vector.Y);
+	}
 
 }
 
@@ -232,6 +238,10 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 	CharaterState = ECharacterState::ECS_Crouching;
 	CharacterMovement->MaxWalkSpeed = 200;
 }
+void AJPlayer::TakeDown(const FInputActionValue& Value)
+{
+
+}
 UCameraComponent* AJPlayer::GetCamera()
 {
 	return CameraComp;
@@ -240,7 +250,6 @@ ECharacterState AJPlayer::GetCharaterState() const
 {
 	return CharaterState;
 }
-
 ECharacterEquipState AJPlayer::GetCharacterEquipState() const
 {
 	return CharacterEquipState;
@@ -325,6 +334,7 @@ void AJPlayer::HandleQTEInput()
 		{
 			// QTE 성공, Grab 상태 해제
 			StopGrabbedState(true);
+			bEscapeSuccess = true;
 			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, TEXT("Escaped from Grab!"));
 		}
 	}

@@ -78,6 +78,7 @@ public:
 	void Zoom(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
 	void Crouching(const FInputActionValue& Value);
+	void TakeDown(const FInputActionValue& Value);
 
 	UCameraComponent* GetCamera();
 
@@ -130,12 +131,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=UI)
 	TSubclassOf<class UUserWidget> QTEUIFactory;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UUserWidget* QTEWidget;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEscapeSuccess;
 
 	// 현재 Player를 잡고 있는 Enemy의 참조 반환 함수
 	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
+	UFUNCTION(BlueprintCallable)
+	float GetKeyProcessPercent();
+
 
 protected:
 	// Called when the game starts or when spawned
