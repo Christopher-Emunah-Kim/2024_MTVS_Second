@@ -19,7 +19,8 @@ void UKEnemyQTEWidget::PlayScaleFlash()
 {
 	if ( ScaleFlash )
 	{
-		PlayAnimation(ScaleFlash, 0, 1); //1번 반복재생
+		PlayAnimation(ScaleFlash, 0, 0); //1번 반복재생
+		UE_LOG(LogTemp, Warning, TEXT("flash"));
 	}
 }
 
@@ -29,6 +30,7 @@ void UKEnemyQTEWidget::PlayQTEPassed()
 	if ( QTEPassed )
 	{
 		PlayAnimation(QTEPassed, 0, 1); //1번 반복재생
+		UE_LOG(LogTemp, Warning, TEXT("flash2"));
 	}
 }
 
@@ -38,6 +40,7 @@ void UKEnemyQTEWidget::PlayQTEFailed()
 	if ( QTEFailed )
 	{
 		PlayAnimation(QTEFailed, 0, 1); //1번 반복재생
+		UE_LOG(LogTemp, Warning, TEXT("flash3"));
 	}
 }
 
@@ -50,6 +53,7 @@ void UKEnemyQTEWidget::UpdateMaterialProgress(float QTEProgress)
 		if ( TempMateiralInstance )
 		{
 			// Material Instance가 유효하면, 파라미터 값 설정
+			UE_LOG(LogTemp, Warning, TEXT("flash4"));
 			TempMateiralInstance->SetScalarParameterValue(FName("Progress"), QTEProgress);
 		}
 	}
