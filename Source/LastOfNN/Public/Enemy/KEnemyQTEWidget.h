@@ -40,8 +40,12 @@ public:
 	void PlayQTEFailed();
 
 	//UI에서 사용한 이미지 위젯 인스턴스 선언
-	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget))
 	class UImage* RadialProgressBorder;
+
+	//Material Instance Dynamic을 저장할 변수 선언
+	UPROPERTY()
+	class UMaterialInstanceDynamic* TempMateiralInstance;
 
 	//ProgressSquare 값 업데이트 함수 선언
 	UFUNCTION(BlueprintCallable, Category = "UI")

@@ -64,7 +64,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	{
 		//소리감지 설정
 		HearingConfig->HearingRange = EnemySoundDetectionRadius;
-		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; 
 		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
 		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
@@ -80,9 +80,9 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemySoundDetectionRadius = 2000.0f;
 	EnemyWalkSpeed = 200.0f;
 	EnemyRunSpeed = 400.0f;
-	EnemyAttackRange = 150.0f;
-	EnemyAttackDelayTime = 0.5f;
-	EnemyMoveDistanceOnSound = 100.0f;
+	EnemyAttackRange = 50.0f;
+	EnemyAttackDelayTime = 2.0f;
+	EnemyMoveDistanceOnSound = 300.0f;
 	EnemyHP = 100;
 }
 
@@ -92,6 +92,7 @@ void AKNormalZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+	//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 
 	//소리감지처리함수 바인딩
 	if ( AIPerceptionComp )
@@ -142,19 +143,23 @@ void AKNormalZombieEnemy::EnemyMove()
 
 		//속도를 뛰기속도로 변경
 		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 
 		// AI를 이용하여 계산된 위치로 이동
 		ai->MoveToLocation(NewLocation);
-		UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		//UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		
 		//만약 목적지에 도착했다면
-		if ( dir.Size() < 350.0f )
+		if ( dir.Size() < 150.0f )
 		{
 			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
 			//이동 플래그 초기화
 			bShouldMoveToSound = false;
+			//IDLE상태 전환
+			FSMComponent->CurrentState = EEnemyState::IDLE;
 		}
 	}
 	else if (target)
@@ -183,11 +188,28 @@ void AKNormalZombieEnemy::EnemyMove()
 		{
 			//속도를 뛰기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 			//타깃에게 이동
 			ai->MoveToLocation(EnemyDestination);
+
+			//타깃과 가까워지면 공격상태 전환
+			//공격범위 안에 들어오면
+			if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+			{
+				//AI의 길찾기 기능을 정지한다.
+				ai->StopMovement();
+				//공격상태 전환
+				FSMComponent->CurrentState = EEnemyState::ATTACK;
+				//애니메이션 상태 동기화
+				anim->EnemyAnimState = FSMComponent->CurrentState;
+				//공격 애니메이션 재생 활성화
+				anim->bEnemyAttackPlay = true;
+				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+				CurrentTime = EnemyAttackDelayTime;
+			}
 		}
 		else
 		{
@@ -195,6 +217,7 @@ void AKNormalZombieEnemy::EnemyMove()
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
 			//속도를 걷기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -210,21 +233,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
-	//타깃과 가까워지면 공격상태 전환
-	//공격범위 안에 들어오면
-	if (dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
-	{
-		//AI의 길찾기 기능을 정지한다.
-		ai->StopMovement();
-		//공격상태 전환
-		FSMComponent->CurrentState = EEnemyState::ATTACK;
-		//애니메이션 상태 동기화
-		anim->EnemyAnimState = FSMComponent->CurrentState;
-		//공격 애니메이션 재생 활성화
-		anim->bEnemyAttackPlay = true;
-		//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
-		CurrentTime = EnemyAttackDelayTime;
-	}
+	
 }
 
 
