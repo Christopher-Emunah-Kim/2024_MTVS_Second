@@ -279,22 +279,26 @@ void AJPlayer::TakeDown(const FInputActionValue& Value)
 {
 	CharaterState = ECharacterState::ECS_Crouching;
 	CharacterAnimInstance->PlayResistanceMontage();
-	FTransform t = ExecutionTarget->GetAttackerTransform();
+	if ( ExecutionTarget )
+	{
+		FTransform t = ExecutionTarget->GetAttackerTransform();
 
-	FLatentActionInfo LatentInfo;
-	LatentInfo.CallbackTarget = this;
 
-	UKismetSystemLibrary::MoveComponentTo(
-		GetCapsuleComponent(),              // 이동할 컴포넌트
-		t.GetLocation(),                   // 목표 위치
-		t.GetRotation().Rotator(),         // 목표 회전
-		true,                              // 즉시 스냅
-		false, 
-		0.2f,                            // 텔레포트하지 않음
-		false,	
-		EMoveComponentAction::Type::Move,
-		LatentInfo
-	);
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+
+		UKismetSystemLibrary::MoveComponentTo(
+			GetCapsuleComponent(),              // 이동할 컴포넌트
+			t.GetLocation(),                   // 목표 위치
+			t.GetRotation().Rotator(),         // 목표 회전
+			true,                              // 즉시 스냅
+			false,
+			0.2f,                            // 텔레포트하지 않음
+			false,
+			EMoveComponentAction::Type::Move,
+			LatentInfo
+		);
+	}
 	PlayerController = Cast<APlayerController>(GetController());
 	if ( PlayerController )
 	{
