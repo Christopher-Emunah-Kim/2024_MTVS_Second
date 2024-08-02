@@ -30,7 +30,7 @@ public:
 
 	//불 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
-    float FireDamage = 30.0f;
+    float FireDamage = 20.0f;
 
     //1초마다 데미지 주게 하기
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
