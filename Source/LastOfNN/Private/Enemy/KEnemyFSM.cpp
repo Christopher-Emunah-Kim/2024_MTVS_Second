@@ -5,6 +5,7 @@
 #include "Enemy/KBaseEnemy.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Player/JPlayer.h"
 
 
 
@@ -34,6 +35,7 @@ void UKEnemyFSM::BeginPlay()
         UE_LOG(LogTemp, Error, TEXT("KEnemyFSM: BaseEnemy is not properly initialized."));
     }
 
+    Player = Cast<AJPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 }
 
 
@@ -47,8 +49,8 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     GEngine->AddOnScreenDebugMessage(0,1, FColor::Blue, logMsg);
 
 
-    // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지
-    if ( bIsQTEActive && CurrentState != EEnemyState::GRAB )
+    // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지 -> Player->GetIsGrabbed()로 잠깐 바꿈
+    if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::GRAB )
     {
         SetState(EEnemyState::IDLE);
         UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));

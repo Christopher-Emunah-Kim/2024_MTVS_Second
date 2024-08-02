@@ -23,6 +23,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Enemy/KEnemyQTEWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 
 
@@ -92,6 +93,10 @@ float AJPlayer::GetKeyProcessPercent()
 {
 	return (float)CurrentKeyPresses / RequiredKeyPresses;
 }
+bool AJPlayer::GetIsGrabbed()
+{
+	return bIsGrabbed;
+}
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
@@ -123,6 +128,9 @@ void AJPlayer::BeginPlay()
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
 	Gun->SetActorHiddenInGame(true);
+
+	//FSM얻어오기
+	EnemyFSM = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass())->GetComponentByClass<UKEnemyFSM>();
 }
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -383,14 +391,6 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 {
 	bIsGrabbed = false;
 
-	// 입력 제어 해제
-	/*APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if ( PlayerController )
-	{
-		PlayerController->SetIgnoreMoveInput(false);
-		PlayerController->SetIgnoreLookInput(false);
-	}*/
-
 	// 저항 애니메이션 정지
 	if ( CharacterAnimInstance )
 	{
@@ -420,7 +420,7 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 	}
 
 	// QTE 이벤트가 끝났음을 전역 변수에 표시
-	UKEnemyFSM::bIsQTEActive = false;
+	 EnemyFSM->bIsQTEActive = false;
 }
 
 void AJPlayer::HandleQTEInput()

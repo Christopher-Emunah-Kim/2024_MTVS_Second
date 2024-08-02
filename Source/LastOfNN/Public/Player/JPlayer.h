@@ -168,6 +168,7 @@ public:
 	// 현재 Player를 잡고 있는 Enemy의 참조 반환 함수
 	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
 
+	
 	//위젯 바인딩 키 진행도
 	//UFUNCTION(BlueprintCallable)
 	float GetKeyProcessPercent();
@@ -175,9 +176,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	class AKNormalZombieEnemy* FSMOwner;
 	//암살가능
 	class AKNormalZombieEnemy* ExecutionTarget;
 	bool bCanExecute;
+
+	class UKEnemyFSM* EnemyFSM;
+	bool GetIsGrabbed();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
