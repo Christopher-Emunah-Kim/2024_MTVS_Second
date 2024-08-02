@@ -153,6 +153,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyTDamageDelayTime = 1.5f;
 
+	//암살상태처리함수
+	virtual void EnemyExecuted();
+
 	//**죽음상태처리함수
     virtual void EnemyDead();
 	//죽음 후 메시 내려가는 속도

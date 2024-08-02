@@ -182,7 +182,14 @@ public:
 	bool bCanExecute;
 
 	class UKEnemyFSM* EnemyFSM;
+	class UKEnemyFSM* BossEnemyFSM;
 	bool GetIsGrabbed();
+	void EnemyIsDead();
+
+	float HP;
+	float MAXHP = 100;
+
+	class UEnhancedInputLocalPlayerSubsystem* Subsystem;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

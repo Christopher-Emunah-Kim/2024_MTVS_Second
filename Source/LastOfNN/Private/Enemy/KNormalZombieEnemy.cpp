@@ -369,6 +369,13 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 	}
 }
 
+void AKNormalZombieEnemy::EnemyExecuted()
+{
+	Super::EnemyExecuted();
+
+	ai->StopMovement();
+}
+
 void AKNormalZombieEnemy::EnemyDead()
 {
 	Super::EnemyDead();

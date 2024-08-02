@@ -207,6 +207,11 @@ void AKBaseEnemy::EnemyTakeDamage()
 	
 }
 
+void AKBaseEnemy::EnemyExecuted()
+{
+
+}
+
 void AKBaseEnemy::EnemyDead()
 {
 }
