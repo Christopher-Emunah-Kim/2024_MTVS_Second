@@ -18,6 +18,13 @@
 #include "Player/JCharacterAnimInstance.h"
 #include "Perception/AISense_Hearing.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
+#include "Components/BoxComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Enemy/KEnemyQTEWidget.h"
+#include "Kismet/GameplayStatics.h"
+
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -40,6 +47,9 @@ AJPlayer::AJPlayer()
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
 
+	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
+	Box->SetupAttachment(RootComponent);
+
 	// AI Perception Stimuli Source Component 생성 및 초기화
 	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
 	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
@@ -49,6 +59,10 @@ AJPlayer::AJPlayer()
 
 	//GrabEnemy초기화
 	GrabbedEnemy = nullptr;
+
+	//Crouch함수 사용을 위한 등록
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
 }
 void AJPlayer::PostInitializeComponents()
 {
@@ -73,7 +87,15 @@ void AJPlayer::PostInitializeComponents()
 	{
 
 	});
-
+	PlayerController = Cast<APlayerController>(GetController());
+}
+float AJPlayer::GetKeyProcessPercent()
+{
+	return (float)CurrentKeyPresses / RequiredKeyPresses;
+}
+bool AJPlayer::GetIsGrabbed()
+{
+	return bIsGrabbed;
 }
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
@@ -85,11 +107,7 @@ void AJPlayer::BeginPlay()
 	{
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
-	LockOnComp->SetTargetLockTrue();
-
-	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
-
+	//LockOnComp->SetTargetLockTrue();
 	CharacterMovement = GetCharacterMovement();
 	CharacterMovement->MaxWalkSpeed = 400;
 
@@ -97,12 +115,40 @@ void AJPlayer::BeginPlay()
 	PerceptionStimuliSource->RegisterWithPerceptionSystem();
 	AttackEndComboState();
 
-	QTEWidget = CreateWidget<UUserWidget>(GetWorld(), QTEUIFactory);
-	QTEWidget->AddToViewport();
-	QTEWidget->SetPositionInViewport(FVector2D(700, 400));
-	QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+	_QTEUI = CreateWidget<UKEnemyQTEWidget>(GetWorld(), QTEUIFactory);
+	_QTEUI->AddToViewport();
+	_QTEUI->SetPositionInViewport(FVector2D(700, 400));
+	_QTEUI->SetVisibility(ESlateVisibility::Hidden);
+
+	if ( Box )
+	{
+		Box->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
+	}
+
+	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
+	Gun->SetActorHiddenInGame(true);
+
+	//FSM얻어오기
+	AActor* EnemyActor = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass());
+	if ( EnemyActor )
+	{
+		// 액터가 존재하는 경우, 해당 액터에서 컴포넌트를 가져옵니다
+		EnemyFSM = EnemyActor->GetComponentByClass<UKEnemyFSM>();
+		if ( EnemyFSM  == nullptr)
+		{
+			return;
+		}
+	}
+
 }
 
+void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("DFDF"));
+	ExecutionTarget = Cast<AKNormalZombieEnemy>(OtherComp->GetOwner());
+	bCanExecute = true; //움직이는거 커버 못함.. move가 너무 빨라유
+}
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	UE_LOG(LogTemp, Error, TEXT(" Montage Ended"));
@@ -154,21 +200,27 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Completed, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AJPlayer::Crouching);
 		EnhancedInputComponent->BindAction(IA_Grab, ETriggerEvent::Triggered, this, &AJPlayer::HandleQTEInput);
+		EnhancedInputComponent->BindAction(IA_TakeDown, ETriggerEvent::Triggered, this, &AJPlayer::TakeDown);
+		EnhancedInputComponent->BindAction(IA_EquipGun, ETriggerEvent::Triggered, this, &AJPlayer::SetStateEquipGun);
+		EnhancedInputComponent->BindAction(IA_EquipThrowWeapon, ETriggerEvent::Triggered, this, &AJPlayer::SetStateEquipThrowWeapon);
+		EnhancedInputComponent->BindAction(IA_UnEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateUnEquipped);
 	}
 }
 
 void AJPlayer::Move(const FInputActionValue& Value)
 {
-	const FVector2D Vector = Value.Get<FVector2D>();
-	FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
-	FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
+	if ( !bIsGrabbed )                                                                   
+	{
+		const FVector2D Vector = Value.Get<FVector2D>();
+		FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
+		FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
 
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
 
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	AddMovementInput(RightDirection, Vector.Y);
-
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(RightDirection, Vector.Y);
+	}
 
 }
 
@@ -182,6 +234,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 {
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped )
 	{
+		CharacterAnimInstance->PlayGunShotMontage();
 		Gun->PullTrigger();
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped )
@@ -201,7 +254,6 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 			CharacterAnimInstance->Montage_Play(AttackMontage);
 			bIsAttacking = true;
 		}
-
 	}
 }
 void AJPlayer::Zoom(const FInputActionValue& Value)
@@ -229,8 +281,82 @@ void AJPlayer::Run(const FInputActionValue& Value)
 
 void AJPlayer::Crouching(const FInputActionValue& Value)
 {
+	bCrouched = !bCrouched;
+	if ( bCrouched )
+	{
+		CharaterState = ECharacterState::ECS_Crouching;
+		Crouch();
+	}
+	else
+	{
+		CharaterState = ECharacterState::ECS_UnGrabbed;
+		UnCrouch();
+	}
+}
+void AJPlayer::TakeDown(const FInputActionValue& Value)
+{
 	CharaterState = ECharacterState::ECS_Crouching;
-	CharacterMovement->MaxWalkSpeed = 200;
+	CharacterAnimInstance->PlayResistanceMontage();
+	if ( ExecutionTarget )
+	{
+		FTransform t = ExecutionTarget->GetAttackerTransform();
+
+
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+
+		UKismetSystemLibrary::MoveComponentTo(
+			GetCapsuleComponent(),              // 이동할 컴포넌트
+			t.GetLocation(),                   // 목표 위치
+			t.GetRotation().Rotator(),         // 목표 회전
+			true,                              // 즉시 스냅
+			false,
+			0.2f,                            // 텔레포트하지 않음
+			false,
+			EMoveComponentAction::Type::Move,
+			LatentInfo
+		);
+	}
+	PlayerController = Cast<APlayerController>(GetController());
+	if ( PlayerController )
+	{
+		PlayerController->SetIgnoreMoveInput(true);
+		PlayerController->SetIgnoreLookInput(true);
+		UE_LOG(LogTemp, Warning, TEXT("dd"));
+	}
+	CharacterAnimInstance->PlayExecuteMontage();
+	//몽타주 끝나면 상태 바꾸기
+	GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
+	CameraComp->SetFieldOfView(60.f);
+/////////////////////////////////////////////////////////////
+	//좀비 상태 바꿔야함, OR 좀비 당하는 몽타주 나오면 상관없나?
+
+}
+void AJPlayer::AfterTakeDown()
+{
+	PlayerController = Cast<APlayerController>(GetController());
+	CharaterState = ECharacterState::ECS_UnGrabbed;
+	if ( PlayerController )
+	{
+		PlayerController->SetIgnoreMoveInput(false);
+		PlayerController->SetIgnoreLookInput(false);
+	}
+
+}
+void AJPlayer::SetStateEquipGun()
+{
+	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
+	Gun->SetActorHiddenInGame(false);
+}
+void AJPlayer::SetStateEquipThrowWeapon()
+{
+	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
+	Gun->SetActorHiddenInGame(true);
+}
+void AJPlayer::SetStateUnEquipped()
+{
+	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+	Gun->SetActorHiddenInGame(true);
 }
 UCameraComponent* AJPlayer::GetCamera()
 {
@@ -240,7 +366,6 @@ ECharacterState AJPlayer::GetCharaterState() const
 {
 	return CharaterState;
 }
-
 ECharacterEquipState AJPlayer::GetCharacterEquipState() const
 {
 	return CharacterEquipState;
@@ -276,18 +401,10 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 {
 	bIsGrabbed = false;
 
-	// 입력 제어 해제
-	/*APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if ( PlayerController )
-	{
-		PlayerController->SetIgnoreMoveInput(false);
-		PlayerController->SetIgnoreLookInput(false);
-	}*/
-
 	// 저항 애니메이션 정지
 	if ( CharacterAnimInstance )
 	{
-		CharacterAnimInstance->StopResistanceMontage();
+		CharacterAnimInstance->PlayResistanceReleaseSection();
 	}
 
 	// QTE UI 제거 및 성공/실패 애니메이션 재생
@@ -313,7 +430,7 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 	}
 
 	// QTE 이벤트가 끝났음을 전역 변수에 표시
-	UKEnemyFSM::bIsQTEActive = false;
+	 EnemyFSM->bIsQTEActive = false;
 }
 
 void AJPlayer::HandleQTEInput()
@@ -321,10 +438,13 @@ void AJPlayer::HandleQTEInput()
 	if ( bIsGrabbed )
 	{
 		CurrentKeyPresses++;
+		_QTEUI->PlayQTEPassed();
+		_QTEUI->UpdateMaterialProgress(GetKeyProcessPercent());
 		if ( CurrentKeyPresses >= RequiredKeyPresses )
 		{
 			// QTE 성공, Grab 상태 해제
 			StopGrabbedState(true);
+			bEscapeSuccess = true;
 			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, TEXT("Escaped from Grab!"));
 		}
 	}
@@ -332,44 +452,32 @@ void AJPlayer::HandleQTEInput()
 
 void AJPlayer::StartQTEGrabEvent()
 {
-	if ( QTEWidget )
+	if ( _QTEUI )
 	{
-		QTEWidget->SetVisibility(ESlateVisibility::Visible);
+		_QTEUI->SetVisibility(ESlateVisibility::Visible);
 
 		// ScaleFlash 애니메이션 재생
-		//UWidgetAnimation* ScaleFlashAnim = QTEWidget->GetAnimationByName(TEXT("ScaleFlash"));
-
-		/*UWidgetAnimation* ScaleFlashAnim = FindObject<UWidgetAnimation>(this, TEXT("ScaleFlash"));
-		if ( ScaleFlashAnim )
-		{
-			QTEWidget->PlayAnimation(ScaleFlashAnim, 0, 0);
-		}*/
+		_QTEUI->PlayScaleFlash();
 	}
 }
 
 void AJPlayer::StopQTEGrabEvent(bool bSuccess)
 {
-	if ( QTEWidget )
+	if ( _QTEUI )
 	{
-		//// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
-		//UWidgetAnimation* ResultAnim = nullptr;
+		// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
+		UWidgetAnimation* ResultAnim = nullptr;
 
-		//if ( bSuccess )
-		//{
-		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Passed"));
-		//}
-		//else
-		//{
-		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Failed"));
-		//}
-
-		//if ( ResultAnim )
-		//{
-		//	QTEWidget->PlayAnimation(ResultAnim, 0, 1);
-		//}
-
+		if ( bSuccess )
+		{
+			
+		}
+		else
+		{
+			_QTEUI->PlayQTEFailed();
+		}
 		// 일정 시간 후 UI 제거
-		QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+		_QTEUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

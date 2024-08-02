@@ -53,6 +53,9 @@ public:
 	UCameraComponent* CameraComp;	
 	UPROPERTY(EditAnywhere)
 	USpringArmComponent* SpringArmComp;
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* Box;
+
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputMappingContext* IMC_Joel;
@@ -70,15 +73,39 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Crouch;
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_Grab;
+	UInputAction* IA_Grab;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_TakeDown;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_EquipGun;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_EquipThrowWeapon;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_UnEquipped;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
-	void Crouching(const FInputActionValue& Value);
 
+	void Crouching(const FInputActionValue& Value);
+	//토글 체크 변수
+	bool bCrouched = false;
+
+	//암살 함수
+	//플레이어 컨트롤러
+	APlayerController* PlayerController;
+	
+	void TakeDown(const FInputActionValue& Value);
+	//암살 후에
+	void AfterTakeDown();
+	FTimerHandle TakeDownTimer;
+
+	//상태변경함수
+	void SetStateEquipGun();
+	void SetStateEquipThrowWeapon();
+	void SetStateUnEquipped();
 	UCameraComponent* GetCamera();
 
 	UPROPERTY()
@@ -128,15 +155,34 @@ public:
 	void StopQTEGrabEvent(bool bSuccess);
 
 	UPROPERTY(EditDefaultsOnly, Category=UI)
-	TSubclassOf<class UUserWidget> QTEUIFactory;
+	TSubclassOf<class UKEnemyQTEWidget> QTEUIFactory;
 
-	UPROPERTY()
-	class UUserWidget* QTEWidget;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//class UUserWidget* QTEWidget;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UKEnemyQTEWidget* _QTEUI;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEscapeSuccess;
 
 	// 현재 Player를 잡고 있는 Enemy의 참조 반환 함수
 	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
 
+	
+	//위젯 바인딩 키 진행도
+	//UFUNCTION(BlueprintCallable)
+	float GetKeyProcessPercent();
+
+	UFUNCTION(BlueprintCallable)
+	void ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	class AKNormalZombieEnemy* FSMOwner;
+	//암살가능
+	class AKNormalZombieEnemy* ExecutionTarget;
+	bool bCanExecute;
+
+	class UKEnemyFSM* EnemyFSM;
+	bool GetIsGrabbed();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -25,6 +25,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void EnemySetState(EEnemyState newstate) override;
+
     virtual void EnemyIDLE() override;
 
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus) override;
@@ -45,4 +47,11 @@ public:
 
     virtual void EnemyDead() override;
 
+	//암살 이벤트 사용 함수 변수
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* AssassinBox;
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* AssassinSceneComp;
+
+	FTransform GetAttackerTransform();
 };
