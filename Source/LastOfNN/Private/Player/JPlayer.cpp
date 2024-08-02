@@ -130,7 +130,17 @@ void AJPlayer::BeginPlay()
 	Gun->SetActorHiddenInGame(true);
 
 	//FSM얻어오기
-	EnemyFSM = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass())->GetComponentByClass<UKEnemyFSM>();
+	AActor* EnemyActor = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass());
+	if ( EnemyActor )
+	{
+		// 액터가 존재하는 경우, 해당 액터에서 컴포넌트를 가져옵니다
+		EnemyFSM = EnemyActor->GetComponentByClass<UKEnemyFSM>();
+		if ( EnemyFSM  == nullptr)
+		{
+			return;
+		}
+	}
+
 }
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
