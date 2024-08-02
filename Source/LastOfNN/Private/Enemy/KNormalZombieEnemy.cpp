@@ -13,6 +13,8 @@
 #include <Kismet/GameplayStatics.h>
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Components/BoxComponent.h"
+#include "Components/SceneComponent.h"
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -25,9 +27,26 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
-		GetMesh()->SetRelativeScale3D(FVector(0.1f));
+		GetMesh()->SetRelativeScale3D(FVector(0.11f));
+	}
+	//암살 이벤트를 위한 충돌체 세팅
+	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
+	if ( AssassinBox )
+	{
+		AssassinBox->SetupAttachment(GetRootComponent());
+		AssassinBox->SetRelativeLocation(FVector(-105.f, 0.f, 0.f));
 	}
 
+	AssassinSceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("AttackerLocation"));
+	if ( AssassinSceneComp )
+	{
+		AssassinSceneComp->SetupAttachment(GetRootComponent());
+		AssassinSceneComp->SetRelativeLocation(FVector(-177.f, 5.f, 0.f));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to create AssassinSceneComp."));
+	}
 	//애니메이션 BP 할당
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_NormalZombieEnemyAnim.ABP_NormalZombieEnemyAnim_C'"));
 	if (tempClass.Succeeded())
@@ -45,7 +64,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	{
 		//소리감지 설정
 		HearingConfig->HearingRange = EnemySoundDetectionRadius;
-		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; //적일때만 탐지
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; 
 		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
 		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
@@ -61,9 +80,9 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemySoundDetectionRadius = 2000.0f;
 	EnemyWalkSpeed = 200.0f;
 	EnemyRunSpeed = 400.0f;
-	EnemyAttackRange = 150.0f;
-	EnemyAttackDelayTime = 0.5f;
-	EnemyMoveDistanceOnSound = 100.0f;
+	EnemyAttackRange = 145.0f;
+	EnemyAttackDelayTime = 2.0f;
+	EnemyMoveDistanceOnSound = 300.0f;
 	EnemyHP = 100;
 }
 
@@ -73,6 +92,7 @@ void AKNormalZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+	//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 
 	//소리감지처리함수 바인딩
 	if ( AIPerceptionComp )
@@ -91,6 +111,11 @@ void AKNormalZombieEnemy::BeginPlay()
 void AKNormalZombieEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AKNormalZombieEnemy::EnemySetState(EEnemyState newstate)
+{
+	Super::EnemySetState(newstate);
 }
 
 void AKNormalZombieEnemy::EnemyIDLE()
@@ -123,19 +148,24 @@ void AKNormalZombieEnemy::EnemyMove()
 
 		//속도를 뛰기속도로 변경
 		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 
 		// AI를 이용하여 계산된 위치로 이동
 		ai->MoveToLocation(NewLocation);
-		UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		//UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
+		
 		//만약 목적지에 도착했다면
-		if ( dir.Size() < 350.0f )
+		if ( dir.Size() < 150.0f )
 		{
 			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
 			//이동 플래그 초기화
 			bShouldMoveToSound = false;
+			//IDLE상태 전환
+			EnemySetState(EEnemyState::IDLE);
+			//FSMComponent->CurrentState = EEnemyState::IDLE;
 		}
 	}
 	else if (target)
@@ -144,6 +174,8 @@ void AKNormalZombieEnemy::EnemyMove()
 		EnemyDestination = target->GetActorLocation();
 		//방향
 		dir = EnemyDestination - GetActorLocation();
+		//거리 구하기
+		float targetdistance = dir.Size();
 
 		//(1단계) 길찾기 결과 얻어오기
 		//Navigation 객체 얻어오기
@@ -160,15 +192,33 @@ void AKNormalZombieEnemy::EnemyMove()
 		FPathFindingResult FindingResult = ns->FindPathSync(query);
 
 		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
-		if (FindingResult.Result == ENavigationQueryResult::Success)
+		if (FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 		{
 			//속도를 뛰기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+			UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 			//타깃에게 이동
 			ai->MoveToLocation(EnemyDestination);
+
+			//타깃과 가까워지면 공격상태 전환
+			//공격범위 안에 들어오면
+			if ( targetdistance < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+			{
+				//AI의 길찾기 기능을 정지한다.
+				ai->StopMovement();
+				//공격상태 전환
+				EnemySetState(EEnemyState::ATTACK);
+				//FSMComponent->CurrentState = EEnemyState::ATTACK;
+				//애니메이션 상태 동기화
+				//anim->EnemyAnimState = FSMComponent->CurrentState;
+				//공격 애니메이션 재생 활성화
+				anim->bEnemyAttackPlay = true;
+				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+				CurrentTime = EnemyAttackDelayTime;
+			}
 		}
 		else
 		{
@@ -176,6 +226,7 @@ void AKNormalZombieEnemy::EnemyMove()
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
 			//속도를 걷기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+			UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -191,21 +242,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
-	//타깃과 가까워지면 공격상태 전환
-	//공격범위 안에 들어오면
-	if (dir.Size() < EnemyAttackRange)
-	{
-		//AI의 길찾기 기능을 정지한다.
-		ai->StopMovement();
-		//공격상태 전환
-		FSMComponent->CurrentState = EEnemyState::ATTACK;
-		//애니메이션 상태 동기화
-		anim->EnemyAnimState = FSMComponent->CurrentState;
-		//공격 애니메이션 재생 활성화
-		anim->bEnemyAttackPlay = true;
-		//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
-		CurrentTime = EnemyAttackDelayTime;
-	}
+	
 }
 
 
@@ -245,9 +282,10 @@ void AKNormalZombieEnemy::EnemyAttack()
 	if (TargetDistance > EnemyAttackRange)
 	{
 		//이동상태 전환
-		FSMComponent->CurrentState = EEnemyState::MOVE;
+		EnemySetState(EEnemyState::MOVE);
+		//FSMComponent->CurrentState = EEnemyState::MOVE;
 		//애니메이션 상태 동기화
-		anim->EnemyAnimState = FSMComponent->CurrentState;
+		//anim->EnemyAnimState = FSMComponent->CurrentState;
 		//랜덤위치값을 이때도 다시 설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
@@ -281,7 +319,7 @@ void AKNormalZombieEnemy::EnemyGrab()
 	}
 
 	// QTE 이벤트가 시작되었음을 전역 변수에 표시
-	UKEnemyFSM::bIsQTEActive = true;
+	FSMComponent->bIsQTEActive = true;
 
 	// 모든 Enemy를 IDLE 상태로 유지
 	SetAllEnemiesToIdle();
@@ -297,7 +335,7 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 		AKNormalZombieEnemy* Enemy = *It;
 		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY && Enemy != this )
 		{
-			Enemy->FSMComponent->SetState(EEnemyState::IDLE);
+			EnemySetState(EEnemyState::IDLE);
 		}
 	}
 }
@@ -324,11 +362,12 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 	if (CurrentTime > EnemyTDamageDelayTime)
 	{
 		//IDLE상태로 전환
-		FSMComponent->CurrentState = EEnemyState::IDLE;
-		CurrentTime = 0;
-
+		EnemySetState(EEnemyState::IDLE);
+		//FSMComponent->CurrentState = EEnemyState::IDLE;
 		//애니메이션 상태 동기화
-		anim->EnemyAnimState = FSMComponent->CurrentState;
+		//anim->EnemyAnimState = FSMComponent->CurrentState;
+
+		CurrentTime = 0;
 	}
 }
 
@@ -351,4 +390,9 @@ void AKNormalZombieEnemy::EnemyDead()
 	{
 		Destroy();
 	}
+}
+
+FTransform AKNormalZombieEnemy::GetAttackerTransform()
+{
+	return AssassinSceneComp->GetComponentToWorld();
 }

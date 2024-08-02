@@ -58,6 +58,8 @@ public:
     class AKBaseEnemy* BaseEnemy;
 
     //QTE이벤트 진행 여부 확인 플래그
-    static bool bIsQTEActive;
+    bool bIsQTEActive;
 
+    //플레이어 캐릭터
+    class AJPlayer* Player;
 };

@@ -50,7 +50,11 @@ public:
 	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* ResistanceMontage;
+	UAnimMontage* ResistanceMontage;	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* ExecuteMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* GunShotMontage;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
@@ -63,7 +67,11 @@ public:
 
 	void PlayResistanceMontage();
 	void StopResistanceMontage();
+	void PlayResistanceReleaseSection();
 
+	void PlayExecuteMontage();
+
+	void PlayGunShotMontage();
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	
