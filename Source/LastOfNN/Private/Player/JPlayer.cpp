@@ -24,6 +24,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Enemy/KEnemyQTEWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Enemy/KBossZombieEnemy.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 
@@ -49,6 +51,8 @@ AJPlayer::AJPlayer()
 
 	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
 	Box->SetupAttachment(RootComponent);
+
+	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
 
 	// AI Perception Stimuli Source Component 생성 및 초기화
 	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
@@ -140,7 +144,16 @@ void AJPlayer::BeginPlay()
 			return;
 		}
 	}
-
+	AActor* BossEnemyActor = UGameplayStatics::GetActorOfClass(this, AKBossZombieEnemy::StaticClass());
+	if ( BossEnemyActor )
+	{
+		// 액터가 존재하는 경우, 해당 액터에서 컴포넌트를 가져옵니다
+		EnemyFSM = EnemyActor->GetComponentByClass<UKEnemyFSM>();
+		if ( EnemyFSM == nullptr )
+		{
+			return;
+		}
+	}
 }
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -183,7 +196,7 @@ void AJPlayer::AttackEndComboState()
 // Called every frame
 void AJPlayer::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime);	
 }
 
 // Called to bind functionality to input
@@ -226,6 +239,8 @@ void AJPlayer::Move(const FInputActionValue& Value)
 
 void AJPlayer::Look(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed )	return;
+
 	FVector2D LV = Value.Get<FVector2D>();
 	AddControllerPitchInput(-LV.Y);
 	AddControllerYawInput(LV.X);
@@ -379,19 +394,30 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 	CurrentKeyPresses = 0;
 	GrabbedEnemy = Enemy;
 
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+
+	bUseControllerRotationYaw = false;	
+	FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), GrabbedEnemy->GetActorLocation());
+
+	UKismetSystemLibrary::MoveComponentTo(
+	GetCapsuleComponent(),              // 이동할 컴포넌트
+	GetActorLocation(),                   // 목표 위치
+	rot,         // 목표 회전
+	false,                              // 즉시 스냅
+	true,
+	0.5f,                            // 텔레포트하지 않음
+	false,
+	EMoveComponentAction::Type::Move,
+	LatentInfo
+		);
+
 	// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
 	if ( CharacterAnimInstance )
 	{
 		CharacterAnimInstance->PlayResistanceMontage();
 	}
-
-	//// E키 이외의 모든 입력을 차단
-	//APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	//if ( PlayerController )
-	//{
-	//	PlayerController->SetIgnoreMoveInput(true);
-	//	PlayerController->SetIgnoreLookInput(true);
-	//}
 
 	// QTE UI 표시
 	StartQTEGrabEvent();
@@ -465,6 +491,7 @@ void AJPlayer::StopQTEGrabEvent(bool bSuccess)
 {
 	if ( _QTEUI )
 	{
+		bUseControllerRotationYaw = true;
 		// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
 		UWidgetAnimation* ResultAnim = nullptr;
 
