@@ -68,6 +68,11 @@ void UJCharacterAnimInstance::StopResistanceMontage()
 	Montage_Stop(0.2f, ResistanceMontage);
 }
 
+void UJCharacterAnimInstance::PlayResistanceReleaseSection()
+{
+	Montage_JumpToSection(TEXT("Release"), ResistanceMontage);
+}
+
 void UJCharacterAnimInstance::PlayExecuteMontage()
 {
 	Montage_Play(ExecuteMontage);

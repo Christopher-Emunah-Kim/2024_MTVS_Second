@@ -47,13 +47,12 @@ void AJBurningField::BeginPlay()
 	MakeSound();
 
 	SetLifeSpan(5);
-	//이걸해야 인식함-> 모지???
-	//Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	//오버랩되게 함
+	Box->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
 	Super::BeginPlay();
 	//던졌을때 그 위에 있는애들
 	Box->GetOverlappingActors(HitActors);
-
 	//불필드 안에 들어온 애들 배열 만들어서
 	Box->OnComponentBeginOverlap.AddDynamic(this, &AJBurningField::BeginOverlap);
 	//불필드 밖으로 나가면 배열에서 빼주고

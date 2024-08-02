@@ -389,7 +389,7 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 	// 저항 애니메이션 정지
 	if ( CharacterAnimInstance )
 	{
-		CharacterAnimInstance->StopResistanceMontage();
+		CharacterAnimInstance->PlayResistanceReleaseSection();
 	}
 
 	// QTE UI 제거 및 성공/실패 애니메이션 재생

@@ -67,6 +67,7 @@ public:
 
 	void PlayResistanceMontage();
 	void StopResistanceMontage();
+	void PlayResistanceReleaseSection();
 
 	void PlayExecuteMontage();
 
