@@ -22,6 +22,8 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Enemy/KEnemyQTEWidget.h"
+
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -88,8 +90,7 @@ void AJPlayer::PostInitializeComponents()
 }
 float AJPlayer::GetKeyProcessPercent()
 {
-	return CurrentKeyPresses / RequiredKeyPresses;
-	//이거 바꿔얗마
+	return (float)CurrentKeyPresses / RequiredKeyPresses;
 }
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
@@ -109,10 +110,10 @@ void AJPlayer::BeginPlay()
 	PerceptionStimuliSource->RegisterWithPerceptionSystem();
 	AttackEndComboState();
 
-	QTEWidget = CreateWidget<UUserWidget>(GetWorld(), QTEUIFactory);
-	QTEWidget->AddToViewport();
-	QTEWidget->SetPositionInViewport(FVector2D(700, 400));
-	QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+	_QTEUI = CreateWidget<UKEnemyQTEWidget>(GetWorld(), QTEUIFactory);
+	_QTEUI->AddToViewport();
+	_QTEUI->SetPositionInViewport(FVector2D(700, 400));
+	_QTEUI->SetVisibility(ESlateVisibility::Hidden);
 
 	if ( Box )
 	{
@@ -423,6 +424,8 @@ void AJPlayer::HandleQTEInput()
 	if ( bIsGrabbed )
 	{
 		CurrentKeyPresses++;
+		_QTEUI->PlayQTEPassed();
+		_QTEUI->UpdateMaterialProgress(GetKeyProcessPercent());
 		if ( CurrentKeyPresses >= RequiredKeyPresses )
 		{
 			// QTE 성공, Grab 상태 해제
@@ -435,44 +438,32 @@ void AJPlayer::HandleQTEInput()
 
 void AJPlayer::StartQTEGrabEvent()
 {
-	if ( QTEWidget )
+	if ( _QTEUI )
 	{
-		QTEWidget->SetVisibility(ESlateVisibility::Visible);
+		_QTEUI->SetVisibility(ESlateVisibility::Visible);
 
 		// ScaleFlash 애니메이션 재생
-		//UWidgetAnimation* ScaleFlashAnim = QTEWidget->GetAnimationByName(TEXT("ScaleFlash"));
-
-		/*UWidgetAnimation* ScaleFlashAnim = FindObject<UWidgetAnimation>(this, TEXT("ScaleFlash"));
-		if ( ScaleFlashAnim )
-		{
-			QTEWidget->PlayAnimation(ScaleFlashAnim, 0, 0);
-		}*/
+		_QTEUI->PlayScaleFlash();
 	}
 }
 
 void AJPlayer::StopQTEGrabEvent(bool bSuccess)
 {
-	if ( QTEWidget )
+	if ( _QTEUI )
 	{
-		//// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
-		//UWidgetAnimation* ResultAnim = nullptr;
+		// QTE 성공 시 Passed 애니메이션, 실패 시 Failed 애니메이션 재생
+		UWidgetAnimation* ResultAnim = nullptr;
 
-		//if ( bSuccess )
-		//{
-		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Passed"));
-		//}
-		//else
-		//{
-		//	ResultAnim = QTEWidget->GetAnimationByName(TEXT("Failed"));
-		//}
-
-		//if ( ResultAnim )
-		//{
-		//	QTEWidget->PlayAnimation(ResultAnim, 0, 1);
-		//}
-
+		if ( bSuccess )
+		{
+			
+		}
+		else
+		{
+			_QTEUI->PlayQTEFailed();
+		}
 		// 일정 시간 후 UI 제거
-		QTEWidget->SetVisibility(ESlateVisibility::Hidden);
+		_QTEUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

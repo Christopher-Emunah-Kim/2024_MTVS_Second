@@ -155,11 +155,13 @@ public:
 	void StopQTEGrabEvent(bool bSuccess);
 
 	UPROPERTY(EditDefaultsOnly, Category=UI)
-	TSubclassOf<class UUserWidget> QTEUIFactory;
+	TSubclassOf<class UKEnemyQTEWidget> QTEUIFactory;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UUserWidget* QTEWidget;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//class UUserWidget* QTEWidget;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UKEnemyQTEWidget* _QTEUI;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEscapeSuccess;
 
@@ -167,7 +169,7 @@ public:
 	AKBaseEnemy* GetGrabbedEnemy() const { return GrabbedEnemy; }
 
 	//위젯 바인딩 키 진행도
-	UFUNCTION(BlueprintCallable)
+	//UFUNCTION(BlueprintCallable)
 	float GetKeyProcessPercent();
 
 	UFUNCTION(BlueprintCallable)
