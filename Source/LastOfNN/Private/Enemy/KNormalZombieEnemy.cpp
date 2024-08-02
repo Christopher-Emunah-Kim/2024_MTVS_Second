@@ -15,6 +15,7 @@
 #include "EngineUtils.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
+#include <Enemy/KBossZombieEnemy.h>
 
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
@@ -82,6 +83,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemyRunSpeed = 400.0f;
 	EnemyAttackRange = 145.0f;
 	EnemyAttackDelayTime = 2.0f;
+	EnemyAttackDamage = 15.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
 	EnemyHP = 100;
 }
@@ -165,7 +167,6 @@ void AKNormalZombieEnemy::EnemyMove()
 			bShouldMoveToSound = false;
 			//IDLE상태 전환
 			EnemySetState(EEnemyState::IDLE);
-			//FSMComponent->CurrentState = EEnemyState::IDLE;
 		}
 	}
 	else if (target)
@@ -209,11 +210,8 @@ void AKNormalZombieEnemy::EnemyMove()
 			{
 				//AI의 길찾기 기능을 정지한다.
 				ai->StopMovement();
-				//공격상태 전환
+				//공격상태 전환 / 애니메이션 상태 동기화
 				EnemySetState(EEnemyState::ATTACK);
-				//FSMComponent->CurrentState = EEnemyState::ATTACK;
-				//애니메이션 상태 동기화
-				//anim->EnemyAnimState = FSMComponent->CurrentState;
 				//공격 애니메이션 재생 활성화
 				anim->bEnemyAttackPlay = true;
 				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
@@ -281,11 +279,8 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//거리가 공격범위를 벗어나면
 	if (TargetDistance > EnemyAttackRange)
 	{
-		//이동상태 전환
+		//이동상태 전환 /애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
-		//FSMComponent->CurrentState = EEnemyState::MOVE;
-		//애니메이션 상태 동기화
-		//anim->EnemyAnimState = FSMComponent->CurrentState;
 		//랜덤위치값을 이때도 다시 설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
@@ -295,8 +290,6 @@ void AKNormalZombieEnemy::EnemyGrab()
 {
 	Super::EnemyGrab();
 
-	// GRAB 상태로 전환
-	//FSMComponent->SetState(EEnemyState::GRAB);
 
 	// Grab 애니메이션 재생
 	if ( anim )
@@ -338,6 +331,14 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 			EnemySetState(EEnemyState::IDLE);
 		}
 	}
+	for ( TActorIterator<AKBossZombieEnemy> It(GetWorld()); It; ++It )
+	{
+		AKBossZombieEnemy* Enemy = *It;
+		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY )
+		{
+			EnemySetState(EEnemyState::IDLE);
+		}
+	}
 }
 
 float AKNormalZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -361,11 +362,8 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 	//전환대기시간이 지나면
 	if (CurrentTime > EnemyTDamageDelayTime)
 	{
-		//IDLE상태로 전환
+		//IDLE상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::IDLE);
-		//FSMComponent->CurrentState = EEnemyState::IDLE;
-		//애니메이션 상태 동기화
-		//anim->EnemyAnimState = FSMComponent->CurrentState;
 
 		CurrentTime = 0;
 	}

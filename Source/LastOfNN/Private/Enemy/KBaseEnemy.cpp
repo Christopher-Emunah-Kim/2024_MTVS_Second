@@ -94,7 +94,7 @@ void AKBaseEnemy::EnemyIDLE()
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 	//UE_LOG(LogTemp, Warning, TEXT("CurrentTime : %f"), CurrentTime);
 	//경과시간이 대기시간을 지나면
-	if (CurrentTime > IdleDelayTime)
+	if (CurrentTime > IdleDelayTime )
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Enemy Move!!!!"));
 		//이동상태로 전환
