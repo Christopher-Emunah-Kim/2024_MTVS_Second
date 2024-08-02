@@ -6,8 +6,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 
-//QTE이벤트 진행 여부 초기화
-bool UKEnemyFSM::bIsQTEActive = false;
+
 
 // Sets default values for this component's properties
 UKEnemyFSM::UKEnemyFSM()
@@ -24,6 +23,9 @@ UKEnemyFSM::UKEnemyFSM()
 void UKEnemyFSM::BeginPlay()
 {
     Super::BeginPlay();
+
+    //QTE이벤트 진행 여부 초기화
+    bIsQTEActive = false;
 
     // BaseEnemy 초기화
     BaseEnemy = Cast<AKBaseEnemy>(GetOwner());
@@ -49,11 +51,13 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     if ( bIsQTEActive && CurrentState != EEnemyState::GRAB )
     {
         SetState(EEnemyState::IDLE);
+        UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
     }
     else
     {
         //그외엔 계속 상태 업데이트
         UpdateState();
+        UE_LOG(LogTemp, Warning, TEXT("STATE UPDATE!!!!"));
     }
 }
 

@@ -309,7 +309,7 @@ void AKNormalZombieEnemy::EnemyGrab()
 	}
 
 	// QTE 이벤트가 시작되었음을 전역 변수에 표시
-	UKEnemyFSM::bIsQTEActive = true;
+	FSMComponent->bIsQTEActive = true;
 
 	// 모든 Enemy를 IDLE 상태로 유지
 	SetAllEnemiesToIdle();
