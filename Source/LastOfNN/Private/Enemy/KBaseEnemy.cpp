@@ -78,6 +78,16 @@ bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radiu
 	return result;
 }
 
+
+
+void AKBaseEnemy::EnemySetState(EEnemyState newstate)
+{
+	//상태 전환
+	FSMComponent->CurrentState = newstate;
+	//애니메이션 상태 동기화
+	anim->EnemyAnimState = newstate;
+}
+
 void AKBaseEnemy::EnemyIDLE()
 {
 	//시간이 흐르면
@@ -87,8 +97,11 @@ void AKBaseEnemy::EnemyIDLE()
 	if (CurrentTime > IdleDelayTime)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Enemy Move!!!!"));
-		//이동상태로 전환한다.
-		FSMComponent->CurrentState = EEnemyState::MOVE;
+		//이동상태로 전환
+		EnemySetState(EEnemyState::MOVE);
+		//FSMComponent->CurrentState = EEnemyState::MOVE;
+		////애니메이션 상태 동기화
+		//anim->EnemyAnimState = FSMComponent->CurrentState;
 		//속도를 걷기속도로 설정
 		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
 		//BlendSpace Anim에 액터의 속도 할당
@@ -97,8 +110,7 @@ void AKBaseEnemy::EnemyIDLE()
 		//경과시간 초기화
 		CurrentTime = 0;
 
-		//애니메이션 상태 동기화
-		anim->EnemyAnimState = FSMComponent->CurrentState;
+		
 		//랜덤위치값 최초설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
@@ -164,7 +176,8 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	if (EnemyHP > 0)
 	{
 		//피격상태 전환
-		FSMComponent->CurrentState = EEnemyState::TAKEDAMAGE;
+		//FSMComponent->CurrentState = EEnemyState::TAKEDAMAGE;
+		EnemySetState(EEnemyState::TAKEDAMAGE);
 
 		CurrentTime = 0;
 
@@ -176,14 +189,15 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	else
 	{
 		//죽음상태 전환
-		FSMComponent->CurrentState = EEnemyState::DEAD;
+		/*FSMComponent->CurrentState = EEnemyState::DEAD;*/
+		EnemySetState(EEnemyState::DEAD);
 		//충돌체비활성화
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		//죽음애니메이션 재생
 		anim->PlayEnemyTDamageAnim(TEXT("EnemyDie"));
 	}
-	//애니메이션 상태 동기화
-	anim->EnemyAnimState = FSMComponent->CurrentState;
+	////애니메이션 상태 동기화
+	//anim->EnemyAnimState = FSMComponent->CurrentState;
 	//이땐 AI길찾기 기능 정지시켜두기
 	ai->StopMovement();
 }

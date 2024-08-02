@@ -66,6 +66,10 @@ public:
 	
 	//기본 가상함수 및 필요 속성
 	
+	//State Setting과 Animation동기화 처리
+	virtual void EnemySetState(EEnemyState newstate);
+
+
     //**대기상태처리함수
 	virtual void EnemyIDLE();
 	//대기시간

@@ -25,6 +25,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void EnemySetState(EEnemyState newstate) override;
+
     virtual void EnemyIDLE() override;
 
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus) override;
