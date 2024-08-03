@@ -440,7 +440,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			//컨트롤러 떼기
 			Subsystem->RemoveMappingContext(IMC_Joel);
 		}
-		CharaterState = ECharacterState::ECS;
+		CharaterState = ECharacterState::ECS_Executing;
 
 		CharacterAnimInstance->PlayExecuteMontage();
 		//몽타주 끝나면 상태 바꾸기
@@ -454,8 +454,6 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			GetWorldTimerManager().SetTimer(ExcecuteTimer, this, &AJPlayer::EnemyIsDead, 6.5f, false);
 		}
 	}
-
-
 }
 
 void AJPlayer::EnemyIsDead()
