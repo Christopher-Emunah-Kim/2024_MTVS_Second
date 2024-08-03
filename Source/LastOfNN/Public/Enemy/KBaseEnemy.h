@@ -114,6 +114,7 @@ public:
 
 	//**공격상태처리함수
     virtual void EnemyAttack();
+	virtual void EnemySpecialAttack();
 	//Enemy탐지범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyNoticeRange;

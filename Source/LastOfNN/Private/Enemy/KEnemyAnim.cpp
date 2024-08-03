@@ -8,4 +8,9 @@ void UKEnemyAnim::OnEnemyEndAttackAnimation()
 	bEnemyAttackPlay = false;
 }
 
+void UKEnemyAnim::OnBossThrowGrenadeAnimation()
+{
+	bBossThrowGrenade = true;
+}
+
 

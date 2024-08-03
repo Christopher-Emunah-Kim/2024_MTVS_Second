@@ -41,5 +41,18 @@ public:
 
     virtual void EnemyDead() override;
 
+	//Boss수류탄 공격 함수
+	void BossThrowGrenade();
+	//Boss 수류탄 인스턴스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	TSubclassOf<class AKBossZombieGrenade> BossGrenade;
+	
+	//Boss 수류탄 데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	float BossGrenadeAttackDamage;
+
+	//Boss 수류탄 공격범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	float BossGrenadeAttackRange;
 
 };

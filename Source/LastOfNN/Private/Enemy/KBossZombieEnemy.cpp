@@ -4,6 +4,7 @@
 #include "Enemy/KBossZombieEnemy.h"
 #include "Player/JPlayer.h"
 #include "Enemy/KEnemyAnim.h"
+#include "Enemy/KBossZombieGrenade.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"
 #include "Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h"
@@ -47,7 +48,8 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 	EnemyWalkSpeed = 150.0f;
 	EnemyRunSpeed = 300.0f;
 	EnemyAttackRange = 145.0f;
-	//원거리 범위 필요
+	BossGrenadeAttackDamage = 60.0f;
+	BossGrenadeAttackRange = 700.0f;
 	EnemyAttackDelayTime = 2.0f;
 	EnemyAttackDamage = 60.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
@@ -89,6 +91,19 @@ void AKBossZombieEnemy::EnemyMove()
 
 	if ( target )
 	{
+		//보스 특수 공격(수류탄) 발동을 위한 상태 변경 조건 설정
+		float DistanceToTarget = FVector::Distance(target->GetActorLocation(), GetActorLocation());
+		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= BossGrenadeAttackRange)
+		{
+			// 일정 확률로 원거리공격
+			float RandomChance = FMath::FRand();
+			if ( RandomChance < 0.3f ) // 30% 확률
+			{
+				// 공격 상태로 전환
+				FSMComponent->SetState(EEnemyState::ATTACK);
+			}
+		}
+
 		//타깃목적지
 		EnemyDestination = target->GetActorLocation();
 		//방향
@@ -163,34 +178,31 @@ void AKBossZombieEnemy::EnemyAttack()
 {
 	Super::EnemyAttack();
 
+	//타깃과의 거리를 구하고
+	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
 	//시간이 흐르다가
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	//공격시간이 되면
-	if ( CurrentTime > EnemyAttackDelayTime )
+	
+	//보스 근접공격
+	//공격시간이 되고, 근접공격범위 안이라면
+	if ( CurrentTime > EnemyAttackDelayTime && TargetDistance <= EnemyAttackRange)
 	{
-		// 일정 확률로 Grab 상태로 전환
-		float RandomChance = FMath::FRand();
-		if ( RandomChance < 0.3f ) // 30% 확률로 Grab
-		{
-			//EnemyGrab();
-			CurrentTime = 0;
-		}
-		else
-		{
-			//공격한다.(내용은 나중에 구현)
-			GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
+		//공격한다.(내용은 나중에 구현)
+		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
 
-			//공격 애니메이션 재생 활성화
-			anim->bEnemyAttackPlay = true;
-		}
+		//공격 애니메이션 재생 활성화
+		anim->bEnemyAttackPlay = true;
 
 		// 대기 시간 초기화
 		CurrentTime = 0;
-
 	}
-	//타깃과의 거리를 구하고
-	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
-	//거리가 공격범위를 벗어나면
+	//보스 원거리 공격
+	if ( anim->bBossThrowGrenade )
+	{
+		BossThrowGrenade();
+	}
+
+	//근접공격거리 공격범위를 벗어나면 이동상태 전환
 	if ( TargetDistance > EnemyAttackRange )
 	{
 		//이동상태 전환
@@ -247,5 +259,24 @@ void AKBossZombieEnemy::EnemyDead()
 	if ( P.Z < -200.0f )
 	{
 		Destroy();
+	}
+}
+
+//보스 수류탄 공격 함수
+void AKBossZombieEnemy::BossThrowGrenade()
+{
+	if ( BossGrenade )
+	{
+		//발사체 생성위치
+		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50); 
+		FRotator SpawnRotation = (target->GetActorLocation() - GetActorLocation()).Rotation();
+
+		AKBossZombieGrenade* Grenade = GetWorld()->SpawnActor<AKBossZombieGrenade>(BossGrenade, SpawnLocation, SpawnRotation);
+		if ( Grenade && anim->bBossThrowGrenade == true )
+		{
+			FVector LaunchDirection = SpawnRotation.Vector();
+			Grenade->BossFireInDirection(LaunchDirection);
+		}
+
 	}
 }
