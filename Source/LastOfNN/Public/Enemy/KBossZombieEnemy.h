@@ -43,10 +43,20 @@ public:
 
 	//Boss수류탄 공격 함수
 	void BossThrowGrenade();
+
+	//Boss 수류탄 애니메이션 재생함수
+	void PlayGrenadeAnimation();
+
 	//Boss 수류탄 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	TSubclassOf<class AKBossZombieGrenade> BossGrenade;
+
+	//Boss 수류탄 공격체크
+	bool isBossCanThrowGrenade = false;
 	
+	//Boss 수류탄 발사주기
+	float BossGrenadeDelayTime = 7.0f;
+
 	//Boss 수류탄 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	float BossGrenadeAttackDamage;

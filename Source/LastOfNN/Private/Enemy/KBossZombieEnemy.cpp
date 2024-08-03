@@ -89,18 +89,30 @@ void AKBossZombieEnemy::EnemyMove()
 	FVector dir;
 	FVector EnemyDestination;
 
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+
 	if ( target )
 	{
+		
 		//보스 특수 공격(수류탄) 발동을 위한 상태 변경 조건 설정
 		float DistanceToTarget = FVector::Distance(target->GetActorLocation(), GetActorLocation());
-		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= BossGrenadeAttackRange)
+		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= BossGrenadeAttackRange) 
 		{
-			// 일정 확률로 원거리공격
-			float RandomChance = FMath::FRand();
-			if ( RandomChance < 0.3f ) // 30% 확률
+			if( CurrentTime > BossGrenadeDelayTime ) 
 			{
-				// 공격 상태로 전환
-				FSMComponent->SetState(EEnemyState::ATTACK);
+				//속도를 0으로 만들어
+				GetCharacterMovement()->MaxWalkSpeed = 0;
+				ai->StopMovement();
+				//BlendSpace Anim에 액터의 속도 할당
+				anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+				anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+				//원거리 공격 상태로 전환
+				isBossCanThrowGrenade = true;
+				EnemySetState(EEnemyState::ATTACK);
+				UE_LOG(LogTemp, Error, TEXT("Grenade Ready"));
+				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+				CurrentTime = 0;
+				return;
 			}
 		}
 
@@ -196,14 +208,24 @@ void AKBossZombieEnemy::EnemyAttack()
 		// 대기 시간 초기화
 		CurrentTime = 0;
 	}
-	//보스 원거리 공격
-	if ( anim->bBossThrowGrenade )
+	if ( isBossCanThrowGrenade )
 	{
-		BossThrowGrenade();
-	}
+		anim->bEnemyAttackPlay = true;
+		
+		// 애니메이션이 끝날 때까지 보스를 멈추게 함
+		GetCharacterMovement()->MaxWalkSpeed = 0;
+		ai->StopMovement();
 
+		//수류탄 소환애니메이션 재생
+		PlayGrenadeAnimation();
+
+		// 대기 시간 초기화
+		CurrentTime = 0;
+
+		return;
+	}
 	//근접공격거리 공격범위를 벗어나면 이동상태 전환
-	if ( TargetDistance > EnemyAttackRange )
+	if ( TargetDistance > EnemyAttackRange && isBossCanThrowGrenade == false )
 	{
 		//이동상태 전환
 		EnemySetState(EEnemyState::MOVE);
@@ -265,18 +287,49 @@ void AKBossZombieEnemy::EnemyDead()
 //보스 수류탄 공격 함수
 void AKBossZombieEnemy::BossThrowGrenade()
 {
-	if ( BossGrenade )
+	if ( BossGrenade && isBossCanThrowGrenade )
 	{
 		//발사체 생성위치
-		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50); 
+		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 120); 
 		FRotator SpawnRotation = (target->GetActorLocation() - GetActorLocation()).Rotation();
-
+		// 생성된 수류탄을 저장
 		AKBossZombieGrenade* Grenade = GetWorld()->SpawnActor<AKBossZombieGrenade>(BossGrenade, SpawnLocation, SpawnRotation);
 		if ( Grenade && anim->bBossThrowGrenade == true )
 		{
-			FVector LaunchDirection = SpawnRotation.Vector();
+			//발사지연타이머 설정
+			FTimerHandle LaunchTimerHandle;
+
+			// 1.2초 후에 발사되도록 타이머 설정
+			GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, FTimerDelegate::CreateLambda([=]()
+				{
+					// 수류탄 발사
+					FVector LaunchDirection = SpawnRotation.Vector();
+					Grenade->BossFireInDirection(LaunchDirection);
+					UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));
+
+				}), 2.5f, false); // 1.2초 후에 한 번만 실행되도록 설정
+			
+			/*FVector LaunchDirection = SpawnRotation.Vector();
 			Grenade->BossFireInDirection(LaunchDirection);
+			UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));*/
 		}
 
+		//체크변수 초기화
+		isBossCanThrowGrenade = false;
+		anim->bBossThrowGrenade = false;
 	}
 }
+
+
+void AKBossZombieEnemy::PlayGrenadeAnimation()
+{
+	//보스 원거리 공격 애니메이션 몽타주 재생
+	anim->PlayBossEnemyGrenadeAnim(TEXT("ThrowGrenade"));
+
+	if ( anim->bBossThrowGrenade )
+	{
+		BossThrowGrenade();
+	}
+	isBossCanThrowGrenade = false;
+}
+

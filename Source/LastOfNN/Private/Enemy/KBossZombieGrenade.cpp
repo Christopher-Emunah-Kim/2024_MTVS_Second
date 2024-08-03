@@ -31,8 +31,8 @@ AKBossZombieGrenade::AKBossZombieGrenade()
 
 	ProjectileComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComp"));
 	ProjectileComp->SetUpdatedComponent(CollisionComp);
-	ProjectileComp->InitialSpeed = 2000.0f;
-	ProjectileComp->MaxSpeed = 3000.0f;
+	ProjectileComp->InitialSpeed = 1500.0f;
+	ProjectileComp->MaxSpeed = 2000.0f;
 	ProjectileComp->bRotationFollowsVelocity = true;
 	ProjectileComp->bShouldBounce = true;
 	ProjectileComp->Bounciness = 0.3f;
@@ -45,6 +45,7 @@ void AKBossZombieGrenade::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	target = Cast<AJPlayer>(UGameplayStatics::GetActorOfClass(this, AJPlayer::StaticClass()));
 }
 
 // Called every frame
@@ -56,13 +57,35 @@ void AKBossZombieGrenade::Tick(float DeltaTime)
 
 void AKBossZombieGrenade::BossFireInDirection(const FVector& ShootDirection)
 {
-	check(target);
 	if ( nullptr == target )
 	{
 		return;
 	}
 	//전달받은 방향으로 수류탄 발사
-	ProjectileComp->Velocity = ShootDirection * ProjectileComp->InitialSpeed;
+	//ProjectileComp->Velocity = ShootDirection * ProjectileComp->InitialSpeed;
+
+	// 발사지연타이머 설정
+	FTimerHandle LaunchTimerHandle;
+
+	// 1.2초 후에 발사되도록 타이머 설정
+	FTimerDelegate TimerDel;
+	TimerDel.BindLambda([this, ShootDirection]()
+	{
+		//포물선을 그리도록 수류탄에 UpVector추가
+		FVector LaunchVelocity = ShootDirection * ProjectileComp->InitialSpeed;
+		LaunchVelocity.Z += 500.0f; 
+		// 전달받은 방향으로 수류탄 발사
+		ProjectileComp->Velocity = LaunchVelocity;
+	});
+
+	GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, TimerDel, 3.0f, false);
+	// 1.2초 후에 한 번만 실행되도록 설정
+}
+
+void AKBossZombieGrenade::OnMyThrowGrenade(const FVector& ShootDirection)
+{
+	////전달받은 방향으로 수류탄 발사
+	//ProjectileComp->Velocity = ShootDirection * ProjectileComp->InitialSpeed;
 }
 
 void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

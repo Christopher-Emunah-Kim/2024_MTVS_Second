@@ -53,17 +53,18 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::GRAB )
     {
         SetState(EEnemyState::IDLE);
-        UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
+        //UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
     }
     else if (Player->GetIsExecuting())
     {
         SetState(EEnemyState::IDLE);
     }
+    
     else
     {
         //그외엔 계속 상태 업데이트
         UpdateState();
-        UE_LOG(LogTemp, Warning, TEXT("STATE UPDATE!!!!"));
+        //UE_LOG(LogTemp, Warning, TEXT("STATE UPDATE!!!!"));
     }
 }
 

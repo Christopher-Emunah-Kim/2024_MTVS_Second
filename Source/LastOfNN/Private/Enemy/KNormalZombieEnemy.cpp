@@ -162,7 +162,7 @@ void AKNormalZombieEnemy::EnemyMove()
 		//만약 목적지에 도착했다면
 		if ( dir.Size() < 150.0f )
 		{
-			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
+			//UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
 			//이동 플래그 초기화
 			bShouldMoveToSound = false;
 			//IDLE상태 전환
@@ -197,7 +197,7 @@ void AKNormalZombieEnemy::EnemyMove()
 		{
 			//속도를 뛰기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
-			UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());

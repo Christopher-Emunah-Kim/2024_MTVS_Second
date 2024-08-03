@@ -11,6 +11,9 @@ void UKEnemyAnim::OnEnemyEndAttackAnimation()
 void UKEnemyAnim::OnBossThrowGrenadeAnimation()
 {
 	bBossThrowGrenade = true;
+
+
+
 }
 
 

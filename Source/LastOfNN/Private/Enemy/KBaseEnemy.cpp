@@ -90,7 +90,7 @@ void AKBaseEnemy::EnemyIDLE()
 	//경과시간이 대기시간을 지나면
 	if (CurrentTime > IdleDelayTime )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Move!!!!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Enemy Move!!!!"));
 		//이동상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
 		//속도를 걷기속도로 설정
@@ -118,7 +118,7 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
 	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
-		UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
+		//UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
 		
 		// 소리 발생 위치와 강도 저장
 		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치

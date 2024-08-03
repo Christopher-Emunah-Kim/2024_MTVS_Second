@@ -49,8 +49,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	class UNiagaraSystem* BossGrenadeVFX;
 
-	//발사함수
+	//Boss가 호출할 발사함수
 	void BossFireInDirection(const FVector& ShootDirection);
+
+	//전달받은 Direction값으로 발사 하는 내부함수
+	void OnMyThrowGrenade(const FVector& ShootDirection);
 
 	//충돌처리함수
 	void GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
