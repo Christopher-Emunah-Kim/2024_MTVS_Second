@@ -34,9 +34,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
 	//FSM 인스턴스
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
