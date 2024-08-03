@@ -6,7 +6,8 @@ enum class ECharacterState : uint8
 	ECS_Grabbed UMETA(DisplayName = "Grabbed"),
 	ECS_Escape UMETA(DisplayName = "Escape"),
 	ECS_UnGrabbed UMETA(DisplayName = "UnGrabbed"),
-	ECS_Crouching UMETA(DisplayName = "Crouching")
+	ECS_Crouching UMETA(DisplayName = "Crouching"),
+	ECS_Executing UMETA(DisplayName = "Executing")
 };
 
 UENUM(BlueprintType)

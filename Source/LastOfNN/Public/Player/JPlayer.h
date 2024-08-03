@@ -49,12 +49,16 @@ public:
 
 	//이동 방향
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UCameraComponent* CameraComp;	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USpringArmComponent* SpringArmComp;
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* Box;
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* RightAttackSphere;	
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* LeftAttackSphere;
 
 
 	UPROPERTY(EditAnywhere, Category = "Input")
@@ -81,7 +85,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_EquipThrowWeapon;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_UnEquipped;
+	UInputAction* IA_UnEquipped;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_BatEquipped;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -97,23 +103,34 @@ public:
 	//플레이어 컨트롤러
 	APlayerController* PlayerController;
 	
-	void TakeDown(const FInputActionValue& Value);
+	void NewTakeDown(const FInputActionValue& Value);
 	//암살 후에
 	void AfterTakeDown();
 	FTimerHandle TakeDownTimer;
+	FTimerHandle SetCameraBackTimer;
 
+	void SetCameraBack();
+	void SetCameraBoomToCharacter(bool bSetCameraBoom);
 	//상태변경함수
 	void SetStateEquipGun();
 	void SetStateEquipThrowWeapon();
 	void SetStateUnEquipped();
+	void SetStateBatEquipped();
 	UCameraComponent* GetCamera();
 
+	//총 기
 	UPROPERTY()
 	APlayerGun* Gun;
 
 	UPlayerLockOn* LockOnComp;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerGun> GunClass;
+
+	//배트
+	UPROPERTY()
+	class AJPlayerBat* Bat;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AJPlayerBat> BatClass;
 
 	//이동 관련
 	FVector direction;
@@ -127,11 +144,17 @@ public:
 	bool bCanNextCombo;
 	float CurrentCombo;
 	float MaxCombo = 4;
+
 	UPROPERTY(EditAnywhere)
 	UAnimMontage* AttackMontage;
 
 	void PostInitializeComponents() override;
 	
+	//데미지를 받을 액터들
+	TArray<AActor*> HitActors;
+	UFUNCTION()
+	void OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	UFUNCTION(BlueprintCallable)
 	ECharacterState GetCharaterState() const;
 	UFUNCTION(BlueprintCallable)
@@ -173,6 +196,7 @@ public:
 	//UFUNCTION(BlueprintCallable)
 	float GetKeyProcessPercent();
 
+	//암살박스 닿으면
 	UFUNCTION(BlueprintCallable)
 	void ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -186,10 +210,16 @@ public:
 	bool GetIsGrabbed();
 	void EnemyIsDead();
 
+	//체력
 	float HP;
 	float MAXHP = 100;
 
+	//향상된 입력
 	class UEnhancedInputLocalPlayerSubsystem* Subsystem;
+
+	//데미지 받을때
+	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -26,7 +26,14 @@ void UJCharacterAnimInstance::NativeInitializeAnimation()
 void UJCharacterAnimInstance::JumpToAttackMontageSection(int32 NewSection)
 {
 	UE_LOG(LogTemp, Error, TEXT("Jumptoattack"));
-	Montage_JumpToSection(GetAttackMontageSectionName(NewSection), AttackMontage);
+	if ( AnimCharacterEquipState == ECharacterEquipState::ECES_UnEquipped )
+	{
+		Montage_JumpToSection(GetAttackMontageSectionName(NewSection), AttackMontage);
+	}
+	else if(AnimCharacterEquipState ==ECharacterEquipState::ECES_BatEquipped)
+	{
+		Montage_JumpToSection(GetAttackMontageSectionName(NewSection), BatMontage);
+	}
 }
 
 FName UJCharacterAnimInstance::GetAttackMontageSectionName(int32 Section)
@@ -55,7 +62,14 @@ void UJCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 void UJCharacterAnimInstance::PlayAttackMontage()
 {
-	Montage_Play(AttackMontage, 1.0f);
+	if (AnimCharacterEquipState == ECharacterEquipState::ECES_UnEquipped)
+	{
+		Montage_Play(AttackMontage, 1.0f);
+	}
+	else if ( AnimCharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
+	{
+		Montage_Play(BatMontage, 1.0f);
+	}
 }
 
 void UJCharacterAnimInstance::PlayResistanceMontage()
