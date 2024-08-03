@@ -440,7 +440,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			//컨트롤러 떼기
 			Subsystem->RemoveMappingContext(IMC_Joel);
 		}
-		CharaterState = ECharacterState::ECS_Crouching;
+		CharaterState = ECharacterState::ECS;
 
 		CharacterAnimInstance->PlayExecuteMontage();
 		//몽타주 끝나면 상태 바꾸기
