@@ -140,6 +140,11 @@ void AKBaseEnemy::EnemyAttack()
 	
 }
 
+void AKBaseEnemy::EnemySpecialAttack()
+{
+	
+}
+
 void AKBaseEnemy::EnemyGrab()
 {
 	

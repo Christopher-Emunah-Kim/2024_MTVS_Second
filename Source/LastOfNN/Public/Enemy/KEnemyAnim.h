@@ -29,6 +29,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)
 	void OnEnemyEndAttackAnimation();
 
+	//Boss 수류탄 스폰할지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
+	bool bBossThrowGrenade = false;
+
+	//BossGrenadeThrow 노티파이 이벤트 함수
+	UFUNCTION(BlueprintCallable, Category = FSMEvent)
+	void OnBossThrowGrenadeAnimation();
+
 	//피격, 죽음 애니메이션 몽타주 재생 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayEnemyTDamageAnim(FName sectionName);

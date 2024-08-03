@@ -253,7 +253,7 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//시간이 흐르다가
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 	//공격시간이 되면
-	if (CurrentTime>EnemyAttackDelayTime)
+	if (CurrentTime>EnemyAttackDelayTime && target->GetCharaterState() != ECharacterState::ECS_Crouching)
 	{
 		// 일정 확률로 Grab 상태로 전환
 		float RandomChance = FMath::FRand();

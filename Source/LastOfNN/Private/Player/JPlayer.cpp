@@ -28,7 +28,9 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
-
+#include "Components/SphereComponent.h"
+#include "Engine/DamageEvents.h"
+#include "Player/JPlayerBat.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -69,6 +71,14 @@ AJPlayer::AJPlayer()
 	//Crouch함수 사용을 위한 등록
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
+	RightAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("RightAttackSphere"));
+	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_RightHand"));
+	RightAttackSphere->SetSphereRadius(3.f);
+
+	LeftAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LeftAttackSphere"));
+	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_LeftHand"));
+	LeftAttackSphere->SetSphereRadius(3.f);
+
 }
 void AJPlayer::PostInitializeComponents()
 {
@@ -95,16 +105,7 @@ void AJPlayer::PostInitializeComponents()
 	});
 	
 }
-float AJPlayer::GetKeyProcessPercent()
-{
-	return (float)CurrentKeyPresses / RequiredKeyPresses;
-}
-bool AJPlayer::GetIsGrabbed()
-{
-	return bIsGrabbed;
-}
 
-// Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
 	Super::BeginPlay();
@@ -131,10 +132,23 @@ void AJPlayer::BeginPlay()
 	{
 		Box->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
 	}
+	if ( RightAttackSphere )
+	{
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::OverlapDamage);
+	}	
+	if ( LeftAttackSphere )
+	{
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::OverlapDamage);
+	}
 
 	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
 	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
 	Gun->SetActorHiddenInGame(true);
+
+	Bat = GetWorld()->SpawnActor<AJPlayerBat>(BatClass);
+	Bat->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHand"));
+	Bat->SetActorHiddenInGame(true);
+	Bat->SetActorEnableCollision(false);
 
 	//FSM얻어오기
 	AActor* EnemyActor = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass());
@@ -158,7 +172,82 @@ void AJPlayer::BeginPlay()
 		}
 	}
 	PlayerController = Cast<APlayerController>(GetController());
+
+	HP = MAXHP;
 }
+
+void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//if ( OtherActor && OtherActor != this )
+	//{
+	//	HitActors.AddUnique(OtherActor); //데미지를 입을 액터들
+	//}
+	//for ( AActor* Actor : HitActors )
+	//{
+		//if ( Actor )
+		//{
+			//일단 타격데미지 10으로 설정
+	Boss = Cast<AKBossZombieEnemy>(OtherActor);
+	if ( Boss  && OtherComp == Boss->GetCapsuleComponent())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Boss  Applied"));
+		FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = nullptr;
+		//애들 컨트롤러 얻어와서 데미지 주기
+		APawn* ActorPawn = Cast<APawn>(OtherActor);
+		if ( ActorPawn )
+		{
+			ActorController = ActorPawn->GetController();
+		}
+		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+	}
+	FSMOwner = Cast<AKNormalZombieEnemy>(OtherActor);
+
+	if (FSMOwner && OtherComp == FSMOwner->GetCapsuleComponent() )
+	{
+		UE_LOG(LogTemp, Log, TEXT("Applied"));
+		FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = nullptr;
+		//애들 컨트롤러 얻어와서 데미지 주기
+		APawn* ActorPawn = Cast<APawn>(OtherActor);
+		if ( ActorPawn )
+		{
+			ActorController = ActorPawn->GetController();
+		}
+		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+	}
+}
+float AJPlayer::GetKeyProcessPercent()
+{
+	return (float)CurrentKeyPresses / RequiredKeyPresses;
+}
+bool AJPlayer::GetIsExecuting()
+{
+	return bIsExecuting;
+}
+
+bool AJPlayer::GetIsGrabbed()
+{
+	return bIsGrabbed;
+}
+
+float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float DamageToApply = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser); //늘 부모를 오버라이드 해주자
+	DamageToApply = FMath::Min(HP, DamageToApply); //남은 체력보다 입을 데미지가 더 크면(체력이 0이면) 데미지는 0이 된다.
+	HP -= DamageToApply;
+	UE_LOG(LogTemp, Warning, TEXT("%f"), HP);
+
+	if ( HP <= 0 ) //체력이 0이하가 되면 
+	{	
+		DetachFromControllerPendingDestroy(); //컨트롤러 떼버림
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트 떼어내서
+	}
+
+	return DamageToApply;	
+}
+
+// Called when the game starts or when spawned
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -183,6 +272,15 @@ void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 
 void AJPlayer::AttackStartComboState()
 {
+	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
+	{
+		MaxCombo = 3;
+	}
+	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped )
+	{
+		MaxCombo = 4;
+	}
+
 	bCanNextCombo = true;
 	bIsComboInputOn = false;
 	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
@@ -200,6 +298,8 @@ void AJPlayer::AttackEndComboState()
 void AJPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);	
+
+	CameraComp->FieldOfView = FMath::Lerp(CameraComp->FieldOfView, TargetFOV, DeltaTime * 5);
 }
 
 // Called to bind functionality to input
@@ -211,21 +311,23 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AJPlayer::Move);
 		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AJPlayer::Look);
 		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &AJPlayer::Fire);
-		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AJPlayer::Zoom);
+		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Started, this, &AJPlayer::Zoom);
+		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Completed, this, &AJPlayer::ZoomOut);
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Started, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Run, ETriggerEvent::Completed, this, &AJPlayer::Run);
 		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AJPlayer::Crouching);
 		EnhancedInputComponent->BindAction(IA_Grab, ETriggerEvent::Triggered, this, &AJPlayer::HandleQTEInput);
-		EnhancedInputComponent->BindAction(IA_TakeDown, ETriggerEvent::Triggered, this, &AJPlayer::TakeDown);
+		EnhancedInputComponent->BindAction(IA_TakeDown, ETriggerEvent::Triggered, this, &AJPlayer::NewTakeDown);
 		EnhancedInputComponent->BindAction(IA_EquipGun, ETriggerEvent::Triggered, this, &AJPlayer::SetStateEquipGun);
 		EnhancedInputComponent->BindAction(IA_EquipThrowWeapon, ETriggerEvent::Triggered, this, &AJPlayer::SetStateEquipThrowWeapon);
 		EnhancedInputComponent->BindAction(IA_UnEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateUnEquipped);
+		EnhancedInputComponent->BindAction(IA_BatEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateBatEquipped);
 	}
 }
 
 void AJPlayer::Move(const FInputActionValue& Value)
 {
-	if ( !bIsGrabbed )                                                                   
+	if ( !bIsGrabbed  || !bIsAttacking)                                                                   
 	{
 		const FVector2D Vector = Value.Get<FVector2D>();
 		FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
@@ -255,7 +357,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 		CharacterAnimInstance->PlayGunShotMontage();
 		Gun->PullTrigger();
 	}
-	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped )
+	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped || CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
 	{
 		if ( bIsAttacking )
 		{
@@ -269,7 +371,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 		{
 			AttackStartComboState();
 			CharacterAnimInstance->JumpToAttackMontageSection(CurrentCombo);
-			CharacterAnimInstance->Montage_Play(AttackMontage);
+			CharacterAnimInstance->PlayAttackMontage();
 			bIsAttacking = true;
 		}
 	}
@@ -277,24 +379,47 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 void AJPlayer::Zoom(const FInputActionValue& Value)
 {
 	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
+	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped)
+	{
+		TargetFOV = 30;
+		LockOnComp->SetTargetLockTrue();
+	}
+	else if ( CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped )
+	{
+		TargetFOV = 60;
+	}
+
 }
+void AJPlayer::ZoomOut(const FInputActionValue& Value)
+{
+	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
+	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped || CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped )
+	{
+		TargetFOV = 90;
+	}
+	LockOnComp->SetTargetLockFalse();
+
+}
+
 void AJPlayer::Run(const FInputActionValue& Value)
 {
 	//크라우칭중이 아니라면
-	if ( CharaterState != ECharacterState::ECS_Crouching )
+	if ( CharaterState == ECharacterState::ECS_Crouching || bIsGrabbed )
 	{
-		//안 달리는 중이면
-		if ( !bIsRunning )
-		{
-			CharacterMovement->MaxWalkSpeed = 600;
-		}
-		//달리는 중이면
-		else
-		{
-			CharacterMovement->MaxWalkSpeed = 400;
-		}
-		bIsRunning = !bIsRunning;
+		return;
 	}
+	//안 달리는 중이면
+	if ( !bIsRunning )
+	{
+		CharacterMovement->MaxWalkSpeed = 600;
+	}
+	//달리는 중이면
+	else
+	{
+		CharacterMovement->MaxWalkSpeed = 400;
+	}
+	bIsRunning = !bIsRunning;
+	
 }
 
 void AJPlayer::Crouching(const FInputActionValue& Value)
@@ -311,54 +436,80 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 		UnCrouch();
 	}
 }
-void AJPlayer::TakeDown(const FInputActionValue& Value)
+void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 {
-	if ( bCanExecute )
+	//camera ignore 해놓기
+	//pawn이기
+	FHitResult HitResult;
+	FVector Start = GetActorLocation();
+	FVector End = Start + (GetActorForwardVector() * 250);
+	ECollisionChannel TraceChannel = ECC_Pawn;  // Trace channel 설정
+
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // 자기 자신을 무시
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		TraceChannel,
+		CollisionParams
+	);
+
+	// 디버그 라인 그리기
+#if WITH_EDITOR
+	DrawDebugLine(
+		GetWorld(),
+		Start,
+		End,
+		bHit ? FColor::Green : FColor::Red, // 히트 여부에 따라 색상 변경
+		false, // 두드러진 레이아웃
+		1.0f,  // 지속 시간 (초)
+		0,     // 선 두께
+		1.0f   // 선의 깊이 (디버그 라인의 두께)
+	);
+	
+#endif
+	if ( bHit )
 	{
-		if ( PlayerController )
-		{
-			bUseControllerRotationYaw = false;
-			//PlayerController->SetIgnoreMoveInput(true);
-			//PlayerController->SetIgnoreLookInput(true);
-			//UE_LOG(LogTemp, Warning, TEXT("ERER2"));
-		}
-		if ( Subsystem )
-		{
-			Subsystem->RemoveMappingContext(IMC_Joel);
-		}
-		CharaterState = ECharacterState::ECS_Crouching;
-		CharacterAnimInstance->PlayResistanceMontage();
+		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ExecutionTarget = Cast<AKNormalZombieEnemy>(HitResult.GetActor());
+	
 		if ( ExecutionTarget )
 		{
 			FTransform t = ExecutionTarget->GetAttackerTransform();
-
-			FLatentActionInfo LatentInfo;
-			LatentInfo.CallbackTarget = this;
-
+			SetActorLocation(ExecutionTarget->GetAttackerTransform().GetLocation());
+			bIsExecuting = true;
+			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_Spine1"));
+			SpringArmComp->SetRelativeRotation(FRotator(0, 180, 0));
+			CameraComp->SetupAttachment(SpringArmComp);
+			SpringArmComp->TargetArmLength = 200;
+			//움직임 빼기
 			UKEnemyFSM* FFSSMM = ExecutionTarget->GetComponentByClass<UKEnemyFSM>();
-			if ( FFSSMM  && bCanExecute)
+			if ( FFSSMM && bCanExecute )
 			{
 				FFSSMM->SetState(EEnemyState::EXECUTED);
 				//좀비가 자꾸 움직임..
 			}
-			UKismetSystemLibrary::MoveComponentTo(
-				GetCapsuleComponent(),              // 이동할 컴포넌트
-				t.GetLocation(),                   // 목표 위치
-				t.GetRotation().Rotator(),         // 목표 회전
-				true,                              // 즉시 스냅
-				false,
-				0.5f,                            // 텔레포트하지 않음
-				false,
-				EMoveComponentAction::Type::Move,
-				LatentInfo
-			);
+			//컨트롤러 방향
+			PlayerController->AController::SetControlRotation(t.GetRotation().Rotator());
+
+			if ( Subsystem )
+			{
+				//컨트롤러 떼기
+				Subsystem->RemoveMappingContext(IMC_Joel);
+			}
+			CharaterState = ECharacterState::ECS_Crouching;
+
 			CharacterAnimInstance->PlayExecuteMontage();
 			//몽타주 끝나면 상태 바꾸기
 			GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
-			CameraComp->SetFieldOfView(60.f);
+
 			UKEnemyAnim* EnemyAnim = Cast<UKEnemyAnim>(ExecutionTarget->GetMesh()->GetAnimInstance());
 			if ( EnemyAnim )
 			{
+				UE_LOG(LogTemp, Error, TEXT("ENEMYANIM"));
 				EnemyAnim->PlayEnemyTDamageAnim(TEXT("Executed"));
 				FTimerHandle ExcecuteTimer;
 				GetWorldTimerManager().SetTimer(ExcecuteTimer, this, &AJPlayer::EnemyIsDead, 6.5f, false);
@@ -369,9 +520,22 @@ void AJPlayer::TakeDown(const FInputActionValue& Value)
 
 void AJPlayer::EnemyIsDead()
 {
+	SetActorLocation(GetActorForwardVector() * 175 + GetActorLocation());
 	ExecutionTarget->Destroy();
-	CameraComp->SetFieldOfView(90);
+	SpringArmComp->AttachToComponent(
+			GetCapsuleComponent(),
+			FAttachmentTransformRules::KeepRelativeTransform
+		);
+	SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
+	SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
+	CameraComp->SetupAttachment(SpringArmComp);
+	
 	bCanExecute = false;
+
+	bIsExecuting = false;
+
+	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 void AJPlayer::AfterTakeDown()
@@ -386,22 +550,53 @@ void AJPlayer::AfterTakeDown()
 	{
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
+}
+void AJPlayer::SetCameraBack()
+{
 	bUseControllerRotationYaw = true;
+}
+void AJPlayer::SetCameraBoomToCharacter(bool bSetCameraBoom)
+{
+	if ( SpringArmComp && bSetCameraBoom)
+	{
+		SpringArmComp->SetWorldLocation(GetCapsuleComponent()->GetComponentLocation());
+		SpringArmComp->SetWorldRotation(GetCapsuleComponent()->GetComponentRotation());
+	}
 }
 void AJPlayer::SetStateEquipGun()
 {
-	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
+	//총기 활성화 
 	Gun->SetActorHiddenInGame(false);
+	Gun->SetActorEnableCollision(true);
+	Bat->SetActorHiddenInGame(true);
+	Bat->SetActorEnableCollision(false);
+	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
 }
 void AJPlayer::SetStateEquipThrowWeapon()
 {
-	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
+	//투척무기 활성화 총, 배트 둘다 안보이고 콜리전 비활
 	Gun->SetActorHiddenInGame(true);
+	Gun->SetActorEnableCollision(false);
+	Bat->SetActorHiddenInGame(true);
+	Bat->SetActorEnableCollision(false);
+	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
 }
 void AJPlayer::SetStateUnEquipped()
 {
-	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+	//노 무기 총, 배트 둘다 안보이고 콜리전 비활
 	Gun->SetActorHiddenInGame(true);
+	Gun->SetActorEnableCollision(false);
+	Bat->SetActorHiddenInGame(true);
+	Bat->SetActorEnableCollision(false);
+	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+}
+void AJPlayer::SetStateBatEquipped()
+{
+	//배트 장착, 총 안보이고 콜리전 비활성화
+	Bat->SetActorHiddenInGame(false);
+	Gun->SetActorHiddenInGame(true);
+	Gun->SetActorEnableCollision(false);
+	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
 }
 UCameraComponent* AJPlayer::GetCamera()
 {
@@ -441,13 +636,16 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 	EMoveComponentAction::Type::Move,
 	LatentInfo
 		);
+	SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_LeftShoulder"));
+	SpringArmComp->TargetArmLength = 80;
+	GetController()->SetControlRotation(rot);
 
 	// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
 	if ( CharacterAnimInstance )
 	{
 		CharacterAnimInstance->PlayResistanceMontage();
 	}
-
+	GetController()->SetIgnoreMoveInput(true);
 	// QTE UI 표시
 	StartQTEGrabEvent();
 }
@@ -484,6 +682,15 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 		}
 	}
 
+	SpringArmComp->AttachToComponent(
+		GetCapsuleComponent(),
+		FAttachmentTransformRules::KeepRelativeTransform
+	);
+	SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
+	SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
+	SpringArmComp->TargetArmLength = 200;
+	CameraComp->SetupAttachment(SpringArmComp);
+
 	// QTE 이벤트가 끝났음을 전역 변수에 표시
 	 EnemyFSM->bIsQTEActive = false;
 }
@@ -501,6 +708,7 @@ void AJPlayer::HandleQTEInput()
 			StopGrabbedState(true);
 			bEscapeSuccess = true;
 			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, TEXT("Escaped from Grab!"));
+			GetController()->SetIgnoreMoveInput(false);
 		}
 	}
 }
