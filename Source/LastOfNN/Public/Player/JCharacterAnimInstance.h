@@ -54,7 +54,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* ExecuteMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* GunShotMontage;
+	UAnimMontage* GunShotMontage;	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* BatMontage;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
