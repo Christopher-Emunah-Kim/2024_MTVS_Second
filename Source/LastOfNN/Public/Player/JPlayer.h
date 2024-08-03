@@ -93,6 +93,7 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
 	void Zoom(const FInputActionValue& Value);
+	void ZoomOut(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
 
 	void Crouching(const FInputActionValue& Value);
@@ -224,6 +225,8 @@ public:
 	//데미지 받을때
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
+	//카메라 줌
+	float TargetFOV = 90;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
