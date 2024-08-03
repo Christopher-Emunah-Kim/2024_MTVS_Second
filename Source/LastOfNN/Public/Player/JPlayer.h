@@ -204,9 +204,13 @@ public:
 	//암살가능
 	class AKNormalZombieEnemy* ExecutionTarget;
 	bool bCanExecute;
+	bool bIsExecuting = false;
+	bool GetIsExecuting();
 
 	class UKEnemyFSM* EnemyFSM;
 	class UKEnemyFSM* BossEnemyFSM;
+
+	class AKBossZombieEnemy* Boss;
 	bool GetIsGrabbed();
 	void EnemyIsDead();
 

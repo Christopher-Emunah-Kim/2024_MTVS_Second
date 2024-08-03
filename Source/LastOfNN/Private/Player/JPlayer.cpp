@@ -178,34 +178,54 @@ void AJPlayer::BeginPlay()
 
 void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if ( OtherActor && OtherActor != this )
-	{
-		HitActors.AddUnique(OtherActor); //데미지를 입을 액터들
-		UE_LOG(LogTemp, Log, TEXT("Applied"));
-	}
-	for ( AActor* Actor : HitActors )
-	{
-		if ( Actor )
-		{
+	//if ( OtherActor && OtherActor != this )
+	//{
+	//	HitActors.AddUnique(OtherActor); //데미지를 입을 액터들
+	//}
+	//for ( AActor* Actor : HitActors )
+	//{
+		//if ( Actor )
+		//{
 			//일단 타격데미지 10으로 설정
-			FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
-			AController* ActorController = nullptr;
-			//애들 컨트롤러 얻어와서 데미지 주기
-			APawn* ActorPawn = Cast<APawn>(Actor);
-			if ( ActorPawn )
-			{
-				ActorController = ActorPawn->GetController();
-			}
-			Actor->TakeDamage(10, DamageEvent, ActorController, this);
-
-			UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *Actor->GetName());
+	Boss = Cast<AKBossZombieEnemy>(OtherActor);
+	if ( Boss  && OtherComp == Boss->GetCapsuleComponent())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Boss  Applied"));
+		FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = nullptr;
+		//애들 컨트롤러 얻어와서 데미지 주기
+		APawn* ActorPawn = Cast<APawn>(OtherActor);
+		if ( ActorPawn )
+		{
+			ActorController = ActorPawn->GetController();
 		}
+		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+	}
+	FSMOwner = Cast<AKNormalZombieEnemy>(OtherActor);
+
+	if (FSMOwner && OtherComp == FSMOwner->GetCapsuleComponent() )
+	{
+		UE_LOG(LogTemp, Log, TEXT("Applied"));
+		FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = nullptr;
+		//애들 컨트롤러 얻어와서 데미지 주기
+		APawn* ActorPawn = Cast<APawn>(OtherActor);
+		if ( ActorPawn )
+		{
+			ActorController = ActorPawn->GetController();
+		}
+		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
 	}
 }
 float AJPlayer::GetKeyProcessPercent()
 {
 	return (float)CurrentKeyPresses / RequiredKeyPresses;
 }
+bool AJPlayer::GetIsExecuting()
+{
+	return bIsExecuting;
+}
+
 bool AJPlayer::GetIsGrabbed()
 {
 	return bIsGrabbed;
@@ -418,6 +438,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 #endif
 	if (bHit && ExecutionTarget)
 	{
+		bIsExecuting = true;
 		SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_Spine1"));
 		SpringArmComp->SetRelativeRotation(FRotator(0, 180, 0));
 		CameraComp->SetupAttachment(SpringArmComp);
@@ -440,7 +461,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			//컨트롤러 떼기
 			Subsystem->RemoveMappingContext(IMC_Joel);
 		}
-		CharaterState = ECharacterState::ECS_Executing;
+		CharaterState = ECharacterState::ECS_Crouching;
 
 		CharacterAnimInstance->PlayExecuteMontage();
 		//몽타주 끝나면 상태 바꾸기
@@ -468,6 +489,7 @@ void AJPlayer::EnemyIsDead()
 	SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
 	CameraComp->SetupAttachment(SpringArmComp);
 	bCanExecute = false;
+	bIsExecuting = false;
 }
 
 void AJPlayer::AfterTakeDown()
