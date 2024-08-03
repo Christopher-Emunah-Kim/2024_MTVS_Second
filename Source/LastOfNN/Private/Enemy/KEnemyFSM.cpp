@@ -110,7 +110,11 @@ void UKEnemyFSM::UpdateState()
         break;
     case EEnemyState::FINISHING:
         // Finishing 상태 행동 처리...
-        break;
+        break;    
+    case EEnemyState::EXECUTED:
+        // Executed 상태 행동 처리...
+        BaseEnemy->EnemyExecuted();
+        break;  
     case EEnemyState::DEAD:
         // Dead 상태 행동 처리...
         BaseEnemy->EnemyDead();

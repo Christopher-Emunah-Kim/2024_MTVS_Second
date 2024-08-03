@@ -26,6 +26,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Enemy/KBossZombieEnemy.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Enemy/KEnemyAnim.h"
+#include "Runtime/AIModule/Classes/AIController.h"
 
 
 
@@ -91,7 +93,7 @@ void AJPlayer::PostInitializeComponents()
 	{
 
 	});
-	PlayerController = Cast<APlayerController>(GetController());
+	
 }
 float AJPlayer::GetKeyProcessPercent()
 {
@@ -101,12 +103,13 @@ bool AJPlayer::GetIsGrabbed()
 {
 	return bIsGrabbed;
 }
+
 // Called when the game starts or when spawned
 void AJPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
 	if (Subsystem)
 	{
 		Subsystem->AddMappingContext(IMC_Joel, 0);
@@ -148,17 +151,17 @@ void AJPlayer::BeginPlay()
 	if ( BossEnemyActor )
 	{
 		// 액터가 존재하는 경우, 해당 액터에서 컴포넌트를 가져옵니다
-		EnemyFSM = EnemyActor->GetComponentByClass<UKEnemyFSM>();
+		BossEnemyFSM = BossEnemyActor->GetComponentByClass<UKEnemyFSM>();
 		if ( EnemyFSM == nullptr )
 		{
 			return;
 		}
 	}
+	PlayerController = Cast<APlayerController>(GetController());
 }
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DFDF"));
 	ExecutionTarget = Cast<AKNormalZombieEnemy>(OtherComp->GetOwner());
 	bCanExecute = true; //움직이는거 커버 못함.. move가 너무 빨라유
 }
@@ -310,53 +313,80 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 }
 void AJPlayer::TakeDown(const FInputActionValue& Value)
 {
-	CharaterState = ECharacterState::ECS_Crouching;
-	CharacterAnimInstance->PlayResistanceMontage();
-	if ( ExecutionTarget )
+	if ( bCanExecute )
 	{
-		FTransform t = ExecutionTarget->GetAttackerTransform();
+		if ( PlayerController )
+		{
+			bUseControllerRotationYaw = false;
+			//PlayerController->SetIgnoreMoveInput(true);
+			//PlayerController->SetIgnoreLookInput(true);
+			//UE_LOG(LogTemp, Warning, TEXT("ERER2"));
+		}
+		if ( Subsystem )
+		{
+			Subsystem->RemoveMappingContext(IMC_Joel);
+		}
+		CharaterState = ECharacterState::ECS_Crouching;
+		CharacterAnimInstance->PlayResistanceMontage();
+		if ( ExecutionTarget )
+		{
+			FTransform t = ExecutionTarget->GetAttackerTransform();
 
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
 
-		FLatentActionInfo LatentInfo;
-		LatentInfo.CallbackTarget = this;
-
-		UKismetSystemLibrary::MoveComponentTo(
-			GetCapsuleComponent(),              // 이동할 컴포넌트
-			t.GetLocation(),                   // 목표 위치
-			t.GetRotation().Rotator(),         // 목표 회전
-			true,                              // 즉시 스냅
-			false,
-			0.2f,                            // 텔레포트하지 않음
-			false,
-			EMoveComponentAction::Type::Move,
-			LatentInfo
-		);
+			UKEnemyFSM* FFSSMM = ExecutionTarget->GetComponentByClass<UKEnemyFSM>();
+			if ( FFSSMM  && bCanExecute)
+			{
+				FFSSMM->SetState(EEnemyState::EXECUTED);
+				//좀비가 자꾸 움직임..
+			}
+			UKismetSystemLibrary::MoveComponentTo(
+				GetCapsuleComponent(),              // 이동할 컴포넌트
+				t.GetLocation(),                   // 목표 위치
+				t.GetRotation().Rotator(),         // 목표 회전
+				true,                              // 즉시 스냅
+				false,
+				0.5f,                            // 텔레포트하지 않음
+				false,
+				EMoveComponentAction::Type::Move,
+				LatentInfo
+			);
+			CharacterAnimInstance->PlayExecuteMontage();
+			//몽타주 끝나면 상태 바꾸기
+			GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
+			CameraComp->SetFieldOfView(60.f);
+			UKEnemyAnim* EnemyAnim = Cast<UKEnemyAnim>(ExecutionTarget->GetMesh()->GetAnimInstance());
+			if ( EnemyAnim )
+			{
+				EnemyAnim->PlayEnemyTDamageAnim(TEXT("Executed"));
+				FTimerHandle ExcecuteTimer;
+				GetWorldTimerManager().SetTimer(ExcecuteTimer, this, &AJPlayer::EnemyIsDead, 6.5f, false);
+			}
+		}
 	}
-	PlayerController = Cast<APlayerController>(GetController());
-	if ( PlayerController )
-	{
-		PlayerController->SetIgnoreMoveInput(true);
-		PlayerController->SetIgnoreLookInput(true);
-		UE_LOG(LogTemp, Warning, TEXT("dd"));
-	}
-	CharacterAnimInstance->PlayExecuteMontage();
-	//몽타주 끝나면 상태 바꾸기
-	GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
-	CameraComp->SetFieldOfView(60.f);
-/////////////////////////////////////////////////////////////
-	//좀비 상태 바꿔야함, OR 좀비 당하는 몽타주 나오면 상관없나?
-
 }
+
+void AJPlayer::EnemyIsDead()
+{
+	ExecutionTarget->Destroy();
+	CameraComp->SetFieldOfView(90);
+	bCanExecute = false;
+}
+
 void AJPlayer::AfterTakeDown()
 {
-	PlayerController = Cast<APlayerController>(GetController());
-	CharaterState = ECharacterState::ECS_UnGrabbed;
-	if ( PlayerController )
+	UE_LOG(LogTemp, Warning, TEXT("ERER"));
+	//if ( PlayerController )
+	//{
+	//	PlayerController->SetIgnoreMoveInput(false);
+	//	PlayerController->SetIgnoreLookInput(false);
+	//}
+	if ( Subsystem )
 	{
-		PlayerController->SetIgnoreMoveInput(false);
-		PlayerController->SetIgnoreLookInput(false);
+		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
-
+	bUseControllerRotationYaw = true;
 }
 void AJPlayer::SetStateEquipGun()
 {
@@ -394,7 +424,6 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 	CurrentKeyPresses = 0;
 	GrabbedEnemy = Enemy;
 
-
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 
@@ -427,7 +456,7 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 {
 	bIsGrabbed = false;
 
-	// 저항 애니메이션 정지
+	// 발로 차는 애니메이션 실행
 	if ( CharacterAnimInstance )
 	{
 		CharacterAnimInstance->PlayResistanceReleaseSection();

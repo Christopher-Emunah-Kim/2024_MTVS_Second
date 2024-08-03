@@ -27,7 +27,6 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -88), FRotator(0, -90, 0));
-		//GetMesh()->SetRelativeScale3D(FVector(0.1f));
 	}
 	
 	//애니메이션 BP 할당
@@ -42,22 +41,6 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 
 	//AI Perception Component 초기화
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
-	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-	if ( HearingConfig )
-	{
-		//소리감지 설정
-		HearingConfig->HearingRange = EnemySoundDetectionRadius;
-		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; 
-		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
-		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-
-		//PerceptionComp에 Hearing Config 전달받은 값 연결
-		AIPerceptionComp->ConfigureSense(*HearingConfig);
-		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
-	}
-	//노이즈 발생시 처리내용 초기화
-	//소음 발생위치 이동여부 초기화
-	bShouldMoveToSound = false;
 
 	//Enemy Status 초기화
 	EnemySoundDetectionRadius = 2000.0f;
@@ -66,8 +49,9 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 	EnemyAttackRange = 145.0f;
 	//원거리 범위 필요
 	EnemyAttackDelayTime = 2.0f;
+	EnemyAttackDamage = 60.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
-	EnemyHP = 250;
+	EnemyHP = 300;
 }
 
 void AKBossZombieEnemy::BeginPlay()
@@ -76,20 +60,7 @@ void AKBossZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-	//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 
-	//소리감지처리함수 바인딩
-	if ( AIPerceptionComp )
-	{
-		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBossZombieEnemy::OnEnemyNoiseHeard);
-		UE_LOG(LogTemp, Warning, TEXT("Perception Component 초기화 완료"));
-
-		if ( HearingConfig )
-		{
-			HearingConfig->HearingRange = EnemySoundDetectionRadius;
-			AIPerceptionComp->ConfigureSense(*HearingConfig);
-		}
-	}
 }
 
 void AKBossZombieEnemy::Tick(float DeltaTime)
@@ -107,11 +78,7 @@ void AKBossZombieEnemy::EnemyIDLE()
 	Super::EnemyIDLE();
 }
 
-void AKBossZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
-{
-	Super::OnEnemyNoiseHeard(Actor, Stimulus);
-	UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: %s"), *Stimulus.Tag.ToString());
-}
+
 
 void AKBossZombieEnemy::EnemyMove()
 {
@@ -120,39 +87,7 @@ void AKBossZombieEnemy::EnemyMove()
 	FVector dir;
 	FVector EnemyDestination;
 
-	if ( bShouldMoveToSound )
-	{
-		// 소음에 의해 이동해야 하는 경우
-		EnemyDestination = SoundLocation;
-		dir = EnemyDestination - GetActorLocation();
-
-		// 소리 방향으로 이동할 위치 계산
-		FVector Direction = dir.GetSafeNormal();
-		FVector NewLocation = GetActorLocation() + Direction * EnemyMoveDistanceOnSound;
-
-		//속도를 뛰기속도로 변경
-		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
-		//BlendSpace Anim에 액터의 속도 할당
-		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-
-		// AI를 이용하여 계산된 위치로 이동
-		ai->MoveToLocation(NewLocation);
-		//UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
-
-		//만약 목적지에 도착했다면
-		if ( dir.Size() < 150.0f )
-		{
-			UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
-			//이동 플래그 초기화
-			bShouldMoveToSound = false;
-			//IDLE상태 전환
-			EnemySetState(EEnemyState::IDLE);
-			//FSMComponent->CurrentState = EEnemyState::IDLE;
-		}
-	}
-	else if ( target )
+	if ( target )
 	{
 		//타깃목적지
 		EnemyDestination = target->GetActorLocation();
@@ -174,11 +109,11 @@ void AKBossZombieEnemy::EnemyMove()
 		FPathFindingResult FindingResult = ns->FindPathSync(query);
 
 		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
-		if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+		//if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+		if ( FindingResult.Result == ENavigationQueryResult::Success )
 		{
 			//속도를 뛰기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
-			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -187,15 +122,13 @@ void AKBossZombieEnemy::EnemyMove()
 
 			//타깃과 가까워지면 공격상태 전환
 			//공격범위 안에 들어오면
-			if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+			//if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+			if ( dir.Size() < EnemyAttackRange )
 			{
 				//AI의 길찾기 기능을 정지한다.
 				ai->StopMovement();
-				//공격상태 전환
+				//공격상태전환 /애니메이션 동기화 
 				EnemySetState(EEnemyState::ATTACK);
-				//FSMComponent->CurrentState = EEnemyState::ATTACK;
-				//애니메이션 상태 동기화
-				//anim->EnemyAnimState = FSMComponent->CurrentState;
 				//공격 애니메이션 재생 활성화
 				anim->bEnemyAttackPlay = true;
 				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
@@ -208,7 +141,6 @@ void AKBossZombieEnemy::EnemyMove()
 			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
 			//속도를 걷기속도로 변경
 			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 			//BlendSpace Anim에 액터의 속도 할당
 			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -263,62 +195,11 @@ void AKBossZombieEnemy::EnemyAttack()
 	{
 		//이동상태 전환
 		EnemySetState(EEnemyState::MOVE);
-		//FSMComponent->CurrentState = EEnemyState::MOVE;
-		//애니메이션 상태 동기화
-		//anim->EnemyAnimState = FSMComponent->CurrentState;
-		//랜덤위치값을 이때도 다시 설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
 
-//void AKBossZombieEnemy::EnemyGrab()
-//{
-//	Super::EnemyGrab();
-//
-//	// GRAB 상태로 전환
-//	//FSMComponent->SetState(EEnemyState::GRAB);
-//
-//	// Grab 애니메이션 재생
-//	if ( anim )
-//	{
-//		FString SectionName = FString::Printf(TEXT("Grab"));
-//		anim->PlayEnemyGrabAnim(FName(*SectionName));
-//	}
-//
-//	// Player에게 Grab 상태 알림 및 QTE 이벤트 시작
-//	if ( target && !bIsPlayerGrabbed )
-//	{
-//		AJPlayer* Player = Cast<AJPlayer>(target);
-//		if ( Player )
-//		{
-//			// Player를 잡았음을 표시
-//			bIsPlayerGrabbed = true;
-//			// Player의 Grab 상태 시작 및 QTE 이벤트 시작
-//			Player->StartGrabbedState(this);
-//		}
-//	}
-//
-//	// QTE 이벤트가 시작되었음을 전역 변수에 표시
-//	UKEnemyFSM::bIsQTEActive = true;
-//
-//	// 모든 Enemy를 IDLE 상태로 유지
-//	SetAllEnemiesToIdle();
-//}
 
-void AKBossZombieEnemy::SetAllEnemiesToIdle()
-{
-	Super::SetAllEnemiesToIdle();
-
-	// 월드에 존재하는 모든 Enemy를 IDLE 상태로 전환
-	for ( TActorIterator<AKBossZombieEnemy> It(GetWorld()); It; ++It )
-	{
-		AKBossZombieEnemy* Enemy = *It;
-		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY && Enemy != this )
-		{
-			EnemySetState(EEnemyState::IDLE);
-		}
-	}
-}
 
 float AKBossZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -341,11 +222,8 @@ void AKBossZombieEnemy::EnemyTakeDamage()
 	//전환대기시간이 지나면
 	if ( CurrentTime > EnemyTDamageDelayTime )
 	{
-		//IDLE상태로 전환
+		//IDLE상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::IDLE);
-		//FSMComponent->CurrentState = EEnemyState::IDLE;
-		//애니메이션 상태 동기화
-		//anim->EnemyAnimState = FSMComponent->CurrentState;
 		
 		CurrentTime = 0;
 	}

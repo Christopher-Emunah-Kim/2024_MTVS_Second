@@ -20,7 +20,9 @@ enum class EEnemyState : uint8
     TAKEDAMAGE UMETA(DisplayName = "TakeDamage"),
     KNOCKBACK UMETA(DisplayName = "KnockBack"),
     FINISHING UMETA(DisplayName = "Finishing"),
+    EXECUTED UMETA(DisplayName = "Executed"),
     DEAD UMETA(DisplayName = "Dead")
+
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

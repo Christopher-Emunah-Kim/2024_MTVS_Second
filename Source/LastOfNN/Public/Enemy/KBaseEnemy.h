@@ -34,9 +34,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
 	//FSM 인스턴스
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
     UKEnemyFSM* FSMComponent;
@@ -152,6 +149,9 @@ public:
 	//피격 후 IDLE전환 대기시간
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyTDamageDelayTime = 1.5f;
+
+	//암살상태처리함수
+	virtual void EnemyExecuted();
 
 	//**죽음상태처리함수
     virtual void EnemyDead();
