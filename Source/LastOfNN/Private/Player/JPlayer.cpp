@@ -79,6 +79,9 @@ AJPlayer::AJPlayer()
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_LeftHand"));
 	LeftAttackSphere->SetSphereRadius(3.f);
 
+	//체력초기화
+	HealthPoints = MAXHP;
+
 }
 void AJPlayer::PostInitializeComponents()
 {
@@ -173,7 +176,6 @@ void AJPlayer::BeginPlay()
 	}
 	PlayerController = Cast<APlayerController>(GetController());
 
-	HP = MAXHP;
 }
 
 void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -234,14 +236,28 @@ bool AJPlayer::GetIsGrabbed()
 float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float DamageToApply = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser); //늘 부모를 오버라이드 해주자
-	DamageToApply = FMath::Min(HP, DamageToApply); //남은 체력보다 입을 데미지가 더 크면(체력이 0이면) 데미지는 0이 된다.
-	HP -= DamageToApply;
-	UE_LOG(LogTemp, Warning, TEXT("%f"), HP);
+	DamageToApply = FMath::Min(HealthPoints, DamageToApply); //남은 체력보다 입을 데미지가 더 크면(체력이 0이면) 데미지는 0이 된다.
+	HealthPoints -= DamageToApply;
+	UE_LOG(LogTemp, Warning, TEXT("%f"), HealthPoints);
 
-	if ( HP <= 0 ) //체력이 0이하가 되면 
+	if ( HealthPoints <= 0 ) //체력이 0이하가 되면 
 	{	
+		// 게임 멈추기
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+
 		DetachFromControllerPendingDestroy(); //컨트롤러 떼버림
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트 떼어내서
+	
+		// 입력 모드 설정
+		//APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		//if ( PlayerController )
+		//{
+		//	// 마우스 커서 보이게 하기
+		//	FInputModeUIOnly InputMode;
+		//	InputMode.SetWidgetToFocus(_restartUI->TakeWidget());
+		//	PlayerController->SetInputMode(InputMode);
+		//	PlayerController->bShowMouseCursor = true;
+		//}
 	}
 
 	return DamageToApply;	
@@ -300,6 +316,8 @@ void AJPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);	
 
 	CameraComp->FieldOfView = FMath::Lerp(CameraComp->FieldOfView, TargetFOV, DeltaTime * 5);
+
+	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("HP : %f"), HealthPoints));
 }
 
 // Called to bind functionality to input
@@ -638,16 +656,19 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 		);
 	SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_LeftShoulder"));
 	SpringArmComp->TargetArmLength = 80;
-	GetController()->SetControlRotation(rot);
-
-	// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
-	if ( CharacterAnimInstance )
+	if ( this )
 	{
-		CharacterAnimInstance->PlayResistanceMontage();
+		GetController()->SetControlRotation(rot);
+
+		// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
+		if ( CharacterAnimInstance )
+		{
+			CharacterAnimInstance->PlayResistanceMontage();
+		}
+		GetController()->SetIgnoreMoveInput(true);
+		// QTE UI 표시
+		StartQTEGrabEvent();
 	}
-	GetController()->SetIgnoreMoveInput(true);
-	// QTE UI 표시
-	StartQTEGrabEvent();
 }
 
 void AJPlayer::StopGrabbedState(bool bSuccess)
@@ -668,6 +689,7 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 	{
 		// 실패 시 처리할 로직을 여기에 추가 (예: Player의 HP 감소)
 		//필요하면 하셈
+		HealthPoints -= 30;
 	}
 
 	// Enemy의 상태를 IDLE로 전환하고, QTE가 끝났음을 알림

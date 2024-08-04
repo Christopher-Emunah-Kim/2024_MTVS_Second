@@ -42,6 +42,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	class UAIPerceptionComponent* AIPerceptionComp;
 
+	//데미지 처리 위한 손 충돌체 형성
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* RightAttackSphere;	
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* LeftAttackSphere;
+
 	//플레이어 Target 정보 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     class AJPlayer* target;
@@ -115,6 +121,9 @@ public:
 	//**공격상태처리함수
     virtual void EnemyAttack();
 	virtual void EnemySpecialAttack();
+	UFUNCTION()
+	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	//Enemy탐지범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyNoticeRange;

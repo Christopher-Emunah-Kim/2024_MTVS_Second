@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/SceneComponent.h"
 #include <Enemy/KBossZombieEnemy.h>
 
@@ -30,6 +31,13 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
 		GetMesh()->SetRelativeScale3D(FVector(0.11f));
 	}
+	//데미지처리를 위한 충돌체 손에 붙이기
+	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("LeftHand"));
+	LeftAttackSphere->SetSphereRadius(200.f);
+	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
+	RightAttackSphere->SetSphereRadius(200.f);
+
+
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
 	if ( AssassinBox )
@@ -83,7 +91,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemyRunSpeed = 400.0f;
 	EnemyAttackRange = 145.0f;
 	EnemyAttackDelayTime = 2.0f;
-	EnemyAttackDamage = 15.0f;
+	EnemyAttackDamage = 5.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
 	EnemyHP = 100;
 }
@@ -108,6 +116,17 @@ void AKNormalZombieEnemy::BeginPlay()
 			AIPerceptionComp->ConfigureSense(*HearingConfig);
 		}
 	}
+	//데미지처리함수 바인딩
+	if ( RightAttackSphere )
+	{
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKNormalZombieEnemy::EnemyOverlapDamage);
+	}
+	if ( LeftAttackSphere )
+	{
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKNormalZombieEnemy::EnemyOverlapDamage);
+	}
+
+
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
@@ -255,6 +274,8 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//공격시간이 되면
 	if (CurrentTime>EnemyAttackDelayTime && target->GetCharaterState() != ECharacterState::ECS_Crouching)
 	{
+		
+
 		// 일정 확률로 Grab 상태로 전환
 		float RandomChance = FMath::FRand();
 		if ( RandomChance < 0.3f ) // 30% 확률로 Grab
@@ -266,8 +287,14 @@ void AKNormalZombieEnemy::EnemyAttack()
 			//공격한다.(내용은 나중에 구현)
 			GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
 
+			//공격 충돌체 활성화
+			//RightAttackSphere->SetCollisionProfileName(TEXT("OvelapAll"));
+			RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 			//공격 애니메이션 재생 활성화
 			anim->bEnemyAttackPlay = true;
+
+			UE_LOG(LogTemp, Warning, TEXT("Player Damaged : %f"), target->HealthPoints);
 		}
 
 		// 대기 시간 초기화
@@ -281,9 +308,20 @@ void AKNormalZombieEnemy::EnemyAttack()
 	{
 		//이동상태 전환 /애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
+
+		//공격 충돌체 꺼버리기
+		//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+		RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 		//랜덤위치값을 이때도 다시 설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
+}
+
+void AKNormalZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Super::EnemyOverlapDamage(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep,SweepResult);
+
 }
 
 void AKNormalZombieEnemy::EnemyGrab()

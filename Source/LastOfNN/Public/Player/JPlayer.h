@@ -216,7 +216,8 @@ public:
 	void EnemyIsDead();
 
 	//체력
-	float HP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HP")
+	float HealthPoints;
 	float MAXHP = 100;
 
 	//향상된 입력

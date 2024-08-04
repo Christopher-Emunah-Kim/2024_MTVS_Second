@@ -6,6 +6,7 @@
 #include "Player/JPlayer.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"  
@@ -14,6 +15,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Engine/World.h"
+#include "Engine/DamageEvents.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -27,6 +29,16 @@ AKBaseEnemy::AKBaseEnemy()
 
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
+
+	//데미지 처리를 위한 충돌체형성
+	RightAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("RightAttackSphere"));
+	//RightAttackSphere->SetSphereRadius(200.f);
+	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+	LeftAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LeftAttackSphere"));
+	//LeftAttackSphere->SetSphereRadius(200.f);
+	//LeftAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
 
@@ -47,6 +59,16 @@ void AKBaseEnemy::BeginPlay()
 
 	//AAIController 할당
 	ai = Cast<AAIController>(GetController());
+
+	//데미지처리함수 바인딩
+	if ( RightAttackSphere )
+	{
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBaseEnemy::EnemyOverlapDamage);
+	}
+	if ( LeftAttackSphere )
+	{
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBaseEnemy::EnemyOverlapDamage);
+	}
 }
 
 // Called every frame
@@ -143,6 +165,28 @@ void AKBaseEnemy::EnemyAttack()
 void AKBaseEnemy::EnemySpecialAttack()
 {
 	
+}
+
+void AKBaseEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	
+	if ( target && OtherComp == target->GetCapsuleComponent() )
+	{
+		UE_LOG(LogTemp, Log, TEXT("Zombie Damage to Player!!!"));
+		FPointDamageEvent DamageEvent(EnemyAttackDamage, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = target->GetController();
+		if ( ActorController ) 
+		{
+			target->TakeDamage(EnemyAttackDamage, DamageEvent, ActorController, this);
+		}
+		////애들 컨트롤러 얻어와서 데미지 주기
+		//APawn* ActorPawn = Cast<APawn>(OtherActor);
+		//if ( ActorPawn )
+		//{
+		//	ActorController = ActorPawn->GetController();
+		//}
+		//ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+	}
 }
 
 void AKBaseEnemy::EnemyGrab()

@@ -52,6 +52,7 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지 -> Player->GetIsGrabbed()로 잠깐 바꿈
     if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::GRAB )
     {
+        
         SetState(EEnemyState::IDLE);
         //UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
     }

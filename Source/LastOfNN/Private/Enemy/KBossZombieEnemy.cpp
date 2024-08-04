@@ -16,6 +16,7 @@
 #include "EngineUtils.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/SphereComponent.h"
 
 AKBossZombieEnemy::AKBossZombieEnemy()
 {
@@ -29,7 +30,13 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -88), FRotator(0, -90, 0));
 	}
-	
+
+	//데미지처리를 위한 충돌체 손에 붙이기
+	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_LeftHand"));
+	LeftAttackSphere->SetSphereRadius(50.f);
+	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_RightHand"));
+	RightAttackSphere->SetSphereRadius(50.f);
+
 	//애니메이션 BP 할당
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_BossZombieEnemyAnim.ABP_BossZombieEnemyAnim_C'"));
 	if ( tempClass.Succeeded() )
@@ -47,11 +54,11 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 	EnemySoundDetectionRadius = 2000.0f;
 	EnemyWalkSpeed = 150.0f;
 	EnemyRunSpeed = 300.0f;
-	EnemyAttackRange = 145.0f;
-	BossGrenadeAttackDamage = 60.0f;
+	EnemyAttackRange = 200.0f;
+	BossGrenadeAttackDamage = 20.0f;
 	BossGrenadeAttackRange = 700.0f;
 	EnemyAttackDelayTime = 2.0f;
-	EnemyAttackDamage = 60.0f;
+	EnemyAttackDamage = 15.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
 	EnemyHP = 300;
 }
@@ -62,6 +69,18 @@ void AKBossZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+
+	//데미지처리함수 바인딩
+	if ( RightAttackSphere )
+	{
+		
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieEnemy::EnemyOverlapDamage);
+	}
+	if ( LeftAttackSphere )
+	{
+		
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieEnemy::EnemyOverlapDamage);
+	}
 
 }
 
@@ -205,9 +224,16 @@ void AKBossZombieEnemy::EnemyAttack()
 		//공격 애니메이션 재생 활성화
 		anim->bEnemyAttackPlay = true;
 
+		//공격 충돌체 활성화
+		//RightAttackSphere->SetCollisionProfileName(TEXT("OvelapAll"));
+		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		UE_LOG(LogTemp, Warning, TEXT("Player Damaged : %f"), target->HealthPoints);
+
 		// 대기 시간 초기화
 		CurrentTime = 0;
 	}
+
 	if ( isBossCanThrowGrenade )
 	{
 		anim->bEnemyAttackPlay = true;
@@ -229,8 +255,16 @@ void AKBossZombieEnemy::EnemyAttack()
 	{
 		//이동상태 전환
 		EnemySetState(EEnemyState::MOVE);
+		//공격 충돌체 꺼버리기
+		//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
+}
+
+void AKBossZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Super::EnemyOverlapDamage(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
 
