@@ -73,11 +73,11 @@ AJPlayer::AJPlayer()
 
 	RightAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("RightAttackSphere"));
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_RightHand"));
-	RightAttackSphere->SetSphereRadius(3.f);
+	RightAttackSphere->SetSphereRadius(10.f);
 
 	LeftAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LeftAttackSphere"));
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_LeftHand"));
-	LeftAttackSphere->SetSphereRadius(3.f);
+	LeftAttackSphere->SetSphereRadius(10.f);
 
 	//체력초기화
 	HealthPoints = MAXHP;
@@ -108,6 +108,14 @@ void AJPlayer::PostInitializeComponents()
 	});
 	
 }
+
+void AJPlayer::StopForAttack()
+{
+	PlayerController->SetIgnoreMoveInput(false);
+
+	GetWorld()->GetTimerManager().ClearTimer(TakeDownTimer);
+}
+
 
 void AJPlayer::BeginPlay()
 {
@@ -176,6 +184,10 @@ void AJPlayer::BeginPlay()
 	}
 	PlayerController = Cast<APlayerController>(GetController());
 
+	HP = MAXHP;
+
+	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -242,12 +254,14 @@ float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 	if ( HealthPoints <= 0 ) //체력이 0이하가 되면 
 	{	
-		// 게임 멈추기
-		UGameplayStatics::SetGamePaused(GetWorld(), true);
 
 		DetachFromControllerPendingDestroy(); //컨트롤러 떼버림
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트 떼어내서
-	
+		CharacterAnimInstance->PlayDieMontage();
+		// 게임 멈추기
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+
+		
 		// 입력 모드 설정
 		//APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 		//if ( PlayerController )
@@ -345,18 +359,20 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AJPlayer::Move(const FInputActionValue& Value)
 {
-	if ( !bIsGrabbed  || !bIsAttacking)                                                                   
+	if ( bIsGrabbed || bIsAttacking )
 	{
-		const FVector2D Vector = Value.Get<FVector2D>();
-		FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
-		FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
-
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(ForwardDirection, Vector.X); //한글로 테스트 해봐요
-
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(RightDirection, Vector.Y);
+		return;
 	}
+	const FVector2D Vector = Value.Get<FVector2D>();
+	FRotator Rotation = GetController()->GetControlRotation(); //플레이어의 방향 읽어서 
+	FRotator YawRotation(0, Rotation.Yaw, 0); //yaw사용
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	AddMovementInput(ForwardDirection, Vector.X); 
+
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	AddMovementInput(RightDirection, Vector.Y);
+	
 
 }
 
@@ -370,10 +386,15 @@ void AJPlayer::Look(const FInputActionValue& Value)
 }
 void AJPlayer::Fire(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped )
 	{
+		//GetWorld()->GetTimerManager().ClearTimer(GunHandle);
+		//PlayerController->SetIgnoreMoveInput(true);
 		CharacterAnimInstance->PlayGunShotMontage();
+		CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Shot"));
 		Gun->PullTrigger();
+		/*GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::StopForAttack, 0.6f, false);*/
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped || CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
 	{
@@ -396,11 +417,14 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 }
 void AJPlayer::Zoom(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped)
 	{
 		TargetFOV = 30;
 		LockOnComp->SetTargetLockTrue();
+		CharacterAnimInstance->PlayGunShotMontage();
+		CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Idle"));
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped )
 	{
@@ -410,17 +434,20 @@ void AJPlayer::Zoom(const FInputActionValue& Value)
 }
 void AJPlayer::ZoomOut(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped || CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped )
 	{
 		TargetFOV = 90;
 	}
+	CharacterAnimInstance->StopGunshotMontage();
 	LockOnComp->SetTargetLockFalse();
 
 }
 
 void AJPlayer::Run(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	//크라우칭중이 아니라면
 	if ( CharaterState == ECharacterState::ECS_Crouching || bIsGrabbed )
 	{
@@ -442,6 +469,7 @@ void AJPlayer::Run(const FInputActionValue& Value)
 
 void AJPlayer::Crouching(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	bCrouched = !bCrouched;
 	if ( bCrouched )
 	{
@@ -456,6 +484,7 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 }
 void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 {
+	if ( bIsGrabbed ) return;
 	//camera ignore 해놓기
 	//pawn이기
 	FHitResult HitResult;
@@ -583,6 +612,7 @@ void AJPlayer::SetCameraBoomToCharacter(bool bSetCameraBoom)
 }
 void AJPlayer::SetStateEquipGun()
 {
+	CharacterAnimInstance->PlayGunShotMontage();
 	//총기 활성화 
 	Gun->SetActorHiddenInGame(false);
 	Gun->SetActorEnableCollision(true);
@@ -642,6 +672,8 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 
 	bUseControllerRotationYaw = false;	
 	FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), GrabbedEnemy->GetActorLocation());
+
+	CharacterAnimInstance->Montage_Stop(0.2f);
 
 	UKismetSystemLibrary::MoveComponentTo(
 	GetCapsuleComponent(),              // 이동할 컴포넌트

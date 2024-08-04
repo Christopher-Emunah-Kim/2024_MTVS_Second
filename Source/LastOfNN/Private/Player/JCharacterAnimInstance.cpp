@@ -97,6 +97,21 @@ void UJCharacterAnimInstance::PlayGunShotMontage()
 	Montage_Play(GunShotMontage);
 }
 
+void UJCharacterAnimInstance::PlayGunShotMontageSection(FName Section)
+{
+	Montage_JumpToSection(Section, GunShotMontage);
+}
+
+void UJCharacterAnimInstance::StopGunshotMontage()
+{
+	Montage_Stop(0.2f, GunShotMontage);;
+}
+
+void UJCharacterAnimInstance::PlayDieMontage()
+{
+	Montage_Play(DieMontage);
+}
+
 
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 {

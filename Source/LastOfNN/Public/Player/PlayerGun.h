@@ -28,6 +28,13 @@ public:
 	UPROPERTY(EditAnywhere)
 	float GunDamage = 10;
 
+	UPROPERTY(EditAnywhere)
+	int32 CurrentBulletNum;
+	UPROPERTY(EditAnywhere)
+	int32 MaxBulletNum = 6;
+
+	void ReLoad();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

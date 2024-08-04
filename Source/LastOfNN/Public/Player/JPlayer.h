@@ -55,9 +55,9 @@ public:
 	USpringArmComponent* SpringArmComp;
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* Box;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* RightAttackSphere;	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* LeftAttackSphere;
 
 
@@ -161,7 +161,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	ECharacterEquipState GetCharacterEquipState() const;
 
-
+	FTimerHandle GunHandle;
 	//Grab QTE이벤트 사용내용
 	bool bIsGrabbed = false;
 	int32 RequiredKeyPresses = 5; // 플레이어가 QTE에서 벗어나기 위해 필요한 E키 입력 횟수
@@ -228,6 +228,9 @@ public:
 	
 	//카메라 줌
 	float TargetFOV = 90;
+
+	void StopForAttack(); 
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

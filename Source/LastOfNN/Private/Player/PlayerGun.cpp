@@ -18,10 +18,16 @@ APlayerGun::APlayerGun()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	MeshComp->SetupAttachment(SceneComp); 
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	CurrentBulletNum = MaxBulletNum;
 }
 
 void APlayerGun::PullTrigger()
 {
+	//if ( CurrentBulletNum == 0 )
+	//{
+	//	return;
+	//}
 	//걸린 액터에게 데미지
 	FHitResult Hit;
 	FVector ShotDirection;
@@ -40,6 +46,7 @@ void APlayerGun::PullTrigger()
 		UE_LOG(LogTemp, Error, TEXT("No Actor")); 
 	}
 	MakeSound();
+	/*CurrentBulletNum--;*/
 }
 
 bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
@@ -69,6 +76,11 @@ bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
 		ECollisionChannel::ECC_Pawn,
 		Params
 	);
+}
+
+void APlayerGun::ReLoad()
+{
+	CurrentBulletNum = MaxBulletNum;
 }
 
 // Called when the game starts or when spawned
