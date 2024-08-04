@@ -184,8 +184,6 @@ void AJPlayer::BeginPlay()
 	}
 	PlayerController = Cast<APlayerController>(GetController());
 
-	HP = MAXHP;
-
 	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
@@ -447,12 +445,9 @@ void AJPlayer::ZoomOut(const FInputActionValue& Value)
 
 void AJPlayer::Run(const FInputActionValue& Value)
 {
-	if ( bIsGrabbed ) return;
+	if ( CharaterState == ECharacterState::ECS_Crouching || bIsGrabbed ) return;
 	//크라우칭중이 아니라면
-	if ( CharaterState == ECharacterState::ECS_Crouching || bIsGrabbed )
-	{
-		return;
-	}
+
 	//안 달리는 중이면
 	if ( !bIsRunning )
 	{
@@ -464,6 +459,7 @@ void AJPlayer::Run(const FInputActionValue& Value)
 		CharacterMovement->MaxWalkSpeed = 400;
 	}
 	bIsRunning = !bIsRunning;
+	//쉬프트 <> 크라우칭 버그 있음
 	
 }
 
@@ -474,11 +470,13 @@ void AJPlayer::Crouching(const FInputActionValue& Value)
 	if ( bCrouched )
 	{
 		CharaterState = ECharacterState::ECS_Crouching;
+		CharacterMovement->MaxWalkSpeed = 300;
 		Crouch();
 	}
 	else
 	{
 		CharaterState = ECharacterState::ECS_UnGrabbed;
+		CharacterMovement->MaxWalkSpeed = 400;
 		UnCrouch();
 	}
 }
@@ -525,6 +523,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 	
 		if ( ExecutionTarget )
 		{
+			CharaterState = ECharacterState::ECS_Crouching;
 			FTransform t = ExecutionTarget->GetAttackerTransform();
 			SetActorLocation(ExecutionTarget->GetAttackerTransform().GetLocation());
 			bIsExecuting = true;
@@ -547,7 +546,6 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 				//컨트롤러 떼기
 				Subsystem->RemoveMappingContext(IMC_Joel);
 			}
-			CharaterState = ECharacterState::ECS_Crouching;
 
 			CharacterAnimInstance->PlayExecuteMontage();
 			//몽타주 끝나면 상태 바꾸기
