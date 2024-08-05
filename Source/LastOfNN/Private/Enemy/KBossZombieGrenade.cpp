@@ -94,7 +94,7 @@ void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* Oth
 	if ( OtherActor && (OtherActor->IsA(AJPlayer::StaticClass()) || OtherActor) )
 	{
 		// 수류탄 발사체 제거
-		this->Destroy();
+		//this->Destroy();
 
 
 		//나이아가라 이펙트 생성

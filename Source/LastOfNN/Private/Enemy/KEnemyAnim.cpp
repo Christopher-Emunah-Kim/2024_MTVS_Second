@@ -16,4 +16,9 @@ void UKEnemyAnim::OnBossThrowGrenadeAnimation()
 
 }
 
+void UKEnemyAnim::OnEndAnimation(FName sectionName, int32 anistate)
+{
+	
+}
+
 

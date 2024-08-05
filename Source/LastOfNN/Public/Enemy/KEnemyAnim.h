@@ -15,6 +15,8 @@ class LASTOFNN_API UKEnemyAnim : public UAnimInstance
 {
 	GENERATED_BODY()
 	
+
+
 public:
 	
 	//FSM 열거형 타입 인스턴스
@@ -37,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)
 	void OnBossThrowGrenadeAnimation();
 
+	// 애니메이션 end 노티파이 이벤트 함수
+	UFUNCTION(BlueprintCallable, Category = FSMEvent)
+	void OnEndAnimation(FName sectionName, int32 anistate);
+
 	//피격, 죽음 애니메이션 몽타주 재생 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayEnemyTDamageAnim(FName sectionName);
@@ -48,6 +54,7 @@ public:
 	//Boss수류탄 애니메이션 몽타주 재생 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayBossEnemyGrenadeAnim(FName sectionName);
+
 
 	//죽음애니메이션 종료여부 판단
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
