@@ -59,6 +59,8 @@ public:
 	UAnimMontage* BatMontage;	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* DieMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitMontage;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
@@ -80,6 +82,7 @@ public:
 	void StopGunshotMontage();
 
 	void PlayDieMontage();
+	void PlayHitMontage();
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	

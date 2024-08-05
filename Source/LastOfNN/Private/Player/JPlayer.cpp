@@ -253,7 +253,9 @@ float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	float DamageToApply = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser); //늘 부모를 오버라이드 해주자
 	DamageToApply = FMath::Min(HealthPoints, DamageToApply); //남은 체력보다 입을 데미지가 더 크면(체력이 0이면) 데미지는 0이 된다.
 	HealthPoints -= DamageToApply;
+	CharacterAnimInstance->PlayHitMontage();
 	UE_LOG(LogTemp, Warning, TEXT("%f"), HealthPoints);
+	bIsAttacking = false;
 
 	if ( HealthPoints <= 0 ) //체력이 0이하가 되면 
 	{	
@@ -357,6 +359,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_EquipThrowWeapon, ETriggerEvent::Triggered, this, &AJPlayer::SetStateEquipThrowWeapon);
 		EnhancedInputComponent->BindAction(IA_UnEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateUnEquipped);
 		EnhancedInputComponent->BindAction(IA_BatEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateBatEquipped);
+		EnhancedInputComponent->BindAction(IA_DevelopeMode, ETriggerEvent::Triggered, this, &AJPlayer::GunSuperMode);
 	}
 }
 
@@ -364,6 +367,7 @@ void AJPlayer::Move(const FInputActionValue& Value)
 {
 	if ( bIsGrabbed || bIsAttacking )
 	{
+		UE_LOG(LogTemp, Warning, TEXT("grab : %d, attack : %d"), bIsGrabbed, bIsAttacking);
 		return;
 	}
 	const FVector2D Vector = Value.Get<FVector2D>();
@@ -654,6 +658,10 @@ void AJPlayer::SetStateBatEquipped()
 	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
+void AJPlayer::GunSuperMode()
+{
+	Gun->GunDamage = 300;
+}
 UCameraComponent* AJPlayer::GetCamera()
 {
 	return CameraComp;
@@ -696,6 +704,7 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 		);
 	SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_LeftShoulder"));
 	SpringArmComp->TargetArmLength = 80;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if ( this )
 	{
 		GetController()->SetControlRotation(rot);
@@ -714,7 +723,8 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 void AJPlayer::StopGrabbedState(bool bSuccess)
 {
 	bIsGrabbed = false;
-
+	bIsAttacking = false;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	// 발로 차는 애니메이션 실행
 	if ( CharacterAnimInstance )
 	{

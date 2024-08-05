@@ -87,7 +87,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_UnEquipped;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_BatEquipped;
+	UInputAction* IA_BatEquipped;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_DevelopeMode;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -117,6 +119,7 @@ public:
 	void SetStateEquipThrowWeapon();
 	void SetStateUnEquipped();
 	void SetStateBatEquipped();
+	void GunSuperMode();
 	UCameraComponent* GetCamera();
 
 	//총 기

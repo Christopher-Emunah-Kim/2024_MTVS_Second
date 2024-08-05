@@ -112,6 +112,11 @@ void UJCharacterAnimInstance::PlayDieMontage()
 	Montage_Play(DieMontage);
 }
 
+void UJCharacterAnimInstance::PlayHitMontage()
+{
+	Montage_Play(HitMontage);
+}
+
 
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 {
