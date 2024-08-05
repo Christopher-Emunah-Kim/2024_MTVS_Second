@@ -181,8 +181,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=UI)
 	TSubclassOf<class UKEnemyQTEWidget> QTEUIFactory;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//class UUserWidget* QTEWidget;
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UJGunWidget> GunUIFactory;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UJGunWidget* GunWidget;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UKEnemyQTEWidget* _QTEUI;

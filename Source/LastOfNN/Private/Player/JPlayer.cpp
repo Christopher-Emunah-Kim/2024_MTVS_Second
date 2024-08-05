@@ -31,6 +31,7 @@
 #include "Components/SphereComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Player/JPlayerBat.h"
+#include "Player/JGunWidget.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -138,6 +139,10 @@ void AJPlayer::BeginPlay()
 	_QTEUI->AddToViewport();
 	_QTEUI->SetPositionInViewport(FVector2D(700, 400));
 	_QTEUI->SetVisibility(ESlateVisibility::Hidden);
+
+	GunWidget = CreateWidget<UJGunWidget>(GetWorld(), GunUIFactory);
+	GunWidget->AddToViewport();
+	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 
 	if ( Box )
 	{
@@ -396,6 +401,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped || CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
 	{
+		if ( CharaterState == ECharacterState::ECS_Crouching ) return;
 		if ( bIsAttacking )
 		{
 
@@ -617,6 +623,7 @@ void AJPlayer::SetStateEquipGun()
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
 	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
+	GunWidget->SetVisibility(ESlateVisibility::Visible);
 }
 void AJPlayer::SetStateEquipThrowWeapon()
 {
@@ -626,6 +633,7 @@ void AJPlayer::SetStateEquipThrowWeapon()
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
 	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
+	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 void AJPlayer::SetStateUnEquipped()
 {
@@ -635,6 +643,7 @@ void AJPlayer::SetStateUnEquipped()
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
 	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
+	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 void AJPlayer::SetStateBatEquipped()
 {
@@ -643,6 +652,7 @@ void AJPlayer::SetStateBatEquipped()
 	Gun->SetActorHiddenInGame(true);
 	Gun->SetActorEnableCollision(false);
 	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
+	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 UCameraComponent* AJPlayer::GetCamera()
 {
