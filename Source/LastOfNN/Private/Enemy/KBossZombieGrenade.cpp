@@ -22,7 +22,7 @@ AKBossZombieGrenade::AKBossZombieGrenade()
 	CollisionComp->InitSphereRadius(15.0f);
 	SetRootComponent(CollisionComp);
 	//충돌처리
-	CollisionComp->OnComponentHit.AddDynamic(this, &AKBossZombieGrenade::GrenadeOnHit);
+	//CollisionComp->OnComponentHit.AddDynamic(this, &AKBossZombieGrenade::GrenadeOnHit);
 
 	bodyMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	bodyMeshComp->SetupAttachment(CollisionComp);
@@ -46,6 +46,9 @@ void AKBossZombieGrenade::BeginPlay()
 	Super::BeginPlay();
 	
 	target = Cast<AJPlayer>(UGameplayStatics::GetActorOfClass(this, AJPlayer::StaticClass()));
+
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieGrenade::GrenadeOnHit);
+
 }
 
 // Called every frame
@@ -88,14 +91,12 @@ void AKBossZombieGrenade::OnMyThrowGrenade(const FVector& ShootDirection)
 	//ProjectileComp->Velocity = ShootDirection * ProjectileComp->InitialSpeed;
 }
 
-void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// 충돌한 액터가 JPlayer 타입이거나 다른 오브젝트인 경우
-	if ( OtherActor && (OtherActor->IsA(AJPlayer::StaticClass()) || OtherActor) )
+	//if ( OtherActor && (OtherActor->IsA(AJPlayer::StaticClass()) || OtherActor) )
+	if ( OtherActor )
 	{
-		// 수류탄 발사체 제거
-		//this->Destroy();
-
 
 		//나이아가라 이펙트 생성
 		if ( BossGrenadeVFX )
@@ -119,6 +120,9 @@ void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* Oth
 		{
 				DamageSphere->DestroyComponent();
 		}, 3.0f, false);
+
+		// 수류탄 발사체 제거
+		this->Destroy();
 	}
 }
 

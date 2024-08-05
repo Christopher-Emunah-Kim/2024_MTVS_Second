@@ -221,6 +221,8 @@ void AKBossZombieEnemy::EnemyAttack()
 		//공격한다.(내용은 나중에 구현)
 		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
 
+		
+
 		//공격 애니메이션 재생 활성화
 		anim->bEnemyAttackPlay = true;
 
