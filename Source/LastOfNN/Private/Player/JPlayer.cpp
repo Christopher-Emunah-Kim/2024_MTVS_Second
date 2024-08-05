@@ -689,7 +689,7 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 	bUseControllerRotationYaw = false;	
 	FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), GrabbedEnemy->GetActorLocation());
 
-	CharacterAnimInstance->Montage_Stop(0.2f);
+	CharacterAnimInstance->Montage_Stop(0.2f);   
 
 	UKismetSystemLibrary::MoveComponentTo(
 	GetCapsuleComponent(),              // 이동할 컴포넌트

@@ -23,7 +23,7 @@ public:
 	void PullTrigger();
 	bool GunTrace(FHitResult& Hit, FVector& ShotDirection);
 
-	float MaxRange = 1000;
+	float MaxRange = 10000;
 
 	UPROPERTY(EditAnywhere)
 	float GunDamage = 10;
