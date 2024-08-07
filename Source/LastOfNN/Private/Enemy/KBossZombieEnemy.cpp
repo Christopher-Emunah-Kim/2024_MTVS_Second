@@ -55,8 +55,8 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 	EnemyWalkSpeed = 150.0f;
 	EnemyRunSpeed = 300.0f;
 	EnemyAttackRange = 200.0f;
-	BossGrenadeAttackDamage = 20.0f;
-	BossGrenadeAttackRange = 700.0f;
+	EnemySpecialAttackDamage = 20.0f;
+	EnemySpecialAttackRange = 1000.0f;
 	EnemyAttackDelayTime = 2.0f;
 	EnemyAttackDamage = 15.0f;
 	EnemyMoveDistanceOnSound = 300.0f;
@@ -73,15 +73,12 @@ void AKBossZombieEnemy::BeginPlay()
 	//데미지처리함수 바인딩
 	if ( RightAttackSphere )
 	{
-		
 		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieEnemy::EnemyOverlapDamage);
 	}
 	if ( LeftAttackSphere )
 	{
-		
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieEnemy::EnemyOverlapDamage);
 	}
-
 }
 
 void AKBossZombieEnemy::Tick(float DeltaTime)
@@ -99,110 +96,113 @@ void AKBossZombieEnemy::EnemyIDLE()
 	Super::EnemyIDLE();
 }
 
-
-
 void AKBossZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
-
-	FVector dir;
-	FVector EnemyDestination;
 
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 
 	if ( target )
 	{
-		
-		//보스 특수 공격(수류탄) 발동을 위한 상태 변경 조건 설정
+		//(우선순위) 보스 특수 공격(수류탄) 발동을 위한 상태 변경 조건 설정
 		float DistanceToTarget = FVector::Distance(target->GetActorLocation(), GetActorLocation());
-		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= BossGrenadeAttackRange) 
+		//근거리 공격범위 밖이고, 원거리 공격범위 안이면
+		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= EnemySpecialAttackRange) 
 		{
+			//특수공격 쿨타임이 지나면
 			if( CurrentTime > BossGrenadeDelayTime ) 
 			{
-				//속도를 0으로 만들어
-				GetCharacterMovement()->MaxWalkSpeed = 0;
-				ai->StopMovement();
-				//BlendSpace Anim에 액터의 속도 할당
-				anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-				anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 				//원거리 공격 상태로 전환
 				isBossCanThrowGrenade = true;
-				EnemySetState(EEnemyState::ATTACK);
+				EnemySetState(EEnemyState::SPECIL);
 				UE_LOG(LogTemp, Error, TEXT("Grenade Ready"));
+
 				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
 				CurrentTime = 0;
 				return;
 			}
 		}
 
-		//타깃목적지
-		EnemyDestination = target->GetActorLocation();
-		//방향
-		dir = EnemyDestination - GetActorLocation();
-
-		//(1단계) 길찾기 결과 얻어오기
-		//Navigation 객체 얻어오기
-		auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-		//목적지 길찾기 경로 데이터 탐색
-		FPathFindingQuery query;
-		FAIMoveRequest req;
-		//목적지 인지 가능 범위
-		req.SetAcceptanceRadius(3);
-		req.SetGoalLocation(EnemyDestination);
-		//길찾기 위한 쿼리 생성
-		ai->BuildPathfindingQuery(req, query);
-		//길찾기 결과 가져오기
-		FPathFindingResult FindingResult = ns->FindPathSync(query);
-
-		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
-		//if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
-		if ( FindingResult.Result == ENavigationQueryResult::Success )
-		{
-			//속도를 뛰기속도로 변경
-			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
-			//BlendSpace Anim에 액터의 속도 할당
-			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-			//타깃에게 이동
-			ai->MoveToLocation(EnemyDestination);
-
-			//타깃과 가까워지면 공격상태 전환
-			//공격범위 안에 들어오면
-			//if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
-			if ( dir.Size() < EnemyAttackRange )
-			{
-				//AI의 길찾기 기능을 정지한다.
-				ai->StopMovement();
-				//공격상태전환 /애니메이션 동기화 
-				EnemySetState(EEnemyState::ATTACK);
-				//공격 애니메이션 재생 활성화
-				anim->bEnemyAttackPlay = true;
-				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
-				CurrentTime = EnemyAttackDelayTime;
-			}
-		}
-		else
-		{
-			//랜덤하게 이동
-			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-			//속도를 걷기속도로 변경
-			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-			//BlendSpace Anim에 액터의 속도 할당
-			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-			//목적지에 도착하면
-			if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal )
-			{
-				//새로운 랜덤위치 가져오기
-				GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
-			}
-		}
+		//기본적으로 랜덤 지역 이동
+		//(기본 Attack으로의 전환도 여기서 처리)
+		EnemyRandomMove();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
+}
 
+//Boss 랜덤 이동 함수
+void AKBossZombieEnemy::EnemyRandomMove()
+{
+	FVector dir;
+	FVector EnemyDestination;
+
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+	
+	//타깃목적지
+	EnemyDestination = target->GetActorLocation();
+	//방향
+	dir = EnemyDestination - GetActorLocation();
+
+	//(1단계) 길찾기 결과 얻어오기
+	//Navigation 객체 얻어오기
+	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	//목적지 길찾기 경로 데이터 탐색
+	FPathFindingQuery query;
+	FAIMoveRequest req;
+	//목적지 인지 가능 범위
+	req.SetAcceptanceRadius(3);
+	req.SetGoalLocation(EnemyDestination);
+	//길찾기 위한 쿼리 생성
+	ai->BuildPathfindingQuery(req, query);
+	//길찾기 결과 가져오기
+	FPathFindingResult FindingResult = ns->FindPathSync(query);
+
+	//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
+	//if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+	if ( FindingResult.Result == ENavigationQueryResult::Success )
+	{
+		//속도를 뛰기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//타깃에게 이동
+		ai->MoveToLocation(EnemyDestination);
+
+		//타깃과 가까워지면 공격상태 전환
+		//공격범위 안에 들어오면
+		//if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+		if ( dir.Size() < EnemyAttackRange )
+		{
+			//AI의 길찾기 기능을 정지한다.
+			ai->StopMovement();
+			//공격상태전환 /애니메이션 동기화 
+			EnemySetState(EEnemyState::ATTACK);
+			//공격 애니메이션 재생 활성화
+			anim->bEnemyAttackPlay = true;
+			//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+			CurrentTime = EnemyAttackDelayTime;
+		}
+	}
+	else
+	{
+		//랜덤하게 이동
+		auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+		//속도를 걷기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//목적지에 도착하면
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal )
+		{
+			//새로운 랜덤위치 가져오기
+			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+		}
+	}
 }
 
 void AKBossZombieEnemy::EnemyAttack()
@@ -218,58 +218,61 @@ void AKBossZombieEnemy::EnemyAttack()
 	//공격시간이 되고, 근접공격범위 안이라면
 	if ( CurrentTime > EnemyAttackDelayTime && TargetDistance <= EnemyAttackRange)
 	{
-		//공격한다.(내용은 나중에 구현)
-		GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
-
-		
-
 		//공격 애니메이션 재생 활성화
 		anim->bEnemyAttackPlay = true;
 
 		//공격 충돌체 활성화
-		//RightAttackSphere->SetCollisionProfileName(TEXT("OvelapAll"));
 		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-		UE_LOG(LogTemp, Warning, TEXT("Player Damaged : %f"), target->HealthPoints);
-
+		//Log
+		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, TEXT("Attack!!"));
 		// 대기 시간 초기화
 		CurrentTime = 0;
 	}
 
-	if ( isBossCanThrowGrenade )
-	{
-		anim->bEnemyAttackPlay = true;
-		
-		// 애니메이션이 끝날 때까지 보스를 멈추게 함
-		GetCharacterMovement()->MaxWalkSpeed = 0;
-		ai->StopMovement();
-
-		//수류탄 소환애니메이션 재생
-		PlayGrenadeAnimation();
-
-		// 대기 시간 초기화
-		CurrentTime = 0;
-
-		return;
-	}
-	//근접공격거리 공격범위를 벗어나면 이동상태 전환
+	//근접공격거리 공격범위를 벗어나고, 원거리 공격상태가 아니라면 이동상태 전환
 	if ( TargetDistance > EnemyAttackRange && isBossCanThrowGrenade == false )
 	{
 		//이동상태 전환
 		EnemySetState(EEnemyState::MOVE);
+
 		//공격 충돌체 꺼버리기
-		//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
 		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		//랜덤 도착지역 재설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
+}
+
+//보스 특수공격(수류탄 던지기 처리)
+void AKBossZombieEnemy::EnemySpecialAttack()
+{
+	GEngine->AddOnScreenDebugMessage(6, 2, FColor::Red, TEXT("Special Attack!!"));
+
+	anim->bEnemyAttackPlay = true;
+
+	if ( isBossCanThrowGrenade )
+	{
+		//보스 수류탄 공격 애니메이션 몽타주 재생
+		anim->PlayBossEnemyGrenadeAnim(TEXT("ThrowGrenade"));
+		//수류탄공격여부 비활성화
+		isBossCanThrowGrenade = false;
+		// 대기 시간 초기화
+		CurrentTime = 0;
+	}
+	
+	////속도를 0으로 만들고
+	//GetCharacterMovement()->MaxWalkSpeed = 0;
+	//ai->StopMovement();
+	////BlendSpace Anim에 액터의 속도 할당
+	//anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+	//anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 }
 
 void AKBossZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::EnemyOverlapDamage(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
-
-
 
 float AKBossZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -323,31 +326,41 @@ void AKBossZombieEnemy::EnemyDead()
 //보스 수류탄 공격 함수
 void AKBossZombieEnemy::BossThrowGrenade()
 {
-	if ( BossGrenade && isBossCanThrowGrenade )
+	//if ( BossGrenade && isBossCanThrowGrenade )
+	if ( BossGrenade  )
 	{
 		//발사체 생성위치
-		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 120); 
+		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 40); 
 		FRotator SpawnRotation = (target->GetActorLocation() - GetActorLocation()).Rotation();
+		SpawnRotation.Pitch += 40.0f;
 		// 생성된 수류탄을 저장
 		AKBossZombieGrenade* Grenade = GetWorld()->SpawnActor<AKBossZombieGrenade>(BossGrenade, SpawnLocation, SpawnRotation);
-		if ( Grenade && anim->bBossThrowGrenade == true )
+		//if ( Grenade && anim->bBossThrowGrenade == true )
+		if ( Grenade )
 		{
-			//발사지연타이머 설정
-			FTimerHandle LaunchTimerHandle;
+			// 메시를 target방향으로 돌림
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+			// 수류탄 발사
+			FVector LaunchDirection = SpawnRotation.Vector();
 
-			// 1.2초 후에 발사되도록 타이머 설정
-			GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, FTimerDelegate::CreateLambda([=]()
-				{
-					// 수류탄 발사
-					FVector LaunchDirection = SpawnRotation.Vector();
-					Grenade->BossFireInDirection(LaunchDirection);
-					UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));
+			Grenade->BossThrowGrenade(LaunchDirection);
 
-				}), 2.5f, false); // 1.2초 후에 한 번만 실행되도록 설정
-			
-			/*FVector LaunchDirection = SpawnRotation.Vector();
-			Grenade->BossFireInDirection(LaunchDirection);
-			UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));*/
+			UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));
+
+			//IDLE상태로 전환
+			EnemySetState(EEnemyState::IDLE);
+
+			////발사지연타이머 설정
+			//FTimerHandle LaunchTimerHandle;
+			//// 1.2초 후에 발사되도록 타이머 설정
+			//GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, FTimerDelegate::CreateLambda([=]()
+			//	{
+			//		// 수류탄 발사
+			//		FVector LaunchDirection = SpawnRotation.Vector();
+			//		Grenade->BossThrowGrenade(LaunchDirection);
+			//		UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));
+
+			//	}), 2.5f, false); // 1.2초 후에 한 번만 실행되도록 설정a
 		}
 
 		//체크변수 초기화
@@ -355,17 +368,3 @@ void AKBossZombieEnemy::BossThrowGrenade()
 		anim->bBossThrowGrenade = false;
 	}
 }
-
-
-void AKBossZombieEnemy::PlayGrenadeAnimation()
-{
-	//보스 원거리 공격 애니메이션 몽타주 재생
-	anim->PlayBossEnemyGrenadeAnim(TEXT("ThrowGrenade"));
-
-	if ( anim->bBossThrowGrenade )
-	{
-		BossThrowGrenade();
-	}
-	isBossCanThrowGrenade = false;
-}
-

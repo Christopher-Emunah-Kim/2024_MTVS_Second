@@ -16,7 +16,6 @@ enum class ETeamType : uint8
 	NEUTRAL UMETA(DisplayName = "Neutral")
 };
 
-
 UCLASS()
 class LASTOFNN_API AKBaseEnemy : public ACharacter
 {
@@ -72,7 +71,7 @@ public:
 	//State Setting과 Animation동기화 처리
 	virtual void EnemySetState(EEnemyState newstate);
 
-
+	//=======================================================================================
     //**대기상태처리함수
 	virtual void EnemyIDLE();
 	//대기시간
@@ -81,7 +80,7 @@ public:
 	//경과시간
 	float CurrentTime = 0;
 
-
+	//=======================================================================================
 	//**이동상태처리함수
     virtual void EnemyMove();
 	//걷기속도
@@ -118,9 +117,9 @@ public:
 	UFUNCTION()
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus);
 
+	//=======================================================================================
 	//**공격상태처리함수
     virtual void EnemyAttack();
-	virtual void EnemySpecialAttack();
 	UFUNCTION()
 	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -137,15 +136,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDelayTime;
 
-	//Grab이벤트함수
-	virtual void EnemyGrab();
+	//Grab / Grenade 특수공격 이벤트함수
+	virtual void EnemySpecialAttack();
 	// QTE 이벤트 시작 시 Player를 잡았는지 확인하기 위한 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
 	bool bIsPlayerGrabbed = false;
 	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
 	virtual void SetAllEnemiesToIdle();
+	//EnemySpecialAttack데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemySpecialAttackDamage;
+	//EnemySpecialAttack범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemySpecialAttackRange;
 
-
+	//=======================================================================================
 	//피격알림이벤트함수
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -163,6 +168,7 @@ public:
 	//암살상태처리함수
 	virtual void EnemyExecuted();
 
+	//=======================================================================================
 	//**죽음상태처리함수
     virtual void EnemyDead();
 	//죽음 후 메시 내려가는 속도

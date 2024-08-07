@@ -37,7 +37,6 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
 	RightAttackSphere->SetSphereRadius(200.f);
 
-
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
 	if ( AssassinBox )
@@ -102,7 +101,6 @@ void AKNormalZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-	//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 
 	//소리감지처리함수 바인딩
 	if ( AIPerceptionComp )
@@ -125,8 +123,6 @@ void AKNormalZombieEnemy::BeginPlay()
 	{
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKNormalZombieEnemy::EnemyOverlapDamage);
 	}
-
-
 }
 
 void AKNormalZombieEnemy::Tick(float DeltaTime)
@@ -169,19 +165,16 @@ void AKNormalZombieEnemy::EnemyMove()
 
 		//속도를 뛰기속도로 변경
 		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 
 		// AI를 이용하여 계산된 위치로 이동
 		ai->MoveToLocation(NewLocation);
-		//UE_LOG(LogTemp, Warning, TEXT("MOVE : SL[ %s ] Di[ %s ] EM[ %f ] SP[ %f ]"), *SoundLocation.ToString(), *Direction.ToString(), dir.Size(), EnemyRunSpeed);
 		
 		//만약 목적지에 도착했다면
 		if ( dir.Size() < 150.0f )
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("MOVE STOPs~~~~~~~~~~~~~~~~~~~~~~~~"));
 			//이동 플래그 초기화
 			bShouldMoveToSound = false;
 			//IDLE상태 전환
@@ -190,80 +183,84 @@ void AKNormalZombieEnemy::EnemyMove()
 	}
 	else if (target)
 	{
-		//타깃목적지
-		EnemyDestination = target->GetActorLocation();
-		//방향
-		dir = EnemyDestination - GetActorLocation();
-		//거리 구하기
-		float targetdistance = dir.Size();
-
-		//(1단계) 길찾기 결과 얻어오기
-		//Navigation 객체 얻어오기
-		auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-		//목적지 길찾기 경로 데이터 탐색
-		FPathFindingQuery query;
-		FAIMoveRequest req;
-		//목적지 인지 가능 범위
-		req.SetAcceptanceRadius(3);
-		req.SetGoalLocation(EnemyDestination);
-		//길찾기 위한 쿼리 생성
-		ai->BuildPathfindingQuery(req, query);
-		//길찾기 결과 가져오기
-		FPathFindingResult FindingResult = ns->FindPathSync(query);
-
-		//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
-		if (FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
-		{
-			//속도를 뛰기속도로 변경
-			GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
-			//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
-			//BlendSpace Anim에 액터의 속도 할당
-			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-			//타깃에게 이동
-			ai->MoveToLocation(EnemyDestination);
-
-			//타깃과 가까워지면 공격상태 전환
-			//공격범위 안에 들어오면
-			if ( targetdistance < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
-			{
-				//AI의 길찾기 기능을 정지한다.
-				ai->StopMovement();
-				//공격상태 전환 / 애니메이션 상태 동기화
-				EnemySetState(EEnemyState::ATTACK);
-				//공격 애니메이션 재생 활성화
-				anim->bEnemyAttackPlay = true;
-				//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
-				CurrentTime = EnemyAttackDelayTime;
-			}
-		}
-		else
-		{
-			//랜덤하게 이동
-			auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-			//속도를 걷기속도로 변경
-			GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-			UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
-			//BlendSpace Anim에 액터의 속도 할당
-			anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-			anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-			//목적지에 도착하면
-			if (RanResult == EPathFollowingRequestResult::AlreadyAtGoal)
-			{
-				//새로운 랜덤위치 가져오기
-				GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
-			}
-		}
+		EnemyRandomMove();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
 	}
-	
 }
 
+void AKNormalZombieEnemy::EnemyRandomMove()
+{
+	FVector dir;
+	FVector EnemyDestination;
 
+	//타깃목적지
+	EnemyDestination = target->GetActorLocation();
+	//방향
+	dir = EnemyDestination - GetActorLocation();
+	//거리 구하기
+	float targetdistance = dir.Size();
 
+	//(1단계) 길찾기 결과 얻어오기
+	//Navigation 객체 얻어오기
+	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	//목적지 길찾기 경로 데이터 탐색
+	FPathFindingQuery query;
+	FAIMoveRequest req;
+	//목적지 인지 가능 범위
+	req.SetAcceptanceRadius(3);
+	req.SetGoalLocation(EnemyDestination);
+	//길찾기 위한 쿼리 생성
+	ai->BuildPathfindingQuery(req, query);
+	//길찾기 결과 가져오기
+	FPathFindingResult FindingResult = ns->FindPathSync(query);
+
+	//(2단계) 길찾기 데이터 결과에 따른 이동 수행하기
+	if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+	{
+		//속도를 뛰기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//타깃에게 이동
+		ai->MoveToLocation(EnemyDestination);
+
+		//타깃과 가까워지면 공격상태 전환
+		//공격범위 안에 들어오면
+		if ( targetdistance < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+		{
+			//AI의 길찾기 기능을 정지한다.
+			ai->StopMovement();
+			//공격상태 전환 / 애니메이션 상태 동기화
+			EnemySetState(EEnemyState::ATTACK);
+			//공격 애니메이션 재생 활성화
+			anim->bEnemyAttackPlay = true;
+			//공격 상태 전환 후 대기시간이 바로 끝나도록 처리
+			CurrentTime = EnemyAttackDelayTime;
+		}
+	}
+	else
+	{
+		//랜덤하게 이동
+		auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+		//속도를 걷기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//목적지에 도착하면
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal )
+		{
+			//새로운 랜덤위치 가져오기
+			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+		}
+	}
+}
 
 void AKNormalZombieEnemy::EnemyAttack()
 {
@@ -274,33 +271,27 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//공격시간이 되면
 	if (CurrentTime>EnemyAttackDelayTime && target->GetCharaterState() != ECharacterState::ECS_Crouching)
 	{
-		
-
 		// 일정 확률로 Grab 상태로 전환
 		float RandomChance = FMath::FRand();
 		if ( RandomChance < 0.3f ) // 30% 확률로 Grab
 		{
-			EnemyGrab();
+			EnemySetState(EEnemyState::SPECIL);
 		}
 		else
 		{
 			//공격한다.(내용은 나중에 구현)
-			GEngine->AddOnScreenDebugMessage(0, 2, FColor::Red, TEXT("Attack!!"));
+			GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, TEXT("Attack!!"));
 
 			//공격 충돌체 활성화
-			//RightAttackSphere->SetCollisionProfileName(TEXT("OvelapAll"));
 			RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 			//공격 애니메이션 재생 활성화
 			anim->bEnemyAttackPlay = true;
-
-			UE_LOG(LogTemp, Warning, TEXT("Player Damaged : %f"), target->HealthPoints);
 		}
-
 		// 대기 시간 초기화
 		CurrentTime = 0;
-		
 	}
+
 	//타깃과의 거리를 구하고
 	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
 	//거리가 공격범위를 벗어나면
@@ -310,7 +301,6 @@ void AKNormalZombieEnemy::EnemyAttack()
 		EnemySetState(EEnemyState::MOVE);
 
 		//공격 충돌체 꺼버리기
-		//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
 		RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		//랜덤위치값을 이때도 다시 설정
@@ -324,10 +314,9 @@ void AKNormalZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComp
 
 }
 
-void AKNormalZombieEnemy::EnemyGrab()
+void AKNormalZombieEnemy::EnemySpecialAttack()
 {
-	Super::EnemyGrab();
-
+	Super::EnemySpecialAttack();
 
 	// Grab 애니메이션 재생
 	if ( anim )
@@ -402,7 +391,6 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 	{
 		//IDLE상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::IDLE);
-
 		CurrentTime = 0;
 	}
 }
@@ -435,6 +423,7 @@ void AKNormalZombieEnemy::EnemyDead()
 	}
 }
 
+//Player암살 이벤트 시 메시 고정
 FTransform AKNormalZombieEnemy::GetAttackerTransform()
 {
 	return AssassinSceneComp->GetComponentToWorld();

@@ -25,13 +25,23 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//=======================================================================================
+	// Functions
+	//=======================================================================================
+
 	virtual void EnemySetState(EEnemyState newstate) override;
 
     virtual void EnemyIDLE() override;
 
     virtual void EnemyMove() override;
 
+	void EnemyRandomMove(); //Boss랜덤이동함수
+
     virtual void EnemyAttack() override;
+
+	virtual void EnemySpecialAttack() override;
+
+	void BossThrowGrenade(); //Boss수류탄 공격 함수
 
 	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
@@ -43,11 +53,9 @@ public:
 
     virtual void EnemyDead() override;
 
-	//Boss수류탄 공격 함수
-	void BossThrowGrenade();
-
-	//Boss 수류탄 애니메이션 재생함수
-	void PlayGrenadeAnimation();
+	//=======================================================================================
+	// Instance, Variables
+	//=======================================================================================
 
 	//Boss 수류탄 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
@@ -58,13 +66,5 @@ public:
 	
 	//Boss 수류탄 발사주기
 	float BossGrenadeDelayTime = 7.0f;
-
-	//Boss 수류탄 데미지
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
-	float BossGrenadeAttackDamage;
-
-	//Boss 수류탄 공격범위
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
-	float BossGrenadeAttackRange;
 
 };

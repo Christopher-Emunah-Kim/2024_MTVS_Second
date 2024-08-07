@@ -50,16 +50,10 @@ public:
 	class UNiagaraSystem* BossGrenadeVFX;
 
 	//Boss가 호출할 발사함수
-	void BossFireInDirection(const FVector& ShootDirection);
-
-	//전달받은 Direction값으로 발사 하는 내부함수
-	void OnMyThrowGrenade(const FVector& ShootDirection);
+	void BossThrowGrenade(const FVector& ShootDirection);
 
 	//충돌처리함수
 	UFUNCTION()
 	void GrenadeOnHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	//데미지적용함수
-	void OnDamageSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 };
