@@ -50,7 +50,12 @@ public:
 	//이동 방향
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCameraComponent* CameraComp;	
+	UCameraComponent* CameraComp;			
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* CameraPostion;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class ACameraActor* FieldCamera;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USpringArmComponent* SpringArmComp;
 	UPROPERTY(EditAnywhere)
@@ -170,6 +175,7 @@ public:
 	int32 RequiredKeyPresses = 5; // 플레이어가 QTE에서 벗어나기 위해 필요한 E키 입력 횟수
 	int32 CurrentKeyPresses = 0;
 
+	void MoveFieldCamera();
 	// 현재 Player를 잡고 있는 Enemy의 참조
 	class AKBaseEnemy* GrabbedEnemy;
 
@@ -236,6 +242,11 @@ public:
 	float TargetFOV = 90;
 
 	void StopForAttack(); 
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCameraShakeBase> CamShake;
+
+	void CameraShake();
 
 protected:
 	// Called when the game starts or when spawned

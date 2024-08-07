@@ -32,6 +32,9 @@
 #include "Engine/DamageEvents.h"
 #include "Player/JPlayerBat.h"
 #include "Player/JGunWidget.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Components/SceneComponent.h"
+#include "Camera/CameraActor.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -50,6 +53,11 @@ AJPlayer::AJPlayer()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	CameraPostion = CreateDefaultSubobject<USceneComponent>(TEXT("CameraPostion"));
+	CameraPostion->SetupAttachment(RootComponent);
+	CameraPostion->SetRelativeLocation(FVector(-81.5f, -36.f, 40.f));
+	CameraPostion->SetRelativeRotation(FRotator(14.5f, 11.f, -6.5f));
 
 	LockOnComp = CreateDefaultSubobject<UPlayerLockOn>(TEXT("LockOnComp"));
 	LockOnComp->SetupAttachment(RootComponent);
@@ -117,6 +125,22 @@ void AJPlayer::StopForAttack()
 	GetWorld()->GetTimerManager().ClearTimer(TakeDownTimer);
 }
 
+
+void AJPlayer::CameraShake()
+{
+	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+	if ( CameraManager )
+	{
+		// 클라이언트에서 카메라 흔들림 효과 시작
+		if ( PlayerController )
+		{
+			PlayerController->ClientStartCameraShake(CamShake);
+		}
+
+		// 월드 공간에서 카메라 흔들림 효과 적용
+		//CameraManager->PlayWorldCameraShake(GetWorld(), CamShake, GetActorLocation(), 0.0f, 5.0f, 1.0f);
+	}
+}
 
 void AJPlayer::BeginPlay()
 {
@@ -191,6 +215,9 @@ void AJPlayer::BeginPlay()
 
 	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//카메라액터 얻어오기
+	FieldCamera = Cast<ACameraActor>(UGameplayStatics::GetActorOfClass(this, ACameraActor::StaticClass()));
 }
 
 void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -217,6 +244,7 @@ void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* O
 			ActorController = ActorPawn->GetController();
 		}
 		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+
 	}
 	FSMOwner = Cast<AKNormalZombieEnemy>(OtherActor);
 
@@ -401,6 +429,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 		CharacterAnimInstance->PlayGunShotMontage();
 		CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Shot"));
 		Gun->PullTrigger();
+		CameraShake();
 		/*GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::StopForAttack, 0.6f, false);*/
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped || CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
@@ -527,20 +556,19 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 #endif
 	if ( bHit )
 	{
-		LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		ExecutionTarget = Cast<AKNormalZombieEnemy>(HitResult.GetActor());
 	
 		if ( ExecutionTarget )
 		{
 			CharaterState = ECharacterState::ECS_Crouching;
 			FTransform t = ExecutionTarget->GetAttackerTransform();
-			SetActorLocation(ExecutionTarget->GetAttackerTransform().GetLocation());
+			SetActorLocation(ExecutionTarget->GetAttackerTransform().GetLocation() + FVector(10, 0, 0));
 			bIsExecuting = true;
 			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_Spine1"));
-			SpringArmComp->SetRelativeRotation(FRotator(0, 180, 0));
+			//SpringArmComp->bUsePawnControlRotation = false;
+			//SpringArmComp->SetRelativeRotation(FRotator(237, -84, -18));
 			CameraComp->SetupAttachment(SpringArmComp);
-			SpringArmComp->TargetArmLength = 200;
+			SpringArmComp->TargetArmLength = 150;
 			//움직임 빼기
 			UKEnemyFSM* FFSSMM = ExecutionTarget->GetComponentByClass<UKEnemyFSM>();
 			if ( FFSSMM && bCanExecute )
@@ -589,8 +617,6 @@ void AJPlayer::EnemyIsDead()
 
 	bIsExecuting = false;
 
-	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 void AJPlayer::AfterTakeDown()
@@ -677,6 +703,15 @@ ECharacterEquipState AJPlayer::GetCharacterEquipState() const
 
 #pragma region Grab QTE Event Function
 
+void AJPlayer::MoveFieldCamera()
+{
+	FTransform t = CameraPostion->K2_GetComponentToWorld();
+	FieldCamera->SetActorTransform(t);
+	CameraComp->SetActive(false);
+	FieldCamera->GetRootComponent()->SetActive(true);
+	PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
+}
+
 void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 {
 	bIsGrabbed = true;
@@ -697,13 +732,12 @@ void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
 	rot,         // 목표 회전
 	false,                              // 즉시 스냅
 	true,
-	0.5f,                            // 텔레포트하지 않음
+	1.f,                            // 텔레포트하지 않음
 	false,
 	EMoveComponentAction::Type::Move,
 	LatentInfo
 		);
-	SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_LeftShoulder"));
-	SpringArmComp->TargetArmLength = 80;
+	MoveFieldCamera();
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if ( this )
 	{
@@ -724,6 +758,10 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 {
 	bIsGrabbed = false;
 	bIsAttacking = false;
+	CameraComp->SetActive(true);
+	FieldCamera->GetRootComponent()->SetActive(false);
+	PlayerController->SetViewTargetWithBlend(CameraComp->GetOwner(), 0.5f);
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	// 발로 차는 애니메이션 실행
 	if ( CharacterAnimInstance )
