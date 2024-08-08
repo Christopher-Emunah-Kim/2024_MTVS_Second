@@ -260,6 +260,7 @@ void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* O
 			ActorController = ActorPawn->GetController();
 		}
 		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
+		UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *ActorPawn->GetName());
 	}
 }
 float AJPlayer::GetKeyProcessPercent()
@@ -364,7 +365,7 @@ void AJPlayer::Tick(float DeltaTime)
 
 	CameraComp->FieldOfView = FMath::Lerp(CameraComp->FieldOfView, TargetFOV, DeltaTime * 5);
 
-	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("HP : %f"), HealthPoints));
+	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("Player HP : %f"), HealthPoints));
 }
 
 // Called to bind functionality to input
@@ -679,6 +680,7 @@ void AJPlayer::SetStateBatEquipped()
 {
 	//배트 장착, 총 안보이고 콜리전 비활성화
 	Bat->SetActorHiddenInGame(false);
+	Bat->SetActorEnableCollision(true);
 	Gun->SetActorHiddenInGame(true);
 	Gun->SetActorEnableCollision(false);
 	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
@@ -712,11 +714,11 @@ void AJPlayer::MoveFieldCamera()
 	PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
 }
 
-void AJPlayer::StartGrabbedState(AKNormalZombieEnemy* Enemy)
+void AJPlayer::StartGrabbedState(AActor* Enemy)
 {
 	bIsGrabbed = true;
 	CurrentKeyPresses = 0;
-	GrabbedEnemy = Enemy;
+	GrabbedEnemy = Cast<AKBaseEnemy>(Enemy);
 
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
@@ -817,7 +819,7 @@ void AJPlayer::HandleQTEInput()
 			// QTE 성공, Grab 상태 해제
 			StopGrabbedState(true);
 			bEscapeSuccess = true;
-			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, TEXT("Escaped from Grab!"));
+			GEngine->AddOnScreenDebugMessage(5, 1, FColor::Green, TEXT("Escaped from Grab!"));
 			GetController()->SetIgnoreMoveInput(false);
 		}
 	}

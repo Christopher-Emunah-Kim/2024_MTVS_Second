@@ -179,7 +179,7 @@ public:
 	// 현재 Player를 잡고 있는 Enemy의 참조
 	class AKBaseEnemy* GrabbedEnemy;
 
-	void StartGrabbedState(class AKNormalZombieEnemy* Enemy); // Grab 상태 시작 함수
+	void StartGrabbedState(class AActor* Enemy); // Grab 상태 시작 함수
 	void StopGrabbedState(bool bSuccess);  // Grab 상태 종료 함수, 성공 여부에 따라 다르게 처리
 	void HandleQTEInput();    // QTE 입력 처리 함수
 

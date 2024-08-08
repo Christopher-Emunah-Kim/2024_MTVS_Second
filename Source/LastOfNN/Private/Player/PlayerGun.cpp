@@ -101,7 +101,7 @@ void APlayerGun::MakeSound()
 {
 	// 소리 자극 발생시키기
 	FVector NoiseLocation = GetActorLocation();
-	float Loudness = 101.f;  // 소리 강도 (예시 값)
+	float Loudness = 50.5f;  // 소리 강도 (예시 값)
 	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.0f, TEXT("ObjectLanding"));
 }

@@ -5,6 +5,8 @@
 #include "Engine/DamageEvents.h"
 #include "Components/SceneComponent.h"
 
+#include "Components/CapsuleComponent.h"
+
 // Sets default values
 AJPlayerBat::AJPlayerBat()
 {
@@ -16,6 +18,15 @@ AJPlayerBat::AJPlayerBat()
 
 	Bat = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bat"));
 	Bat->SetupAttachment(RootComponent);
+	Bat->SetCollisionProfileName(TEXT("OverlapAll"));
+	Bat->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	HitCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("HitCapsule"));
+	HitCapsule->SetupAttachment(RootComponent);
+	HitCapsule->SetRelativeLocation(FVector(61.189181f, -31.936999f, 13.889282f));
+	HitCapsule->SetRelativeRotation(FRotator(-82, 10, 334));
+	HitCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 // Called when the game starts or when spawned
@@ -23,7 +34,8 @@ void AJPlayerBat::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	Bat->OnComponentBeginOverlap.AddDynamic(this, &AJPlayerBat::OverlapDamage);
+	HitCapsule->OnComponentBeginOverlap.AddDynamic(this, &AJPlayerBat::OverlapDamage);
+
 }
 
 // Called every frame
@@ -35,27 +47,21 @@ void AJPlayerBat::Tick(float DeltaTime)
 
 void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if ( OtherActor && OtherActor != this )
-	{
-		HitActors.AddUnique(OtherActor); //데미지를 입을 액터들
-		UE_LOG(LogTemp, Log, TEXT("Applied"));
-	}
-	for ( AActor* Actor : HitActors )
-	{
-		if ( Actor )
-		{
-			//일단 빠따 데미지 20으로 설정
-			FPointDamageEvent DamageEvent(20, FHitResult(), GetActorForwardVector(), nullptr);
-			AController* ActorController = nullptr;
-			//애들 컨트롤러 얻어와서 데미지 주기
-			APawn* ActorPawn = Cast<APawn>(Actor);
-			if ( ActorPawn )
-			{
-				ActorController = ActorPawn->GetController();
-			}
-			Actor->TakeDamage(20, DamageEvent, ActorController, this);
+	UE_LOG(LogTemp, Error, TEXT("ZOPBEDF"));
 
-			UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *Actor->GetName());
+	if ( OtherActor && OtherActor != GetWorld()->GetFirstPlayerController()->GetPawn() && OtherActor != this )
+	{
+		//일단 빠따 데미지 20으로 설정
+		FPointDamageEvent DamageEvent(20, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = nullptr;
+		//애들 컨트롤러 얻어와서 데미지 주기
+		APawn* ActorPawn = Cast<APawn>(OtherActor);
+		if ( ActorPawn )
+		{
+			ActorController = ActorPawn->GetController();
 		}
+		OtherActor->TakeDamage(20, DamageEvent, ActorController, this);
+
+		UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *OtherActor->GetName());
 	}
 }
