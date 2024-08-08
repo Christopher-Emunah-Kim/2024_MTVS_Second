@@ -94,7 +94,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_BatEquipped;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_DevelopeMode;
+	UInputAction* IA_DevelopeMode;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Inventory;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -102,7 +104,7 @@ public:
 	void Zoom(const FInputActionValue& Value);
 	void ZoomOut(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
-
+	void InventoryOn(const FInputActionValue& Value);
 	void Crouching(const FInputActionValue& Value);
 	//토글 체크 변수
 	bool bCrouched = false;
@@ -193,11 +195,19 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<class UJGunWidget> GunUIFactory;
 
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UInventoryWidget> InventoryUIFactory;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UJGunWidget* GunWidget;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UKEnemyQTEWidget* _QTEUI;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UInventoryWidget* Inventory;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEscapeSuccess;
 

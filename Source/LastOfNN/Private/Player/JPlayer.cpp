@@ -35,6 +35,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Components/SceneComponent.h"
 #include "Camera/CameraActor.h"
+#include "Player/InventoryWidget.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -167,6 +168,11 @@ void AJPlayer::BeginPlay()
 	GunWidget = CreateWidget<UJGunWidget>(GetWorld(), GunUIFactory);
 	GunWidget->AddToViewport();
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	Inventory = CreateWidget<UInventoryWidget>(GetWorld(), InventoryUIFactory);
+	Inventory->AddToViewport();
+	Inventory->SetVisibility(ESlateVisibility::Hidden);
+
 
 	if ( Box )
 	{
@@ -389,6 +395,7 @@ void AJPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(IA_UnEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateUnEquipped);
 		EnhancedInputComponent->BindAction(IA_BatEquipped, ETriggerEvent::Triggered, this, &AJPlayer::SetStateBatEquipped);
 		EnhancedInputComponent->BindAction(IA_DevelopeMode, ETriggerEvent::Triggered, this, &AJPlayer::GunSuperMode);
+		EnhancedInputComponent->BindAction(IA_Inventory, ETriggerEvent::Triggered, this, &AJPlayer::InventoryOn);
 	}
 }
 
@@ -501,6 +508,12 @@ void AJPlayer::Run(const FInputActionValue& Value)
 	bIsRunning = !bIsRunning;
 	//쉬프트 <> 크라우칭 버그 있음
 	
+}
+
+void AJPlayer::InventoryOn(const FInputActionValue& Value)
+{
+	Inventory->SetVisibility(ESlateVisibility::Visible);
+	PlayerController->bShowMouseCursor = true;
 }
 
 void AJPlayer::Crouching(const FInputActionValue& Value)
