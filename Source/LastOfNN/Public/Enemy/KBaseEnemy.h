@@ -98,18 +98,23 @@ public:
 	//랜덤위치가져오기 함수
 	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
 
+	//=======================================================================================
+	//** AI Perception
+	
 	//사운드 인식 길찾기 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	float EnemyAttentionDegree;
 	//소음 감지거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemySoundDetectionRadius;
 	//소음 발생시 이동거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemyMoveDistanceOnSound;
 	//소음 발생위치
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	FVector SoundLocation;
 	//소음에 의한 위치이동여부
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	bool bShouldMoveToSound;
 	//AI Hearing 정보 Config
 	class UAISenseConfig_Hearing* HearingConfig;
@@ -122,6 +127,10 @@ public:
     virtual void EnemyAttack();
 	UFUNCTION()
 	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	//Normla Grab / Boss Grenade 특수공격 이벤트함수
+	virtual void EnemySpecialAttack();
+	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
+	virtual void SetAllEnemiesToIdle();
 
 	//Enemy탐지범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
@@ -135,20 +144,15 @@ public:
 	//Enemy공격대기시간
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDelayTime;
-
-	//Grab / Grenade 특수공격 이벤트함수
-	virtual void EnemySpecialAttack();
-	// QTE 이벤트 시작 시 Player를 잡았는지 확인하기 위한 변수
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
-	bool bIsPlayerGrabbed = false;
-	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
-	virtual void SetAllEnemiesToIdle();
 	//EnemySpecialAttack데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemySpecialAttackDamage;
 	//EnemySpecialAttack범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemySpecialAttackRange;
+	// QTE 이벤트 시작 시 Player를 잡았는지 확인하기 위한 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+	bool bIsPlayerGrabbed = false;
 
 	//=======================================================================================
 	//피격알림이벤트함수

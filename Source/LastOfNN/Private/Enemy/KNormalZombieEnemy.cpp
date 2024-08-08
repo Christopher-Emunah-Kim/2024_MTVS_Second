@@ -18,6 +18,10 @@
 #include "Components/SceneComponent.h"
 #include <Enemy/KBossZombieEnemy.h>
 
+//=======================================================================================
+//이 좀비는 이름만 Normal이지 사실 Clicker임 ㅋㅋ
+//=======================================================================================
+
 AKNormalZombieEnemy::AKNormalZombieEnemy()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -193,6 +197,9 @@ void AKNormalZombieEnemy::EnemyMove()
 
 void AKNormalZombieEnemy::EnemyRandomMove()
 {
+	
+	//if(target && target이 시야 어그로 수치를 만족시켰을경우)
+
 	FVector dir;
 	FVector EnemyDestination;
 

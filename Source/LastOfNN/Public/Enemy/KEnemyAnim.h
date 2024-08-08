@@ -36,20 +36,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
 	bool bEnemyAttackPlay = false;
 
-	//AttackEnd 노티파이 이벤트 함수
-	UFUNCTION(BlueprintCallable, Category = FSMEvent)
-	void OnEnemyEndAttackAnimation();
-
 	//Boss 수류탄 스폰할지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
 	bool bBossThrowGrenade = false;
 
-	//BossGrenadeThrow 노티파이 이벤트 함수
-	/*UFUNCTION(BlueprintCallable, Category = FSMEvent)
-	void OnBossThrowGrenadeAnimation();*/
-
+	//수류탄 애니메이션 발사동작 notify
 	UFUNCTION()
 	void AnimNotify_GrenadeShoot();
+
+	//각 공격 애니메이션 동작완료 notify
+	UFUNCTION()
+	void AnimNotify_AttackEnd();
 
 	// 애니메이션 end 노티파이 이벤트 함수
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)

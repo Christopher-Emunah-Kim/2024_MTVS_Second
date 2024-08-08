@@ -20,19 +20,19 @@ AKBossZombieGrenade::AKBossZombieGrenade()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	CollisionComp->InitSphereRadius(50.0f);
+	CollisionComp->InitSphereRadius(150.0f);
 	SetRootComponent(CollisionComp);
 	CollisionComp->SetCollisionProfileName(TEXT("OverlapAll"));
 
 	bodyMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	bodyMeshComp->SetupAttachment(CollisionComp);
 	bodyMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	bodyMeshComp->SetRelativeScale3D(FVector(0.25f));
+	bodyMeshComp->SetRelativeScale3D(FVector(0.3f));
 
 	ProjectileComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComp"));
 	ProjectileComp->SetUpdatedComponent(CollisionComp);
-	ProjectileComp->InitialSpeed = 1000.0f;
-	ProjectileComp->MaxSpeed = 1200.0f;
+	ProjectileComp->InitialSpeed = 800.0f;
+	ProjectileComp->MaxSpeed = 1000.0f;
 	ProjectileComp->ProjectileGravityScale = 1.0f;
 	ProjectileComp->bRotationFollowsVelocity = true;
 	ProjectileComp->bShouldBounce = true;
@@ -65,22 +65,35 @@ void AKBossZombieGrenade::BossThrowGrenade(const FVector& ShootDirection)
 		return;
 	}
 
-   // 발사지연타이머 설정
-	FTimerHandle LaunchTimerHandle;
-
-	// 1.2초 후에 발사되도록 타이머 설정
-	FTimerDelegate TimerDel;
-	TimerDel.BindLambda([this, ShootDirection]()
+	CurrentTime += GetWorld()->DeltaTimeSeconds;
+	if ( CurrentTime > 3.0f )
 	{
-		 //포물선을 그리도록 수류탄에 UpVector추가
+		//포물선을 그리도록 수류탄에 UpVector추가
 		FVector LaunchVelocity = ShootDirection * ProjectileComp->InitialSpeed;
 
 		// SetVelocityInLocalSpace를 사용하여 발사체의 초기 속도를 설정
 		ProjectileComp->SetVelocityInLocalSpace(LaunchVelocity);
-	});
 
-	GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, TimerDel, 3.0f, false);
-	// 1.2초 후에 한 번만 실행되도록 설정
+		CurrentTime = 0;
+	}
+	
+
+ //  // 발사지연타이머 설정
+	//FTimerHandle LaunchTimerHandle;
+
+	//// 1.2초 후에 발사되도록 타이머 설정
+	//FTimerDelegate TimerDel;
+	//TimerDel.BindLambda([this, ShootDirection]()
+	//{
+	//	 //포물선을 그리도록 수류탄에 UpVector추가
+	//	FVector LaunchVelocity = ShootDirection * ProjectileComp->InitialSpeed;
+
+	//	// SetVelocityInLocalSpace를 사용하여 발사체의 초기 속도를 설정
+	//	ProjectileComp->SetVelocityInLocalSpace(LaunchVelocity);
+	//});
+
+	//GetWorld()->GetTimerManager().SetTimer(LaunchTimerHandle, TimerDel, 3.0f, false);
+	//// 1.2초 후에 한 번만 실행되도록 설정
 
 }
 

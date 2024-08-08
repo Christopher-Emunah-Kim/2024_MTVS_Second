@@ -75,6 +75,8 @@ void AKBaseEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//시간이 흘러감에 따라 어그로수치를 계속 줄임.
+	FMath::Max(EnemyAttentionDegree - (DeltaTime/120), 0);
 }
 
 bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
@@ -131,13 +133,15 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 	{
 		// 소리 발생 위치와 강도 저장
 		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
-		float Loudness = Stimulus.Strength; //소리강도
+		EnemyAttentionDegree += Stimulus.Strength; //소리강도
 
 		// 소리 강도에 따라 이동 플래그 설정
-		if ( Loudness > 100.0f ) // 특정 소리 강도 기준
+		if ( EnemyAttentionDegree > 100.0f ) // 특정 소리 강도 기준
 		{
-			GEngine->AddOnScreenDebugMessage(2, 1, FColor::Red, FString::Printf(TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), Loudness));
+			GEngine->AddOnScreenDebugMessage(2, 1, FColor::Red, FString::Printf(TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), EnemyAttentionDegree));
 
+			//어그로 수치 초기화
+			EnemyAttentionDegree = 0;
 			bShouldMoveToSound = true;
 			SoundLocation = NoiseLocation;
 		}

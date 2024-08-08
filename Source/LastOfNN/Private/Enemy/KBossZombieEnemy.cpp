@@ -112,6 +112,13 @@ void AKBossZombieEnemy::EnemyMove()
 			//특수공격 쿨타임이 지나면
 			if( CurrentTime > BossGrenadeDelayTime ) 
 			{
+				//속도를 0으로 만들고
+				GetCharacterMovement()->MaxWalkSpeed = 0;
+				ai->StopMovement();
+				//BlendSpace Anim에 액터의 속도 할당
+				anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+				anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+
 				//원거리 공격 상태로 전환
 				isBossCanThrowGrenade = true;
 				EnemySetState(EEnemyState::SPECIL);
@@ -253,6 +260,8 @@ void AKBossZombieEnemy::EnemySpecialAttack()
 
 	if ( isBossCanThrowGrenade )
 	{
+		// 메시를 target방향으로 돌림
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		//보스 수류탄 공격 애니메이션 몽타주 재생
 		anim->PlayBossEnemyGrenadeAnim(TEXT("ThrowGrenade"));
 		//수류탄공격여부 비활성화
@@ -330,16 +339,15 @@ void AKBossZombieEnemy::BossThrowGrenade()
 	if ( BossGrenade  )
 	{
 		//발사체 생성위치
-		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 40); 
+		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 45); 
 		FRotator SpawnRotation = (target->GetActorLocation() - GetActorLocation()).Rotation();
-		SpawnRotation.Pitch += 40.0f;
+		SpawnRotation.Pitch += 50.0f;
 		// 생성된 수류탄을 저장
 		AKBossZombieGrenade* Grenade = GetWorld()->SpawnActor<AKBossZombieGrenade>(BossGrenade, SpawnLocation, SpawnRotation);
 		//if ( Grenade && anim->bBossThrowGrenade == true )
 		if ( Grenade )
 		{
-			// 메시를 target방향으로 돌림
-			GetCharacterMovement()->bOrientRotationToMovement = true;
+			
 			// 수류탄 발사
 			FVector LaunchDirection = SpawnRotation.Vector();
 
@@ -347,8 +355,13 @@ void AKBossZombieEnemy::BossThrowGrenade()
 
 			UE_LOG(LogTemp, Warning, TEXT("Boss Throw Grenade!!"));
 
-			//IDLE상태로 전환
-			EnemySetState(EEnemyState::IDLE);
+			////애니메이션이 완료되면
+			//if ( false == anim->bEnemyAttackPlay )
+			//{
+			//	//IDLE상태로 전환
+			//	EnemySetState(EEnemyState::IDLE);
+			//}
+			
 
 			////발사지연타이머 설정
 			//FTimerHandle LaunchTimerHandle;
