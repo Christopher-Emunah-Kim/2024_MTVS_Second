@@ -117,6 +117,22 @@ void UJCharacterAnimInstance::PlayHitMontage()
 	Montage_Play(HitMontage);
 }
 
+void UJCharacterAnimInstance::PlayEquipAnimMontage(FName Section)
+{
+	Montage_Play(EquipMontage);
+	Montage_JumpToSection(Section);
+}
+
+bool UJCharacterAnimInstance::GetChangingWeapon()
+{
+	return bChangingWeapon;
+}
+
+void UJCharacterAnimInstance::PlayShotgunMontage()
+{
+	Montage_Play(ShotgunMontage);
+	Montage_JumpToSection(TEXT("Shoot"));
+}
 
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 {
@@ -126,4 +142,14 @@ void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 void UJCharacterAnimInstance::AnimNotify_AttackHitCheck()
 {
 	OnAttackHitCheck.Broadcast();
+}
+
+void UJCharacterAnimInstance::AnimNotify_StopMove()
+{
+	bChangingWeapon = true;
+}
+
+void UJCharacterAnimInstance::AnimNotify_Move()
+{
+	bChangingWeapon = false;
 }

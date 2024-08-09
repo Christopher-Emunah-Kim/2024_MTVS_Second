@@ -17,4 +17,5 @@ enum class ECharacterEquipState : uint8
 	ECES_GunEquipped UMETA(DisplayName = "GunEquipped"),
 	ECES_BatEquipped UMETA(DisplayName = "BatEquipped"),
 	ECES_ThrowWeaponEquipped UMETA(DisplayName = "ThrowWeaponEquipped"),
+	ECES_ShotgunEquipped UMETA(DisplayName = "ShotgunEquipped")
 };

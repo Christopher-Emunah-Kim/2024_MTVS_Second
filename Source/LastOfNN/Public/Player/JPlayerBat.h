@@ -24,6 +24,7 @@ public:
 	class UCapsuleComponent* HitCapsule;
 
 	TArray<AActor*> HitActors;
+	FTimerHandle TimeDilationHandle;
 
 protected:
 	// Called when the game starts or when spawned
@@ -36,4 +37,7 @@ public:
 	UFUNCTION()
 	void OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void MakeTimeSlow(float SlowRate);
+	void ResetTimeDilation();
 };
