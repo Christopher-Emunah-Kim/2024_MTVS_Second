@@ -37,6 +37,7 @@
 #include "Camera/CameraActor.h"
 #include "Player/InventoryWidget.h"
 #include "Player/JPlayerShotGun.h"
+#include "Enemy/KBeginnerZombieEnemy.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -222,6 +223,16 @@ void AJPlayer::BeginPlay()
 		{
 			return;
 		}
+	}	
+	AActor* BeginnerEnemyActor = UGameplayStatics::GetActorOfClass(this, AKBeginnerZombieEnemy::StaticClass());
+	if ( BeginnerEnemyActor )
+	{
+		// 액터가 존재하는 경우, 해당 액터에서 컴포넌트를 가져옵니다
+		NormalEnemyFSM = BeginnerEnemyActor->GetComponentByClass<UKEnemyFSM>();
+		if ( NormalEnemyFSM == nullptr )
+		{
+			return;
+		}
 	}
 	PlayerController = Cast<APlayerController>(GetController());
 
@@ -328,7 +339,7 @@ float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 void AJPlayer::ReadyToExcecute(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ExecutionTarget = Cast<AKNormalZombieEnemy>(OtherComp->GetOwner());
+	ExecutionTarget1 = Cast<AKNormalZombieEnemy>(OtherComp->GetOwner());
 	bCanExecute = true; //움직이는거 커버 못함.. move가 너무 빨라유
 }
 void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -599,17 +610,17 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 		0,     // 선 두께
 		1.0f   // 선의 깊이 (디버그 라인의 두께)
 	);
-	
+
 #endif
 	if ( bHit )
 	{
-		ExecutionTarget = Cast<AKNormalZombieEnemy>(HitResult.GetActor());
-	
-		if ( ExecutionTarget )
+		ExecutionTarget1 = Cast<AKNormalZombieEnemy>(HitResult.GetActor());
+		ExecutionTarget2 = Cast<AKBeginnerZombieEnemy>(HitResult.GetActor());
+		if ( ExecutionTarget1 )
 		{
 			CharaterState = ECharacterState::ECS_Crouching;
-			FTransform t = ExecutionTarget->GetAttackerTransform();
-			SetActorLocation(ExecutionTarget->GetAttackerTransform().GetLocation() + FVector(10, 0, 0));
+			FTransform t = ExecutionTarget1->GetAttackerTransform();
+			SetActorLocation(ExecutionTarget1->GetAttackerTransform().GetLocation() + FVector(10, 0, 0));
 			bIsExecuting = true;
 			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_Spine1"));
 			//SpringArmComp->bUsePawnControlRotation = false;
@@ -617,7 +628,7 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			CameraComp->SetupAttachment(SpringArmComp);
 			SpringArmComp->TargetArmLength = 150;
 			//움직임 빼기
-			UKEnemyFSM* FFSSMM = ExecutionTarget->GetComponentByClass<UKEnemyFSM>();
+			UKEnemyFSM* FFSSMM = ExecutionTarget1->GetComponentByClass<UKEnemyFSM>();
 			if ( FFSSMM && bCanExecute )
 			{
 				FFSSMM->SetState(EEnemyState::EXECUTED);
@@ -636,7 +647,47 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 			//몽타주 끝나면 상태 바꾸기
 			GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
 
-			UKEnemyAnim* EnemyAnim = Cast<UKEnemyAnim>(ExecutionTarget->GetMesh()->GetAnimInstance());
+			UKEnemyAnim* EnemyAnim = Cast<UKEnemyAnim>(ExecutionTarget1->GetMesh()->GetAnimInstance());
+			if ( EnemyAnim )
+			{
+				UE_LOG(LogTemp, Error, TEXT("ENEMYANIM"));
+				EnemyAnim->PlayEnemyTDamageAnim(TEXT("Executed"));
+				FTimerHandle ExcecuteTimer;
+				GetWorldTimerManager().SetTimer(ExcecuteTimer, this, &AJPlayer::EnemyIsDead, 6.5f, false);
+			}
+		}
+		else if ( ExecutionTarget2 )
+		{
+			CharaterState = ECharacterState::ECS_Crouching;
+			FTransform t = ExecutionTarget2->GetAttackerTransform();
+			SetActorLocation(ExecutionTarget2->GetAttackerTransform().GetLocation() + FVector(10, 0, 0));
+			bIsExecuting = true;
+			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_Spine1"));
+			//SpringArmComp->bUsePawnControlRotation = false;
+			//SpringArmComp->SetRelativeRotation(FRotator(237, -84, -18));
+			CameraComp->SetupAttachment(SpringArmComp);
+			SpringArmComp->TargetArmLength = 150;
+			//움직임 빼기
+			UKEnemyFSM* FFSSMM = ExecutionTarget2->GetComponentByClass<UKEnemyFSM>();
+			if ( FFSSMM && bCanExecute )
+			{
+				FFSSMM->SetState(EEnemyState::EXECUTED);
+				//좀비가 자꾸 움직임..
+			}
+			//컨트롤러 방향
+			PlayerController->AController::SetControlRotation(t.GetRotation().Rotator());
+
+			if ( Subsystem )
+			{
+				//컨트롤러 떼기
+				Subsystem->RemoveMappingContext(IMC_Joel);
+			}
+
+			CharacterAnimInstance->PlayExecuteMontage();
+			//몽타주 끝나면 상태 바꾸기
+			GetWorldTimerManager().SetTimer(TakeDownTimer, this, &AJPlayer::AfterTakeDown, 6.f, false);
+
+			UKEnemyAnim* EnemyAnim = Cast<UKEnemyAnim>(ExecutionTarget2->GetMesh()->GetAnimInstance());
 			if ( EnemyAnim )
 			{
 				UE_LOG(LogTemp, Error, TEXT("ENEMYANIM"));
@@ -651,7 +702,10 @@ void AJPlayer::NewTakeDown(const FInputActionValue& Value)
 void AJPlayer::EnemyIsDead()
 {
 	SetActorLocation(GetActorForwardVector() * 175 + GetActorLocation());
-	ExecutionTarget->Destroy();
+
+	if(ExecutionTarget1) ExecutionTarget1->Destroy();
+
+	if ( ExecutionTarget2 ) ExecutionTarget2->Destroy();
 	SpringArmComp->AttachToComponent(
 			GetCapsuleComponent(),
 			FAttachmentTransformRules::KeepRelativeTransform
@@ -889,7 +943,9 @@ void AJPlayer::StopGrabbedState(bool bSuccess)
 	CameraComp->SetupAttachment(SpringArmComp);
 
 	// QTE 이벤트가 끝났음을 전역 변수에 표시
-	 EnemyFSM->bIsQTEActive = false;
+	 if(EnemyFSM) EnemyFSM->bIsQTEActive = false;
+
+	 if(NormalEnemyFSM) NormalEnemyFSM->bIsQTEActive = false; //위험함
 }
 
 void AJPlayer::HandleQTEInput()

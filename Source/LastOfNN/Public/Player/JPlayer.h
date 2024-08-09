@@ -234,13 +234,16 @@ public:
 
 	class AKNormalZombieEnemy* FSMOwner;
 	//암살가능
-	class AKNormalZombieEnemy* ExecutionTarget;
+	class AKNormalZombieEnemy* ExecutionTarget1; //노말좀비 -> baseenemy
+	class AKBeginnerZombieEnemy* ExecutionTarget2;
 	bool bCanExecute;
 	bool bIsExecuting = false;
 	bool GetIsExecuting();
 
 	class UKEnemyFSM* EnemyFSM;
 	class UKEnemyFSM* BossEnemyFSM;
+	class UKEnemyFSM* NormalEnemyFSM;
+
 
 	class AKBossZombieEnemy* Boss;
 	bool GetIsGrabbed();
