@@ -114,7 +114,7 @@ void AKBossZombieEnemy::EnemyMove()
 			{
 				//속도를 0으로 만들고
 				GetCharacterMovement()->MaxWalkSpeed = 0;
-				ai->StopMovement();
+				//ai->StopMovement();
 				//BlendSpace Anim에 액터의 속도 할당
 				anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 				anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -160,7 +160,7 @@ void AKBossZombieEnemy::EnemyRandomMove()
 	FPathFindingQuery query;
 	FAIMoveRequest req;
 	//목적지 인지 가능 범위
-	req.SetAcceptanceRadius(3);
+	req.SetAcceptanceRadius(50);
 	req.SetGoalLocation(EnemyDestination);
 	//길찾기 위한 쿼리 생성
 	ai->BuildPathfindingQuery(req, query);
@@ -185,7 +185,7 @@ void AKBossZombieEnemy::EnemyRandomMove()
 		if ( dir.Size() < EnemyAttackRange )
 		{
 			//AI의 길찾기 기능을 정지한다.
-			ai->StopMovement();
+			//ai->StopMovement();
 			//공격상태전환 /애니메이션 동기화 
 			EnemySetState(EEnemyState::ATTACK);
 			//공격 애니메이션 재생 활성화
@@ -204,7 +204,7 @@ void AKBossZombieEnemy::EnemyRandomMove()
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 		//목적지에 도착하면
-		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal )
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
 		{
 			//새로운 랜덤위치 가져오기
 			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
