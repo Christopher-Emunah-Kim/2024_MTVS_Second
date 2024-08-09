@@ -15,10 +15,7 @@ UKEnemyFSM::UKEnemyFSM()
     // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
     // off to improve performance if you don't need them.
     PrimaryComponentTick.bCanEverTick = true;
-
-    
 }
-
 
 // Called when the game starts
 void UKEnemyFSM::BeginPlay()
@@ -34,7 +31,6 @@ void UKEnemyFSM::BeginPlay()
     {
         UE_LOG(LogTemp, Error, TEXT("KEnemyFSM: BaseEnemy is not properly initialized."));
     }
-
     Player = Cast<AJPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 }
 
@@ -48,12 +44,11 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     FString logMsg = UEnum::GetValueAsString(CurrentState);
     GEngine->AddOnScreenDebugMessage(0,1, FColor::Blue, logMsg);
 
-
     // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지 -> Player->GetIsGrabbed()로 잠깐 바꿈
-    if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::GRAB )
+    if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::SPECIL )
     {
         SetState(EEnemyState::IDLE);
-        UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
+        //UE_LOG(LogTemp, Warning, TEXT("IDLE!!!!!!!!"));
     }
     else if (Player->GetIsExecuting())
     {
@@ -63,7 +58,6 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     {
         //그외엔 계속 상태 업데이트
         UpdateState();
-        UE_LOG(LogTemp, Warning, TEXT("STATE UPDATE!!!!"));
     }
 }
 
@@ -81,12 +75,6 @@ void UKEnemyFSM::UpdateState()
         // Idle 상태 행동 처리...
         BaseEnemy->EnemyIDLE();
         break;
-    case EEnemyState::PATROL:
-        // Patrol 상태 행동 처리...
-        break;
-    case EEnemyState::DETECT:
-        // Detect 상태 행동 처리...
-        break;
     case EEnemyState::MOVE:
         // Move 상태 행동 처리...
         BaseEnemy->EnemyMove();
@@ -95,26 +83,14 @@ void UKEnemyFSM::UpdateState()
         // Attack 상태 행동 처리...
         BaseEnemy->EnemyAttack();
         break;
-    case EEnemyState::GRAB:
+    case EEnemyState::SPECIL:
         // Grab 상태 행동 처리...
-        BaseEnemy->EnemyGrab();
-        break;
-    case EEnemyState::EVADE:
-        // Evade 상태 행동 처리...
-        break;
-    case EEnemyState::HIDE:
-        // Hide 상태 행동 처리...
+        BaseEnemy->EnemySpecialAttack();
         break;
     case EEnemyState::TAKEDAMAGE:
         // TakeDamage 상태 행동 처리...
         BaseEnemy->EnemyTakeDamage();
         break;
-    case EEnemyState::KNOCKBACK:
-        // Finishing 상태 행동 처리...
-        break;
-    case EEnemyState::FINISHING:
-        // Finishing 상태 행동 처리...
-        break;    
     case EEnemyState::EXECUTED:
         // Executed 상태 행동 처리...
         BaseEnemy->EnemyExecuted();
@@ -125,4 +101,3 @@ void UKEnemyFSM::UpdateState()
         break;
     }
 }
-

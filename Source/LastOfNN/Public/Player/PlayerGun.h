@@ -23,10 +23,17 @@ public:
 	void PullTrigger();
 	bool GunTrace(FHitResult& Hit, FVector& ShotDirection);
 
-	float MaxRange = 1000;
+	float MaxRange = 10000;
 
 	UPROPERTY(EditAnywhere)
 	float GunDamage = 10;
+
+	UPROPERTY(EditAnywhere)
+	int32 CurrentBulletNum;
+	UPROPERTY(EditAnywhere)
+	int32 MaxBulletNum = 6;
+
+	void ReLoad();
 
 protected:
 	// Called when the game starts or when spawned

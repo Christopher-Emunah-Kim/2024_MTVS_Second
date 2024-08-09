@@ -16,7 +16,6 @@ enum class ETeamType : uint8
 	NEUTRAL UMETA(DisplayName = "Neutral")
 };
 
-
 UCLASS()
 class LASTOFNN_API AKBaseEnemy : public ACharacter
 {
@@ -42,6 +41,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	class UAIPerceptionComponent* AIPerceptionComp;
 
+	//데미지 처리 위한 손 충돌체 형성
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* RightAttackSphere;	
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* LeftAttackSphere;
+
 	//플레이어 Target 정보 인스턴스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     class AJPlayer* target;
@@ -66,7 +71,7 @@ public:
 	//State Setting과 Animation동기화 처리
 	virtual void EnemySetState(EEnemyState newstate);
 
-
+	//=======================================================================================
     //**대기상태처리함수
 	virtual void EnemyIDLE();
 	//대기시간
@@ -75,7 +80,7 @@ public:
 	//경과시간
 	float CurrentTime = 0;
 
-
+	//=======================================================================================
 	//**이동상태처리함수
     virtual void EnemyMove();
 	//걷기속도
@@ -93,18 +98,23 @@ public:
 	//랜덤위치가져오기 함수
 	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
 
+	//=======================================================================================
+	//** AI Perception
+	
 	//사운드 인식 길찾기 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	float EnemyAttentionDegree;
 	//소음 감지거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemySoundDetectionRadius;
 	//소음 발생시 이동거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemyMoveDistanceOnSound;
 	//소음 발생위치
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	FVector SoundLocation;
 	//소음에 의한 위치이동여부
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SoundPerception")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	bool bShouldMoveToSound;
 	//AI Hearing 정보 Config
 	class UAISenseConfig_Hearing* HearingConfig;
@@ -112,9 +122,16 @@ public:
 	UFUNCTION()
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus);
 
+	//=======================================================================================
 	//**공격상태처리함수
     virtual void EnemyAttack();
+	UFUNCTION()
+	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	//Normla Grab / Boss Grenade 특수공격 이벤트함수
 	virtual void EnemySpecialAttack();
+	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
+	virtual void SetAllEnemiesToIdle();
+
 	//Enemy탐지범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyNoticeRange;
@@ -127,16 +144,17 @@ public:
 	//Enemy공격대기시간
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float EnemyAttackDelayTime;
-
-	//Grab이벤트함수
-	virtual void EnemyGrab();
+	//EnemySpecialAttack데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemySpecialAttackDamage;
+	//EnemySpecialAttack범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemySpecialAttackRange;
 	// QTE 이벤트 시작 시 Player를 잡았는지 확인하기 위한 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
 	bool bIsPlayerGrabbed = false;
-	// QTE 이벤트 진행 중 다른 Enemy들을 IDLE 상태로 유지
-	virtual void SetAllEnemiesToIdle();
 
-
+	//=======================================================================================
 	//피격알림이벤트함수
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -154,6 +172,7 @@ public:
 	//암살상태처리함수
 	virtual void EnemyExecuted();
 
+	//=======================================================================================
 	//**죽음상태처리함수
     virtual void EnemyDead();
 	//죽음 후 메시 내려가는 속도

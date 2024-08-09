@@ -6,6 +6,9 @@
 #include "Enemy/KBaseEnemy.h"
 #include "KNormalZombieEnemy.generated.h"
 
+//=======================================================================================
+//이 좀비는 이름만 Normal이지 사실 Clicker임 ㅋㅋ
+//=======================================================================================
 /**
  * 
  */
@@ -33,9 +36,13 @@ public:
 
     virtual void EnemyMove() override;
 
+	void EnemyRandomMove(); //Enemy 랜덤이동함수
+
     virtual void EnemyAttack() override;
 
-	virtual void EnemyGrab() override;
+	virtual void EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+
+	virtual void EnemySpecialAttack() override;
 
 	virtual void SetAllEnemiesToIdle() override;
 
@@ -56,6 +63,6 @@ public:
 	class USceneComponent* AssassinSceneComp;
 
 	FTimerHandle ExcecuteTimer;
-
+	//플레이어에게 암살위치정보 전달
 	FTransform GetAttackerTransform();
 };

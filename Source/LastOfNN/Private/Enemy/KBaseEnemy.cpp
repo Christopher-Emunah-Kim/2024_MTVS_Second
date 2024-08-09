@@ -6,6 +6,7 @@
 #include "Player/JPlayer.h"
 #include <Kismet/GameplayStatics.h>
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"  
@@ -14,6 +15,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Engine/World.h"
+#include "Engine/DamageEvents.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -28,6 +30,15 @@ AKBaseEnemy::AKBaseEnemy()
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
 
+	//데미지 처리를 위한 충돌체형성
+	RightAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("RightAttackSphere"));
+	//RightAttackSphere->SetSphereRadius(200.f);
+	RightAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//RightAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+	LeftAttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LeftAttackSphere"));
+	//LeftAttackSphere->SetSphereRadius(200.f);
+	//LeftAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
+	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
@@ -47,6 +58,16 @@ void AKBaseEnemy::BeginPlay()
 
 	//AAIController 할당
 	ai = Cast<AAIController>(GetController());
+
+	//데미지처리함수 바인딩
+	if ( RightAttackSphere )
+	{
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBaseEnemy::EnemyOverlapDamage);
+	}
+	if ( LeftAttackSphere )
+	{
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBaseEnemy::EnemyOverlapDamage);
+	}
 }
 
 // Called every frame
@@ -54,8 +75,9 @@ void AKBaseEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//시간이 흘러감에 따라 어그로수치를 계속 줄임.
+	FMath::Max(EnemyAttentionDegree - (DeltaTime/120), 0);
 }
-
 
 bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
 {
@@ -72,8 +94,6 @@ bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radiu
 	return result;
 }
 
-
-
 void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 {
 	//상태 전환
@@ -86,11 +106,10 @@ void AKBaseEnemy::EnemyIDLE()
 {
 	//시간이 흐르면
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	//UE_LOG(LogTemp, Warning, TEXT("CurrentTime : %f"), CurrentTime);
+
 	//경과시간이 대기시간을 지나면
 	if (CurrentTime > IdleDelayTime )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Move!!!!"));
 		//이동상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
 		//속도를 걷기속도로 설정
@@ -101,66 +120,58 @@ void AKBaseEnemy::EnemyIDLE()
 		//경과시간 초기화
 		CurrentTime = 0;
 
-		
 		//랜덤위치값 최초설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 	}
 }
 
-void AKBaseEnemy::EnemyMove()
-{
-	
-}
-
-
+void AKBaseEnemy::EnemyMove() { }
 
 void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
 	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
-		UE_LOG(LogTemp, Log, TEXT("소리 감지: 위치 - %s, 강도 - %f"), *Stimulus.StimulusLocation.ToString(), Stimulus.Strength);
-		
 		// 소리 발생 위치와 강도 저장
 		FVector NoiseLocation = Stimulus.StimulusLocation; //소리위치
-		float Loudness = Stimulus.Strength; //소리강도
+		EnemyAttentionDegree += Stimulus.Strength; //소리강도
 
 		// 소리 강도에 따라 이동 플래그 설정
-		if ( Loudness > 100.0f ) // 특정 소리 강도 기준
+		if ( EnemyAttentionDegree > 100.0f ) // 특정 소리 강도 기준
 		{
-			UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), Loudness);
+			GEngine->AddOnScreenDebugMessage(2, 1, FColor::Red, FString::Printf(TEXT("OnEnemyNoiseHeard called with stimulus: Loudness(%f) > 100.0f"), EnemyAttentionDegree));
 
+			//어그로 수치 초기화
+			EnemyAttentionDegree = 0;
 			bShouldMoveToSound = true;
 			SoundLocation = NoiseLocation;
 		}
 	}
 }
 
-void AKBaseEnemy::EnemyAttack()
+void AKBaseEnemy::EnemyAttack() { }
+
+void AKBaseEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	if ( target && OtherComp == target->GetCapsuleComponent() )
+	{
+		FPointDamageEvent DamageEvent(EnemyAttackDamage, FHitResult(), GetActorForwardVector(), nullptr);
+		AController* ActorController = target->GetController();
+		if ( ActorController ) 
+		{
+			target->TakeDamage(EnemyAttackDamage, DamageEvent, ActorController, this);
+		}
+	}
 }
 
-void AKBaseEnemy::EnemySpecialAttack()
-{
-	
-}
+void AKBaseEnemy::EnemySpecialAttack() { }
 
-void AKBaseEnemy::EnemyGrab()
-{
-	
-}
-
-void AKBaseEnemy::SetAllEnemiesToIdle()
-{
-	
-}
+void AKBaseEnemy::SetAllEnemiesToIdle() { }
 
 float AKBaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	
 	OnEnemyDamageProcess(FinalDamage);
-
 	return FinalDamage;
 }
 
@@ -172,9 +183,7 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	if (EnemyHP > 0)
 	{
 		//피격상태 전환
-		
 		EnemySetState(EEnemyState::TAKEDAMAGE);
-
 		CurrentTime = 0;
 
 		//피격애니메이션 재생
@@ -185,29 +194,18 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	else
 	{
 		//죽음상태 전환
-		
 		EnemySetState(EEnemyState::DEAD);
 		//충돌체비활성화
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		//죽음애니메이션 재생
 		anim->PlayEnemyTDamageAnim(TEXT("EnemyDie"));
 	}
-	
 	//이땐 AI길찾기 기능 정지시켜두기
 	ai->StopMovement();
 }
 
-void AKBaseEnemy::EnemyTakeDamage()
-{
-	
-}
+void AKBaseEnemy::EnemyTakeDamage() { }
 
-void AKBaseEnemy::EnemyExecuted()
-{
+void AKBaseEnemy::EnemyExecuted() { }
 
-}
-
-void AKBaseEnemy::EnemyDead()
-{
-}
-
+void AKBaseEnemy::EnemyDead() { }

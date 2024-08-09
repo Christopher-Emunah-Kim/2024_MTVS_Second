@@ -50,14 +50,19 @@ public:
 	//이동 방향
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCameraComponent* CameraComp;	
+	UCameraComponent* CameraComp;			
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* CameraPostion;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class ACameraActor* FieldCamera;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USpringArmComponent* SpringArmComp;
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* Box;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* RightAttackSphere;	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* LeftAttackSphere;
 
 
@@ -87,7 +92,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_UnEquipped;	
 	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* IA_BatEquipped;
+	UInputAction* IA_BatEquipped;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_DevelopeMode;	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_Inventory;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -95,7 +104,7 @@ public:
 	void Zoom(const FInputActionValue& Value);
 	void ZoomOut(const FInputActionValue& Value);
 	void Run(const FInputActionValue& Value);
-
+	void InventoryOn(const FInputActionValue& Value);
 	void Crouching(const FInputActionValue& Value);
 	//토글 체크 변수
 	bool bCrouched = false;
@@ -117,6 +126,7 @@ public:
 	void SetStateEquipThrowWeapon();
 	void SetStateUnEquipped();
 	void SetStateBatEquipped();
+	void GunSuperMode();
 	UCameraComponent* GetCamera();
 
 	//총 기
@@ -161,16 +171,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	ECharacterEquipState GetCharacterEquipState() const;
 
-
+	FTimerHandle GunHandle;
 	//Grab QTE이벤트 사용내용
 	bool bIsGrabbed = false;
 	int32 RequiredKeyPresses = 5; // 플레이어가 QTE에서 벗어나기 위해 필요한 E키 입력 횟수
 	int32 CurrentKeyPresses = 0;
 
+	void MoveFieldCamera();
 	// 현재 Player를 잡고 있는 Enemy의 참조
 	class AKBaseEnemy* GrabbedEnemy;
 
-	void StartGrabbedState(class AKNormalZombieEnemy* Enemy); // Grab 상태 시작 함수
+	void StartGrabbedState(class AActor* Enemy); // Grab 상태 시작 함수
 	void StopGrabbedState(bool bSuccess);  // Grab 상태 종료 함수, 성공 여부에 따라 다르게 처리
 	void HandleQTEInput();    // QTE 입력 처리 함수
 
@@ -181,11 +192,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=UI)
 	TSubclassOf<class UKEnemyQTEWidget> QTEUIFactory;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//class UUserWidget* QTEWidget;
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UJGunWidget> GunUIFactory;
+
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UInventoryWidget> InventoryUIFactory;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UJGunWidget* GunWidget;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UKEnemyQTEWidget* _QTEUI;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UInventoryWidget* Inventory;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEscapeSuccess;
 
@@ -216,7 +238,8 @@ public:
 	void EnemyIsDead();
 
 	//체력
-	float HP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HP")
+	float HealthPoints;
 	float MAXHP = 100;
 
 	//향상된 입력
@@ -227,6 +250,14 @@ public:
 	
 	//카메라 줌
 	float TargetFOV = 90;
+
+	void StopForAttack(); 
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCameraShakeBase> CamShake;
+
+	void CameraShake();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

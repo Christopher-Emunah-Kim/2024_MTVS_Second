@@ -10,16 +10,10 @@ UENUM(BlueprintType)
 enum class EEnemyState : uint8
 {
     IDLE UMETA(DisplayName = "Idle"),
-    PATROL UMETA(DisplayName = "Patrol"),
-    DETECT UMETA(DisplayName = "Detect"),
     MOVE UMETA(DisplayName = "Move"),
     ATTACK UMETA(DisplayName = "Attack"),
-    GRAB UMETA(DisplayName = "Grab"),
-    EVADE UMETA(DisplayName = "Evade"),
-    HIDE UMETA(DisplayName = "Hide"),
+    SPECIL UMETA(DisplayName = "SpecialAttack"),
     TAKEDAMAGE UMETA(DisplayName = "TakeDamage"),
-    KNOCKBACK UMETA(DisplayName = "KnockBack"),
-    FINISHING UMETA(DisplayName = "Finishing"),
     EXECUTED UMETA(DisplayName = "Executed"),
     DEAD UMETA(DisplayName = "Dead")
 

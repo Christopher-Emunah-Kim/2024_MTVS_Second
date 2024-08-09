@@ -18,10 +18,16 @@ APlayerGun::APlayerGun()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	MeshComp->SetupAttachment(SceneComp); 
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	CurrentBulletNum = MaxBulletNum;
 }
 
 void APlayerGun::PullTrigger()
 {
+	//if ( CurrentBulletNum == 0 )
+	//{
+	//	return;
+	//}
 	//걸린 액터에게 데미지
 	FHitResult Hit;
 	FVector ShotDirection;
@@ -40,6 +46,7 @@ void APlayerGun::PullTrigger()
 		UE_LOG(LogTemp, Error, TEXT("No Actor")); 
 	}
 	MakeSound();
+	/*CurrentBulletNum--;*/
 }
 
 bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
@@ -71,6 +78,11 @@ bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
 	);
 }
 
+void APlayerGun::ReLoad()
+{
+	CurrentBulletNum = MaxBulletNum;
+}
+
 // Called when the game starts or when spawned
 void APlayerGun::BeginPlay()
 {
@@ -89,7 +101,7 @@ void APlayerGun::MakeSound()
 {
 	// 소리 자극 발생시키기
 	FVector NoiseLocation = GetActorLocation();
-	float Loudness = 101.f;  // 소리 강도 (예시 값)
+	float Loudness = 50.5f;  // 소리 강도 (예시 값)
 	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.0f, TEXT("ObjectLanding"));
 }

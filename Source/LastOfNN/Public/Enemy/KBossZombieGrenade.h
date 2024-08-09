@@ -49,13 +49,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	class UNiagaraSystem* BossGrenadeVFX;
 
-	//발사함수
-	void BossFireInDirection(const FVector& ShootDirection);
+	//Boss가 호출할 발사함수
+	void BossThrowGrenade(const FVector& ShootDirection);
 
 	//충돌처리함수
-	void GrenadeOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	UFUNCTION()
+	void GrenadeOnHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	//데미지적용함수
-	void OnDamageSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
+	float CurrentTime = 0;
 };
