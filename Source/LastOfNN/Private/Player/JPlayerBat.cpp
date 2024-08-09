@@ -6,6 +6,8 @@
 #include "Components/SceneComponent.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/JPlayer.h"
 
 // Sets default values
 AJPlayerBat::AJPlayerBat()
@@ -48,7 +50,15 @@ void AJPlayerBat::Tick(float DeltaTime)
 void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Error, TEXT("ZOPBEDF"));
-
+	MakeTimeSlow(0.85f);
+	if ( GetOwner() )
+	{
+		auto* Player = Cast<AJPlayer>(GetOwner());
+		if ( Player )
+		{
+			Player->CameraShake();
+		}
+	}
 	if ( OtherActor && OtherActor != GetWorld()->GetFirstPlayerController()->GetPawn() && OtherActor != this )
 	{
 		//일단 빠따 데미지 20으로 설정
@@ -64,4 +74,15 @@ void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor
 
 		UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *OtherActor->GetName());
 	}
+}
+
+void AJPlayerBat::MakeTimeSlow(float SlowRate)
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, SlowRate);
+	GetWorld()->GetTimerManager().SetTimer(TimeDilationHandle, this, &AJPlayerBat::ResetTimeDilation, 0.5f, false);
+}
+
+void AJPlayerBat::ResetTimeDilation()
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.0f);
 }

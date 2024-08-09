@@ -94,6 +94,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_BatEquipped;	
 	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* IA_ShotgunEquipped;
+	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_DevelopeMode;	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* IA_Inventory;
@@ -108,7 +110,7 @@ public:
 	void Crouching(const FInputActionValue& Value);
 	//토글 체크 변수
 	bool bCrouched = false;
-
+	bool bInventoryOn = false;
 	//암살 함수
 	//플레이어 컨트롤러
 	APlayerController* PlayerController;
@@ -126,6 +128,7 @@ public:
 	void SetStateEquipThrowWeapon();
 	void SetStateUnEquipped();
 	void SetStateBatEquipped();
+	void SetStateShotgunEquipped();
 	void GunSuperMode();
 	UCameraComponent* GetCamera();
 
@@ -136,6 +139,12 @@ public:
 	UPlayerLockOn* LockOnComp;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerGun> GunClass;
+
+	UPROPERTY()
+	class AJPlayerShotGun* Shotgun;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AJPlayerShotGun> ShotGunClass;
 
 	//배트
 	UPROPERTY()
@@ -257,7 +266,6 @@ public:
 	TSubclassOf<class UCameraShakeBase> CamShake;
 
 	void CameraShake();
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
