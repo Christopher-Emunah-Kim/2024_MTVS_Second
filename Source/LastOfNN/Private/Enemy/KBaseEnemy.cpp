@@ -100,6 +100,11 @@ void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 	FSMComponent->CurrentState = newstate;
 	//애니메이션 상태 동기화
 	anim->EnemyAnimState = newstate;
+	//다음상태가 이동상태가 아니라면 Ai한테 멈추라고 지시한다.
+	if ( newstate != EEnemyState::MOVE )
+	{
+		ai->StopMovement();
+	}
 }
 
 void AKBaseEnemy::EnemyIDLE()
@@ -201,7 +206,7 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 		anim->PlayEnemyTDamageAnim(TEXT("EnemyDie"));
 	}
 	//이땐 AI길찾기 기능 정지시켜두기
-	ai->StopMovement();
+	//ai->StopMovement();
 }
 
 void AKBaseEnemy::EnemyTakeDamage() { }
