@@ -65,7 +65,7 @@ void UPlayerLockOn::LockOnTarget()
 		{
 			HitActor = HitResult.GetActor();
 			//UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), *HitActor->GetName());
-			FRotator Rotate = UKismetMathLibrary::FindLookAtRotation(ViewLocation, HitActor->GetActorLocation());;
+			FRotator Rotate = UKismetMathLibrary::FindLookAtRotation(ViewLocation, HitActor->GetActorLocation() + FVector(0, 0, 40));
 			Player->GetController()->SetControlRotation(Rotate);
 		}  
 	}

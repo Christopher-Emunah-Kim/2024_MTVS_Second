@@ -2,6 +2,7 @@
 
 
 #include "Enemy/KNormalZombieEnemy.h"
+#include "Enemy/KBeginnerZombieEnemy.h"
 #include "Player/JPlayer.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
@@ -217,7 +218,7 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 	FPathFindingQuery query;
 	FAIMoveRequest req;
 	//목적지 인지 가능 범위
-	req.SetAcceptanceRadius(3);
+	req.SetAcceptanceRadius(50);
 	req.SetGoalLocation(EnemyDestination);
 	//길찾기 위한 쿼리 생성
 	ai->BuildPathfindingQuery(req, query);
@@ -241,7 +242,7 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 		if ( targetdistance < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 		{
 			//AI의 길찾기 기능을 정지한다.
-			ai->StopMovement();
+			//ai->StopMovement();
 			//공격상태 전환 / 애니메이션 상태 동기화
 			EnemySetState(EEnemyState::ATTACK);
 			//공격 애니메이션 재생 활성화
@@ -261,7 +262,7 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 		//목적지에 도착하면
-		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal )
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
 		{
 			//새로운 랜덤위치 가져오기
 			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
@@ -280,7 +281,7 @@ void AKNormalZombieEnemy::EnemyAttack()
 	{
 		// 일정 확률로 Grab 상태로 전환
 		float RandomChance = FMath::FRand();
-		if ( RandomChance < 0.3f ) // 30% 확률로 Grab
+		if ( RandomChance < 0.2f ) // 20% 확률로 Grab
 		{
 			EnemySetState(EEnemyState::SPECIL);
 		}
@@ -357,6 +358,14 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 	Super::SetAllEnemiesToIdle();
 
 	// 월드에 존재하는 모든 Enemy를 IDLE 상태로 전환
+	for ( TActorIterator<AKBeginnerZombieEnemy> It(GetWorld()); It; ++It )
+	{
+		AKBeginnerZombieEnemy* Enemy = *It;
+		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY )
+		{
+			EnemySetState(EEnemyState::IDLE);
+		}
+	}
 	for ( TActorIterator<AKNormalZombieEnemy> It(GetWorld()); It; ++It )
 	{
 		AKNormalZombieEnemy* Enemy = *It;
