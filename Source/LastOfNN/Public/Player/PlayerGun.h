@@ -34,7 +34,8 @@ public:
 	int32 MaxBulletNum = 6;
 
 	void ReLoad();
-
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentBulletNum();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

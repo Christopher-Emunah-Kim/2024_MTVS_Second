@@ -24,10 +24,10 @@ APlayerGun::APlayerGun()
 
 void APlayerGun::PullTrigger()
 {
-	//if ( CurrentBulletNum == 0 )
-	//{
-	//	return;
-	//}
+	if ( CurrentBulletNum == 0 )
+	{
+		return;
+	}
 	//걸린 액터에게 데미지
 	FHitResult Hit;
 	FVector ShotDirection;
@@ -46,7 +46,7 @@ void APlayerGun::PullTrigger()
 		UE_LOG(LogTemp, Error, TEXT("No Actor")); 
 	}
 	MakeSound();
-	/*CurrentBulletNum--;*/
+	CurrentBulletNum--;
 }
 
 bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
@@ -81,6 +81,11 @@ bool APlayerGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
 void APlayerGun::ReLoad()
 {
 	CurrentBulletNum = MaxBulletNum;
+}
+
+float APlayerGun::GetCurrentBulletNum()
+{
+	return CurrentBulletNum;
 }
 
 // Called when the game starts or when spawned

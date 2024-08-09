@@ -60,7 +60,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* DieMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* HitMontage;
+	UAnimMontage* HitMontage;	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* EquipMontage;	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* ShotgunMontage;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
@@ -83,10 +87,22 @@ public:
 
 	void PlayDieMontage();
 	void PlayHitMontage();
+
+	void PlayEquipAnimMontage(FName Section);
+	//무기 바꿀때 못 움직이는 불값
+	bool bChangingWeapon = false;
+	bool GetChangingWeapon();
+
+	void PlayShotgunMontage();
 private:
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	
 	UFUNCTION()
 	void AnimNotify_AttackHitCheck();
+	UFUNCTION()
+	void AnimNotify_StopMove();	
+	UFUNCTION()
+	void AnimNotify_Move();
+
 
 };

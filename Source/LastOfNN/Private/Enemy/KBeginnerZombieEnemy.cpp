@@ -1,8 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Enemy/KNormalZombieEnemy.h"
 #include "Enemy/KBeginnerZombieEnemy.h"
+#include "Enemy/KNormalZombieEnemy.h"
+#include "Enemy/KBossZombieEnemy.h"
 #include "Player/JPlayer.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
@@ -11,36 +12,32 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
-#include <Kismet/GameplayStatics.h>
+#include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SceneComponent.h"
-#include <Enemy/KBossZombieEnemy.h>
 
-//=======================================================================================
-//이 좀비는 이름만 Normal이지 사실 Clicker임 ㅋㅋ
-//=======================================================================================
-
-AKNormalZombieEnemy::AKNormalZombieEnemy()
+AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//외관 세팅
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Clicker/Can_Use/SkeletalMesh/Clicker_Skeletal.Clicker_Skeletal'"));
-	if (tempMesh.Succeeded())
+	//외관 세팅(각자 알아서)
+	/*ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Assests/Enemy/Clicker/Can_Use/SkeletalMesh/Clicker_Skeletal.Clicker_Skeletal'"));
+	if ( tempMesh.Succeeded() )
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
-		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0, -88), FRotator(0,-90,0));
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -88), FRotator(0, -90, 0));
 		GetMesh()->SetRelativeScale3D(FVector(0.11f));
-	}
+	}*/
+
 	//데미지처리를 위한 충돌체 손에 붙이기
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("LeftHand"));
-	LeftAttackSphere->SetSphereRadius(200.f);
+	LeftAttackSphere->SetSphereRadius(100.f);
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
-	RightAttackSphere->SetSphereRadius(200.f);
+	RightAttackSphere->SetSphereRadius(100.f);
 
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
@@ -61,8 +58,8 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		UE_LOG(LogTemp, Warning, TEXT("Failed to create AssassinSceneComp."));
 	}
 	//애니메이션 BP 할당
-	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_NormalZombieEnemyAnim.ABP_NormalZombieEnemyAnim_C'"));
-	if (tempClass.Succeeded())
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_BeginnerZombieEnemyAnim.ABP_BeginnerZombieEnemyAnim_C'"));
+	if ( tempClass.Succeeded() )
 	{
 		GetMesh()->SetAnimInstanceClass(tempClass.Class);
 	}
@@ -73,11 +70,12 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	//AI Perception Component 초기화
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
 	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+
 	if ( HearingConfig )
 	{
 		//소리감지 설정
 		HearingConfig->HearingRange = EnemySoundDetectionRadius;
-		HearingConfig->DetectionByAffiliation.bDetectEnemies = true; 
+		HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 		HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
 		HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
@@ -85,6 +83,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 		AIPerceptionComp->ConfigureSense(*HearingConfig);
 		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
 	}
+
 	//노이즈 발생시 처리내용 초기화
 	//소음 발생위치 이동여부 초기화
 	bShouldMoveToSound = false;
@@ -100,7 +99,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	EnemyHP = 100;
 }
 
-void AKNormalZombieEnemy::BeginPlay()
+void AKBeginnerZombieEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -110,7 +109,7 @@ void AKNormalZombieEnemy::BeginPlay()
 	//소리감지처리함수 바인딩
 	if ( AIPerceptionComp )
 	{
-		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKNormalZombieEnemy::OnEnemyNoiseHeard);
+		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBeginnerZombieEnemy::OnEnemyNoiseHeard);
 		UE_LOG(LogTemp, Warning, TEXT("Perception Component 초기화 완료"));
 
 		if ( HearingConfig )
@@ -122,36 +121,36 @@ void AKNormalZombieEnemy::BeginPlay()
 	//데미지처리함수 바인딩
 	if ( RightAttackSphere )
 	{
-		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKNormalZombieEnemy::EnemyOverlapDamage);
+		RightAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBeginnerZombieEnemy::EnemyOverlapDamage);
 	}
 	if ( LeftAttackSphere )
 	{
-		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKNormalZombieEnemy::EnemyOverlapDamage);
+		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBeginnerZombieEnemy::EnemyOverlapDamage);
 	}
 }
 
-void AKNormalZombieEnemy::Tick(float DeltaTime)
+void AKBeginnerZombieEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AKNormalZombieEnemy::EnemySetState(EEnemyState newstate)
+void AKBeginnerZombieEnemy::EnemySetState(EEnemyState newstate)
 {
 	Super::EnemySetState(newstate);
 }
 
-void AKNormalZombieEnemy::EnemyIDLE()
+void AKBeginnerZombieEnemy::EnemyIDLE()
 {
 	Super::EnemyIDLE();
 }
 
-void AKNormalZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
+void AKBeginnerZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
 	Super::OnEnemyNoiseHeard(Actor, Stimulus);
 	UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: %s"), *Stimulus.Tag.ToString());
 }
 
-void AKNormalZombieEnemy::EnemyMove()
+void AKBeginnerZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
 
@@ -162,7 +161,7 @@ void AKNormalZombieEnemy::EnemyMove()
 	{
 		// 소음에 의해 이동해야 하는 경우
 		EnemyDestination = SoundLocation;
-		dir = EnemyDestination - GetActorLocation();		
+		dir = EnemyDestination - GetActorLocation();
 
 		// 소리 방향으로 이동할 위치 계산
 		FVector Direction = dir.GetSafeNormal();
@@ -176,7 +175,7 @@ void AKNormalZombieEnemy::EnemyMove()
 
 		// AI를 이용하여 계산된 위치로 이동
 		ai->MoveToLocation(NewLocation);
-		
+
 		//만약 목적지에 도착했다면
 		if ( dir.Size() < 150.0f )
 		{
@@ -186,7 +185,7 @@ void AKNormalZombieEnemy::EnemyMove()
 			EnemySetState(EEnemyState::IDLE);
 		}
 	}
-	else if (target)
+	else if ( target )
 	{
 		EnemyRandomMove();
 	}
@@ -196,9 +195,8 @@ void AKNormalZombieEnemy::EnemyMove()
 	}
 }
 
-void AKNormalZombieEnemy::EnemyRandomMove()
+void AKBeginnerZombieEnemy::EnemyRandomMove()
 {
-	
 	//if(target && target이 시야 어그로 수치를 만족시켰을경우)
 
 	FVector dir;
@@ -270,14 +268,14 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 	}
 }
 
-void AKNormalZombieEnemy::EnemyAttack()
+void AKBeginnerZombieEnemy::EnemyAttack()
 {
 	Super::EnemyAttack();
 
 	//시간이 흐르다가
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 	//공격시간이 되면
-	if (CurrentTime>EnemyAttackDelayTime && target->GetCharaterState() != ECharacterState::ECS_Crouching)
+	if ( CurrentTime > EnemyAttackDelayTime && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 	{
 		// 일정 확률로 Grab 상태로 전환
 		float RandomChance = FMath::FRand();
@@ -303,7 +301,7 @@ void AKNormalZombieEnemy::EnemyAttack()
 	//타깃과의 거리를 구하고
 	float TargetDistance = FVector::Distance(target->GetActorLocation(), GetActorLocation());
 	//거리가 공격범위를 벗어나면
-	if (TargetDistance > EnemyAttackRange)
+	if ( TargetDistance > EnemyAttackRange )
 	{
 		//이동상태 전환 /애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
@@ -316,13 +314,12 @@ void AKNormalZombieEnemy::EnemyAttack()
 	}
 }
 
-void AKNormalZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AKBeginnerZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	Super::EnemyOverlapDamage(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep,SweepResult);
-
+	Super::EnemyOverlapDamage(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
-void AKNormalZombieEnemy::EnemySpecialAttack()
+void AKBeginnerZombieEnemy::EnemySpecialAttack()
 {
 	Super::EnemySpecialAttack();
 
@@ -353,7 +350,7 @@ void AKNormalZombieEnemy::EnemySpecialAttack()
 	SetAllEnemiesToIdle();
 }
 
-void AKNormalZombieEnemy::SetAllEnemiesToIdle()
+void AKBeginnerZombieEnemy::SetAllEnemiesToIdle()
 {
 	Super::SetAllEnemiesToIdle();
 
@@ -361,7 +358,7 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 	for ( TActorIterator<AKBeginnerZombieEnemy> It(GetWorld()); It; ++It )
 	{
 		AKBeginnerZombieEnemy* Enemy = *It;
-		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY )
+		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY && Enemy != this )
 		{
 			EnemySetState(EEnemyState::IDLE);
 		}
@@ -369,7 +366,7 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 	for ( TActorIterator<AKNormalZombieEnemy> It(GetWorld()); It; ++It )
 	{
 		AKNormalZombieEnemy* Enemy = *It;
-		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY && Enemy != this )
+		if ( Enemy && Enemy->TeamType == ETeamType::FRIENDLY )
 		{
 			EnemySetState(EEnemyState::IDLE);
 		}
@@ -384,26 +381,26 @@ void AKNormalZombieEnemy::SetAllEnemiesToIdle()
 	}
 }
 
-float AKNormalZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+float AKBeginnerZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	return FinalDamage;
 }
 
-void AKNormalZombieEnemy::OnEnemyDamageProcess(float damage)
+void AKBeginnerZombieEnemy::OnEnemyDamageProcess(float damage)
 {
 	Super::OnEnemyDamageProcess(damage);
 }
 
-void AKNormalZombieEnemy::EnemyTakeDamage()
-{
+void AKBeginnerZombieEnemy::EnemyTakeDamage()
+{	
 	Super::EnemyTakeDamage();
 
 	//시간이 흐르다가
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 	//전환대기시간이 지나면
-	if (CurrentTime > EnemyTDamageDelayTime)
+	if ( CurrentTime > EnemyTDamageDelayTime )
 	{
 		//IDLE상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::IDLE);
@@ -411,14 +408,14 @@ void AKNormalZombieEnemy::EnemyTakeDamage()
 	}
 }
 
-void AKNormalZombieEnemy::EnemyExecuted()
+void AKBeginnerZombieEnemy::EnemyExecuted()
 {
 	Super::EnemyExecuted();
 
 	ai->StopMovement();
 }
 
-void AKNormalZombieEnemy::EnemyDead()
+void AKBeginnerZombieEnemy::EnemyDead()
 {
 	Super::EnemyDead();
 
@@ -433,14 +430,14 @@ void AKNormalZombieEnemy::EnemyDead()
 	FVector P = GetActorLocation() + FVector::DownVector * DieDownfallSpeed * GetWorld()->DeltaTimeSeconds;
 	SetActorLocation(P);
 	//2미터 이상 내려가면
-	if (P.Z < -200.0f)
+	if ( P.Z < -200.0f )
 	{
 		Destroy();
 	}
 }
 
 //Player암살 이벤트 시 메시 고정
-FTransform AKNormalZombieEnemy::GetAttackerTransform()
+FTransform AKBeginnerZombieEnemy::GetAttackerTransform()
 {
 	return AssassinSceneComp->GetComponentToWorld();
 }
