@@ -14,6 +14,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "Engine/World.h"
 #include "Engine/DamageEvents.h"
 #include "EngineUtils.h"
@@ -130,7 +131,7 @@ void AKBaseEnemy::EnemyIDLE()
 	}
 }
 
-void AKBaseEnemy::EnemyMove() { }
+
 
 void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 {
@@ -152,6 +153,56 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 		}
 	}
 }
+
+void AKBaseEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
+{
+	for ( AActor* Actor : UpdatedActors )
+	{
+		FActorPerceptionBlueprintInfo Info;
+		AIPerceptionComp->GetActorsPerception(Actor, Info);
+
+		// JPlayer 타입의 액터만 처리
+		if ( AJPlayer* Player = Cast<AJPlayer>(Actor) )
+		{
+			for ( const FAIStimulus& Stimulus : Info.LastSensedStimuli )
+			{
+				if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type.Name == TEXT("Default__AISense_Sight") )
+				{
+					// 매초 33.4f씩 증가시키기 위해 DeltaTime을 활용
+					float IncrementAmount = 33.4f * GetWorld()->GetDeltaSeconds();
+					EnemyAttentionDegree += IncrementAmount; // 강도에 따라 어그로 채우기
+
+					GEngine->AddOnScreenDebugMessage(2, 1, FColor::Red, FString::Printf(TEXT("OnEnemySightVision called with stimulus: Vision(%f)"), EnemyAttentionDegree));
+
+					if ( EnemyAttentionDegree > 100.0f ) // 특정 강도 기준
+					{
+						// bShoutMoveToSight가 true가 되며, ShownLocation에 플레이어 위치를 저장
+						if ( !bShoutMoveToSight )
+						{
+							bShoutMoveToSight = true;
+							ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
+							GetWorld()->GetTimerManager().SetTimer(EnemySeePlayerTimerHandle, this, &AKBaseEnemy::EnemyMove, 3.0f, false);
+						}
+						else
+						{
+							// 이미 타이머가 돌아가고 있다면 위치 업데이트
+							ShownLocation = Player->GetActorLocation();
+						}
+					}
+					else
+					{
+						// 플레이어가 시야에서 벗어나면 타이머 초기화
+						bShoutMoveToSight = false;
+						GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
+						EnemyAttentionDegree = 0.0f; // 어그로 수치 초기화
+					}
+				}
+			}
+		}
+	}
+}
+
+void AKBaseEnemy::EnemyMove() { }
 
 void AKBaseEnemy::EnemyAttack() { }
 

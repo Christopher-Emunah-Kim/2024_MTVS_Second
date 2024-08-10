@@ -71,7 +71,7 @@ void AJPlayerShotGun::PullTrigger()
 		params.AddIgnoredActor(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
 		//라인트레이스실행 및 설정에 따른 충돌 및 데미지 적용
-		bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECC_Visibility, params);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECollisionChannel::ECC_Pawn, params);
 
 		if ( bHit )
 		{
@@ -85,8 +85,8 @@ void AJPlayerShotGun::PullTrigger()
 			AActor* HitActor = hitInfo.GetActor();
 			AController* OwnerController = GetWorld()->GetFirstPlayerController();
 
-			HitActor->TakeDamage(4, DamageEvent, OwnerController, this);
-
+			HitActor->TakeDamage(10, DamageEvent, OwnerController, this);
+			UE_LOG(LogTemp, Error, TEXT("Hitactor : %s"), *HitActor->GetName());
 
 			// 피격 물체 날려보내기 구현
 			auto* hitComp = hitInfo.GetComponent();

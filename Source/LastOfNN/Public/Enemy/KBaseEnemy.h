@@ -81,24 +81,6 @@ public:
 	float CurrentTime = 0;
 
 	//=======================================================================================
-	//**이동상태처리함수
-    virtual void EnemyMove();
-	//걷기속도
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
-    float EnemyWalkSpeed;
-	//뛰기속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
-    float EnemyRunSpeed;
-	
-	//방향
-    FVector EnemyDirection;
-
-	//길찾기 수행시 랜덤 위치
-	FVector EnemyRandomPos;
-	//랜덤위치가져오기 함수
-	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
-
-	//=======================================================================================
 	//** AI Perception
 	
 	//사운드 인식 길찾기 변수
@@ -117,12 +99,49 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	bool bShouldMoveToSound;
 	//AI Hearing 정보 Config
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	class UAISenseConfig_Hearing* HearingConfig;
 	//소리 감지 처리함수
 	UFUNCTION()
 	virtual void OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus);
 
+	//AI Sight 정보 Config
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	class UAISenseConfig_Sight* SightConfig;
+	//시야 감지 처리함수
+	UFUNCTION()
+	virtual void OnEnemySightVision(const TArray<AActor*>& UpdatedActors);
+	//시야 노출시간 추적타이머
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	FTimerHandle EnemySeePlayerTimerHandle;
+	//시야 감지에 의한 위치이동여부
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	bool bShoutMoveToSight = false;
+	//시야 감지 위치
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	FVector ShownLocation;
+
 	//=======================================================================================
+	// 
+	//**이동상태처리함수
+    virtual void EnemyMove();
+	//걷기속도
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemyWalkSpeed;
+	//뛰기속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
+    float EnemyRunSpeed;
+	
+	//방향
+    FVector EnemyDirection;
+
+	//길찾기 수행시 랜덤 위치
+	FVector EnemyRandomPos;
+	//랜덤위치가져오기 함수
+	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
+
+	//=======================================================================================
+	
 	//**공격상태처리함수
     virtual void EnemyAttack();
 	UFUNCTION()

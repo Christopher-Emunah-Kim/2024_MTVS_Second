@@ -205,8 +205,8 @@ public:
 	TSubclassOf<class UJGunWidget> GunUIFactory;
 
 	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<class UInventoryWidget> InventoryUIFactory;
-
+	TSubclassOf<class UInventoryWidget> InventoryUIFactory;	
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UJGunWidget* GunWidget;
 	

@@ -4,6 +4,7 @@
 #include "Enemy/KBeginnerZombieEnemy.h"
 #include "Enemy/KNormalZombieEnemy.h"
 #include "Enemy/KBossZombieEnemy.h"
+#include "Enemy/KBaseEnemy.h"
 #include "Player/JPlayer.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
@@ -12,6 +13,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
+#include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AISense.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -35,9 +38,9 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 
 	//데미지처리를 위한 충돌체 손에 붙이기
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("LeftHand"));
-	LeftAttackSphere->SetSphereRadius(100.f);
+	LeftAttackSphere->SetSphereRadius(50.f);
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
-	RightAttackSphere->SetSphereRadius(100.f);
+	RightAttackSphere->SetSphereRadius(50.f);
 
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
@@ -84,9 +87,29 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 		AIPerceptionComp->SetDominantSense(HearingConfig->GetSenseImplementation());
 	}
 
-	//노이즈 발생시 처리내용 초기화
 	//소음 발생위치 이동여부 초기화
 	bShouldMoveToSound = false;
+
+
+	//AI Perception - Sight Config 초기화
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+
+	if ( SightConfig )
+	{
+		SightConfig->SightRadius = 1000.0f; // 시야 반경 설정
+		SightConfig->LoseSightRadius = SightConfig->SightRadius + 500.0f; // 시야 상실 반경
+		SightConfig->PeripheralVisionAngleDegrees = 45.0f; // 원뿔형 시야 각도
+		SightConfig->SetMaxAge(4.0f); // 시야 정보 유지 시간
+		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+
+		// AI Perception Component에 Sight Config 추가
+		AIPerceptionComp->ConfigureSense(*SightConfig);
+		AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
+	}
+	//시야감지 이동여부 초기화
+	bShoutMoveToSight = false;
 
 	//Enemy Status 초기화
 	EnemySoundDetectionRadius = 2000.0f;
@@ -132,6 +155,24 @@ void AKBeginnerZombieEnemy::BeginPlay()
 void AKBeginnerZombieEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// 디버그용 시야 원뿔 그리기
+	if ( GEngine )
+	{
+		FVector Start = GetActorLocation();
+		FVector ForwardVector = GetActorForwardVector();
+
+		// 시야 원뿔 각도와 범위
+		float SightRadius = SightConfig->SightRadius;
+		float HalfAngle = FMath::DegreesToRadians(SightConfig->PeripheralVisionAngleDegrees / 2);
+
+		// 디버그 라인 그리기
+		for ( float Angle = -HalfAngle; Angle <= HalfAngle; Angle += FMath::DegreesToRadians(5.0f) )
+		{
+			FVector End = Start + (ForwardVector.RotateAngleAxis(FMath::RadiansToDegrees(Angle), FVector::UpVector) * SightRadius);
+			DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, -1.0f, 0, 2.0f);
+		}
+	}
 }
 
 void AKBeginnerZombieEnemy::EnemySetState(EEnemyState newstate)
@@ -150,6 +191,11 @@ void AKBeginnerZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulu
 	UE_LOG(LogTemp, Warning, TEXT("OnEnemyNoiseHeard called with stimulus: %s"), *Stimulus.Tag.ToString());
 }
 
+void AKBeginnerZombieEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
+{
+	Super::OnEnemySightVision(UpdatedActors);
+}
+
 void AKBeginnerZombieEnemy::EnemyMove()
 {
 	Super::EnemyMove();
@@ -157,7 +203,35 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	FVector dir;
 	FVector EnemyDestination;
 
-	if ( bShouldMoveToSound )
+	//시야에 의해 이동하는 경우
+	if ( bShoutMoveToSight )
+	{
+		//목표위치방향
+		dir = ShownLocation - GetActorLocation();
+
+		//속도를 뛰기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+
+		// 적을 플레이어의 마지막 위치로 이동시키기
+		ai->MoveToLocation(ShownLocation);
+
+		//공격범위 안에 들어오면
+		if ( dir.Size() < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+		{
+			//공격상태 전환 / 애니메이션 상태 동기화
+			EnemySetState(EEnemyState::ATTACK);
+			//공격 애니메이션 재생 활성화
+			anim->bEnemyAttackPlay = true;
+			// 타이머/체크 초기화
+			GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
+			bShoutMoveToSight = false;
+		}
+	}
+	//소리에 의해 이동하는 경우
+	else if ( bShouldMoveToSound )
 	{
 		// 소음에 의해 이동해야 하는 경우
 		EnemyDestination = SoundLocation;
