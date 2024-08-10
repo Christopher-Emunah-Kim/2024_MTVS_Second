@@ -27,3 +27,8 @@ void UInventoryWidget::FireEquip()
 {
 	Player->SetStateEquipThrowWeapon();
 }
+
+void UInventoryWidget::ShotgunEquip()
+{
+	Player->SetStateShotgunEquipped();
+}

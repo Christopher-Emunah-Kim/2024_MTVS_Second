@@ -42,8 +42,8 @@ public:
 	void BatEquip();	
 	UFUNCTION(BlueprintCallable)
 	void FireEquip();	
-	//UFUNCTION(BlueprintCallable)
-	//void PistolEquip();
+	UFUNCTION(BlueprintCallable)
+	void ShotgunEquip();
 
 	class AJPlayer* Player;
 
