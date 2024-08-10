@@ -34,6 +34,7 @@ public:
 
 	float BaseWeaponRange = 2000;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CurrentBulletNum;
 	int32 MaxBulletNum = 8;
 

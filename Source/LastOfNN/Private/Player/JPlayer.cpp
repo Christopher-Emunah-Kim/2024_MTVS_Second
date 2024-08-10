@@ -200,8 +200,9 @@ void AJPlayer::BeginPlay()
 	Bat->SetActorEnableCollision(false);
 
 	Shotgun = GetWorld()->SpawnActor<AJPlayerShotGun>(ShotGunClass);
-	Shotgun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
+	Shotgun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("ShotgunSocket"));
 	Shotgun->SetActorHiddenInGame(true);
+	Shotgun->SetActorEnableCollision(false);
 
 	//FSM얻어오기
 	AActor* EnemyActor = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass());
@@ -356,6 +357,7 @@ void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 		bIsAttacking = false;
 		AttackEndComboState();
 	}
+	CharacterAnimInstance->bChangingWeapon = false;
 }
 
 void AJPlayer::AttackStartComboState()
@@ -491,6 +493,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
 	{
+		if ( Shotgun->CurrentBulletNum == 0 ) return;
 		CharacterAnimInstance->PlayShotgunMontage();
 		Shotgun->PullTrigger();
 	}
@@ -510,13 +513,19 @@ void AJPlayer::Zoom(const FInputActionValue& Value)
 	{
 		TargetFOV = 60;
 	}
+	else if ( CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
+	{
+		TargetFOV = 30;
+		LockOnComp->SetTargetLockTrue();
+	}
 
 }
 void AJPlayer::ZoomOut(const FInputActionValue& Value)
 {
 	if ( bIsGrabbed ) return;
 	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
-	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped || CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped )
+	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped || CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped ||
+		CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
 	{
 		TargetFOV = 90;
 	}
@@ -760,6 +769,7 @@ void AJPlayer::SetStateEquipGun()
 	Gun->SetActorEnableCollision(true);
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
+	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Visible);
 }
@@ -778,6 +788,7 @@ void AJPlayer::SetStateEquipThrowWeapon()
 	Gun->SetActorEnableCollision(false);
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
+	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -788,6 +799,7 @@ void AJPlayer::SetStateUnEquipped()
 	Gun->SetActorEnableCollision(false);
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
+	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -806,6 +818,7 @@ void AJPlayer::SetStateBatEquipped()
 	Bat->SetActorEnableCollision(true);
 	Gun->SetActorHiddenInGame(true);
 	Gun->SetActorEnableCollision(false);
+	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
 }
