@@ -103,6 +103,8 @@ private:
 	void AnimNotify_StopMove();	
 	UFUNCTION()
 	void AnimNotify_Move();
-
+	UFUNCTION()
+	void AnimNotify_MoveCamera();
+	
 
 };

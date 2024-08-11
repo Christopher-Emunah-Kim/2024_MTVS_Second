@@ -122,7 +122,7 @@ public:
 	FTimerHandle SetCameraBackTimer;
 
 	void SetCameraBack();
-	void SetCameraBoomToCharacter(bool bSetCameraBoom);
+	void SetCameraForBatAction();
 	//상태변경함수
 	void SetStateEquipGun();
 	void SetStateEquipThrowWeapon();

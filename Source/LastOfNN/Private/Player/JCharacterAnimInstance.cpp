@@ -4,6 +4,8 @@
 #include "Player/JCharacterAnimInstance.h"
 #include "Player/JPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UJCharacterAnimInstance::UJCharacterAnimInstance()
@@ -33,6 +35,11 @@ void UJCharacterAnimInstance::JumpToAttackMontageSection(int32 NewSection)
 	else if(AnimCharacterEquipState ==ECharacterEquipState::ECES_BatEquipped)
 	{
 		Montage_JumpToSection(GetAttackMontageSectionName(NewSection), BatMontage);
+		if ( GetAttackMontageSectionName(NewSection) == TEXT("Attack3") )
+		{
+			Player->CameraShake();
+			//피 튀기는 거 살짝 보여주게
+		}
 	}
 }
 
@@ -152,4 +159,12 @@ void UJCharacterAnimInstance::AnimNotify_StopMove()
 void UJCharacterAnimInstance::AnimNotify_Move()
 {
 	bChangingWeapon = false;
+}
+
+void UJCharacterAnimInstance::AnimNotify_MoveCamera()
+{
+	Player->SpringArmComp->bEnableCameraLag = true;
+	Player->SpringArmComp->AttachToComponent(Player->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_RightShoulder"));
+	Player->CameraComp->SetFieldOfView(60);
+	//Player->SpringArmComp->bUsePawnControlRotation = true;
 }
