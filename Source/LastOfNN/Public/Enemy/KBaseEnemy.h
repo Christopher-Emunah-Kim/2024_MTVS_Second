@@ -83,9 +83,15 @@ public:
 	//=======================================================================================
 	//** AI Perception
 	
-	//사운드 인식 길찾기 변수
+	//주의도 임계값
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	float AttentionThreshold = 100.0f;
+
+	//어그로 수치 관리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemyAttentionDegree;
+
+
 	//소음 감지거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemySoundDetectionRadius;
@@ -182,6 +188,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     int32 EnemyHP;
 
+	//배트 피격 애니메이션 재생을 위한 인덱스
+	int32 BatIndex = 2;
+
 	//**피격상태처리함수
 	virtual void EnemyTakeDamage();
 	//피격 후 IDLE전환 대기시간
@@ -198,8 +207,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float DieDownfallSpeed = 50.0f;
 
-	//배트 피격 애니메이션 재생을 위한 인덱스
-	int32 BatIndex = 2;
+
 
 #pragma endregion
 };

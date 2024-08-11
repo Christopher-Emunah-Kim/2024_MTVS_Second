@@ -96,9 +96,9 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 
 	if ( SightConfig )
 	{
-		SightConfig->SightRadius = 1000.0f; // 시야 반경 설정
+		SightConfig->SightRadius = 2000.0f; // 시야 반경 설정
 		SightConfig->LoseSightRadius = SightConfig->SightRadius + 500.0f; // 시야 상실 반경
-		SightConfig->PeripheralVisionAngleDegrees = 45.0f; // 원뿔형 시야 각도
+		SightConfig->PeripheralVisionAngleDegrees = 120.0f; // 원뿔형 시야 각도
 		SightConfig->SetMaxAge(4.0f); // 시야 정보 유지 시간
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -194,6 +194,8 @@ void AKBeginnerZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulu
 void AKBeginnerZombieEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
 {
 	Super::OnEnemySightVision(UpdatedActors);
+
+	GEngine->AddOnScreenDebugMessage(9, 1, FColor::Red, TEXT("DEBUG DEBUG DEBUG DEBUG"));
 }
 
 void AKBeginnerZombieEnemy::EnemyMove()
@@ -261,7 +263,23 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	}
 	else if ( target )
 	{
-		EnemyRandomMove();
+		//EnemyRandomMove();
+		
+		
+		//랜덤하게 이동
+		auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+		//속도를 걷기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//목적지에 도착하면
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
+		{
+			//새로운 랜덤위치 가져오기
+			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+		}
 	}
 	else
 	{
