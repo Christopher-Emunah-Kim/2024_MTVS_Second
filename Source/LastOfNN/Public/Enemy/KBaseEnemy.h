@@ -91,6 +91,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemyAttentionDegree;
 
+	//AI 감지 감각에 따른 처리함수
+	UFUNCTION()
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	//소음 감지거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIPerception")

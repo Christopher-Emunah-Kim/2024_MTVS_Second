@@ -38,6 +38,7 @@
 #include "Player/InventoryWidget.h"
 #include "Player/JPlayerShotGun.h"
 #include "Enemy/KBeginnerZombieEnemy.h"
+#include <Perception/AISense_Sight.h>
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -72,7 +73,10 @@ AJPlayer::AJPlayer()
 
 	// AI Perception Stimuli Source Component 생성 및 초기화
 	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
+	PerceptionStimuliSource->RegisterWithPerceptionSystem();
 	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
+	PerceptionStimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+
 
 	// 팀 타입 설정 (플레이어는 적)
 	TeamType = ETeamType::ENEMY;
