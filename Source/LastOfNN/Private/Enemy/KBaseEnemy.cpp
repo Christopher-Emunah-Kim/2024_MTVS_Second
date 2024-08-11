@@ -246,6 +246,19 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 		int32 index = FMath::RandRange(0,1);
 		FString SectionName = FString::Printf(TEXT("EnemyTDamage%d"), index);
 		anim->PlayEnemyTDamageAnim(FName(*SectionName));
+
+		//배트 들었을 때 피격 애니메이션
+		if ( target->CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
+		{
+			FString BatSectionName = FString::Printf(TEXT("EnemyTDamage%d"), BatIndex);
+			anim->PlayEnemyTDamageAnim(FName(*BatSectionName));
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *BatSectionName);
+			BatIndex++;
+			if ( BatIndex > 4 )
+			{
+				BatIndex = 2;
+			}
+		}
 	}
 	else
 	{

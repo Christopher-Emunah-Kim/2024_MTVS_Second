@@ -198,6 +198,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float DieDownfallSpeed = 50.0f;
 
+	//배트 피격 애니메이션 재생을 위한 인덱스
+	int32 BatIndex = 2;
 
 #pragma endregion
 };

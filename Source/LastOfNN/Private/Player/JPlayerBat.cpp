@@ -27,7 +27,9 @@ AJPlayerBat::AJPlayerBat()
 	HitCapsule->SetupAttachment(RootComponent);
 	HitCapsule->SetRelativeLocation(FVector(61.189181f, -31.936999f, 13.889282f));
 	HitCapsule->SetRelativeRotation(FRotator(-82, 10, 334));
+	HitCapsule->SetWorldScale3D(FVector(1, 1, 1.6f));
 	HitCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 
 }
 
@@ -49,20 +51,10 @@ void AJPlayerBat::Tick(float DeltaTime)
 
 void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Error, TEXT("ZOPBEDF"));
-	MakeTimeSlow(0.85f);
-	if ( GetOwner() )
-	{
-		auto* Player = Cast<AJPlayer>(GetOwner());
-		if ( Player )
-		{
-			Player->CameraShake();
-		}
-	}
 	if ( OtherActor && OtherActor != GetWorld()->GetFirstPlayerController()->GetPawn() && OtherActor != this )
 	{
 		//일단 빠따 데미지 20으로 설정
-		FPointDamageEvent DamageEvent(20, FHitResult(), GetActorForwardVector(), nullptr);
+		FPointDamageEvent DamageEvent(10, FHitResult(), GetActorForwardVector(), nullptr);
 		AController* ActorController = nullptr;
 		//애들 컨트롤러 얻어와서 데미지 주기
 		APawn* ActorPawn = Cast<APawn>(OtherActor);
@@ -70,8 +62,17 @@ void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor
 		{
 			ActorController = ActorPawn->GetController();
 		}
-		OtherActor->TakeDamage(20, DamageEvent, ActorController, this);
-
+		OtherActor->TakeDamage(10, DamageEvent, ActorController, this);
+		MakeTimeSlow(0.75f);
+		//if ( GetOwner() )
+		//{
+		//	auto* Player = Cast<AJPlayer>(GetOwner());
+		//	if ( Player )
+		//	{
+		//		UE_LOG(LogTemp, Error, TEXT("ZOPBEDF"));
+		//		Player->CameraShake();
+		//	}
+		//}
 		UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *OtherActor->GetName());
 	}
 }
@@ -79,7 +80,7 @@ void AJPlayerBat::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor
 void AJPlayerBat::MakeTimeSlow(float SlowRate)
 {
 	UGameplayStatics::SetGlobalTimeDilation(this, SlowRate);
-	GetWorld()->GetTimerManager().SetTimer(TimeDilationHandle, this, &AJPlayerBat::ResetTimeDilation, 0.5f, false);
+	GetWorld()->GetTimerManager().SetTimer(TimeDilationHandle, this, &AJPlayerBat::ResetTimeDilation, 0.2f, false);
 }
 
 void AJPlayerBat::ResetTimeDilation()

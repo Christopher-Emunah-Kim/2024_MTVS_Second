@@ -198,6 +198,7 @@ void AJPlayer::BeginPlay()
 	Bat->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHand"));
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
+	Bat->SetOwner(this);
 
 	Shotgun = GetWorld()->SpawnActor<AJPlayerShotGun>(ShotGunClass);
 	Shotgun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("ShotgunSocket"));
@@ -358,6 +359,20 @@ void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 		AttackEndComboState();
 	}
 	CharacterAnimInstance->bChangingWeapon = false;
+
+	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped && !bIsAttacking )
+	{
+		SpringArmComp->AttachToComponent(
+				GetCapsuleComponent(),
+				FAttachmentTransformRules::KeepRelativeTransform
+		);
+		SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
+		SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
+		CameraComp->SetupAttachment(SpringArmComp);
+		SpringArmComp->bEnableCameraLag = false;
+		CameraComp->SetFieldOfView(90);
+		UE_LOG(LogTemp, Error, TEXT("BATT"));
+	}
 }
 
 void AJPlayer::AttackStartComboState()
@@ -460,6 +475,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	//}
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped)
 	{
+		if ( CharaterState == ECharacterState::ECS_Crouching ) return;
 		if ( Gun->CurrentBulletNum == 0 )
 		{
 			CharacterAnimInstance->PlayGunShotMontage();
@@ -493,6 +509,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
 	{
+		if ( CharaterState == ECharacterState::ECS_Crouching ) return;
 		if ( Shotgun->CurrentBulletNum == 0 ) return;
 		CharacterAnimInstance->PlayShotgunMontage();
 		Shotgun->PullTrigger();
@@ -744,16 +761,25 @@ void AJPlayer::AfterTakeDown()
 }
 void AJPlayer::SetCameraBack()
 {
-	bUseControllerRotationYaw = true;
+	CameraComp->SetActive(true);
+	FieldCamera->GetRootComponent()->SetActive(false);
+	PlayerController->SetViewTargetWithBlend(CameraComp->GetOwner(), 0.5f);
 }
-void AJPlayer::SetCameraBoomToCharacter(bool bSetCameraBoom)
+void AJPlayer::SetCameraForBatAction()
 {
-	if ( SpringArmComp && bSetCameraBoom)
+	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
 	{
-		SpringArmComp->SetWorldLocation(GetCapsuleComponent()->GetComponentLocation());
-		SpringArmComp->SetWorldRotation(GetCapsuleComponent()->GetComponentRotation());
+		FVector SocketOffset(-55.f, -145.5f, -27.f); // 소켓에서 약간 위쪽으로 오프셋
+		FRotator SocketRotation(14.5f, 42.f, -194.5f);
+		FieldCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightForeArm"));
+		FieldCamera->SetActorRelativeLocation(SocketOffset);
+		FieldCamera->SetActorRelativeRotation(SocketRotation);
+		CameraComp->SetActive(false);
+		FieldCamera->GetRootComponent()->SetActive(true);
+		PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
 	}
 }
+
 void AJPlayer::SetStateEquipGun()
 {
 	if ( CharaterState == ECharacterState::ECS_Crouching )
