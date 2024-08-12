@@ -27,6 +27,7 @@ AKBaseEnemy::AKBaseEnemy()
 
 	//팀타입 초기화
 	TeamType = ETeamType::FRIENDLY;
+	//TeamID = FGenericTeamId(1);
 
 	//EnemyFSM 컴포넌트 추가
 	FSMComponent = CreateDefaultSubobject<UKEnemyFSM>(TEXT("FSM"));
@@ -79,6 +80,27 @@ void AKBaseEnemy::Tick(float DeltaTime)
 	//시간이 흘러감에 따라 어그로수치를 계속 줄임.
 	FMath::Max(EnemyAttentionDegree - (DeltaTime/120), 0);
 }
+////Team ID Setting
+//FGenericTeamId AKBaseEnemy::GetGenericTeamId() const
+//{
+//	return TeamID;
+//}
+////Team Attitude Setting
+//ETeamAttitude::Type AKBaseEnemy::GetTeamAttitudeTowards(const AActor& Other) const
+//{
+//	if ( const IGenericTeamAgentInterface* TeamAgent = Cast<const IGenericTeamAgentInterface>(&Other) )
+//	{
+//		FGenericTeamId OtherTeamID = TeamAgent->GetGenericTeamId();
+//
+//		// 팀 ID가 동일하지 않은 경우 적대적 태도 설정
+//		if ( OtherTeamID != TeamID )
+//		{
+//			return ETeamAttitude::Hostile;
+//		}
+//	}
+//
+//	return ETeamAttitude::Neutral; // 동일 팀이거나 팀 ID를 알 수 없을 경우 중립
+//}
 
 bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
 {

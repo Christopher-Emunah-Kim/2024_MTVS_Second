@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "Enemy/KBaseEnemy.h"
 #include "CharacterTypes.h"
+#include "GenericTeamAgentInterface.h"
 #include "JPlayer.generated.h"
 
 
@@ -269,6 +270,12 @@ public:
 	TSubclassOf<class UCameraShakeBase> CamShake;
 
 	void CameraShake();
+
+	//AI와 적대적 관계 설정
+	// IGenericTeamAgentInterface 인터페이스 구현
+	/*virtual FGenericTeamId GetGenericTeamId() const override;
+	FGenericTeamId TeamID;*/
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

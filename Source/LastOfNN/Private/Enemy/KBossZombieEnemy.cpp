@@ -46,6 +46,7 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 
 	//팀타입 초기화
 	TeamType = ETeamType::FRIENDLY;
+	//TeamID = FGenericTeamId(1);
 
 	//AI Perception Component 초기화
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
@@ -331,6 +332,20 @@ void AKBossZombieEnemy::EnemyDead()
 		Destroy();
 	}
 }
+
+//FGenericTeamId AKBossZombieEnemy::GetGenericTeamId() const
+//{
+//	Super::GetGenericTeamId;
+//
+//	return FGenericTeamId();
+//}
+//
+//ETeamAttitude::Type AKBossZombieEnemy::GetTeamAttitudeTowards(const AActor& Other) const
+//{
+//	Super:GetTeamAttitudeTowards(Other);	
+//	
+//	return ETeamAttitude::Type();
+//}
 
 //보스 수류탄 공격 함수
 void AKBossZombieEnemy::BossThrowGrenade()

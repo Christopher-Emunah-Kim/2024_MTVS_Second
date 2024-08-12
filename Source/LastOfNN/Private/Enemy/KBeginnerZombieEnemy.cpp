@@ -61,6 +61,7 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 
 	//팀타입 초기화
 	TeamType = ETeamType::FRIENDLY;
+	//TeamID = FGenericTeamId(1);
 
 	//Enemy Status 초기화
 	EnemySoundDetectionRadius = 2000.0f;
@@ -159,23 +160,23 @@ void AKBeginnerZombieEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 디버그용 시야 원뿔 그리기
-	if ( GEngine )
-	{
-		FVector Start = GetActorLocation();
-		FVector ForwardVector = GetActorForwardVector();
+	//// 디버그용 시야 원뿔 그리기
+	//if ( GEngine )
+	//{
+	//	FVector Start = GetActorLocation();
+	//	FVector ForwardVector = GetActorForwardVector();
 
-		// 시야 원뿔 각도와 범위
-		float SightRadius = SightConfig->SightRadius;
-		float HalfAngle = FMath::DegreesToRadians(SightConfig->PeripheralVisionAngleDegrees / 2);
+	//	// 시야 원뿔 각도와 범위
+	//	float SightRadius = SightConfig->SightRadius;
+	//	float HalfAngle = FMath::DegreesToRadians(SightConfig->PeripheralVisionAngleDegrees / 2);
 
-		// 디버그 라인 그리기
-		for ( float Angle = -HalfAngle; Angle <= HalfAngle; Angle += FMath::DegreesToRadians(5.0f) )
-		{
-			FVector End = Start + (ForwardVector.RotateAngleAxis(FMath::RadiansToDegrees(Angle), FVector::UpVector) * SightRadius);
-			DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, -1.0f, 0, 2.0f);
-		}
-	}
+	//	// 디버그 라인 그리기
+	//	for ( float Angle = -HalfAngle; Angle <= HalfAngle; Angle += FMath::DegreesToRadians(5.0f) )
+	//	{
+	//		FVector End = Start + (ForwardVector.RotateAngleAxis(FMath::RadiansToDegrees(Angle), FVector::UpVector) * SightRadius);
+	//		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, -1.0f, 0, 2.0f);
+	//	}
+	//}
 }
 
 void AKBeginnerZombieEnemy::EnemySetState(EEnemyState newstate)
@@ -213,7 +214,7 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	FVector EnemyDestination;
 
 	//시야에 의해 이동하는 경우
-	if ( bShoutMoveToSight )
+	if ( bShoutMoveToSight && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 	{
 		ShownLocation = target->GetActorLocation();
 		//목표위치방향
@@ -274,22 +275,22 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	{
 		//이거해두면 무조건 쫓아오니까 잠시 끄기
 		//이후에 어그로 끌렸을때 무조건 쫓아오게 하는 방식으로 가보자.
-		//EnemyRandomMove();
+		EnemyRandomMove();
 
-		//랜덤하게 이동
-		auto RanResult = ai->MoveToLocation(EnemyRandomPos);
-		//속도를 걷기속도로 변경
-		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
-		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
-		//BlendSpace Anim에 액터의 속도 할당
-		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
-		//목적지에 도착하면
-		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
-		{
-			//새로운 랜덤위치 가져오기
-			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
-		}
+		////랜덤하게 이동
+		//auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+		////속도를 걷기속도로 변경
+		//GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		////UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+		////BlendSpace Anim에 액터의 속도 할당
+		//anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		//anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		////목적지에 도착하면
+		//if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
+		//{
+		//	//새로운 랜덤위치 가져오기
+		//	GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+		//}
 	}
 	else
 	{
@@ -537,6 +538,20 @@ void AKBeginnerZombieEnemy::EnemyDead()
 		Destroy();
 	}
 }
+
+//FGenericTeamId AKBeginnerZombieEnemy::GetGenericTeamId() const
+//{
+//	Super::GetGenericTeamId;
+//
+//	return FGenericTeamId();
+//}
+//
+//ETeamAttitude::Type AKBeginnerZombieEnemy::GetTeamAttitudeTowards(const AActor& Other) const
+//{
+//	Super:GetTeamAttitudeTowards(Other);
+//
+//	return ETeamAttitude::Type();
+//}
 
 //Player암살 이벤트 시 메시 고정
 FTransform AKBeginnerZombieEnemy::GetAttackerTransform()

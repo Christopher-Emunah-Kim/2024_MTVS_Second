@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Enemy/KEnemyFSM.h"
+#include "GenericTeamAgentInterface.h"
 #include "KBaseEnemy.generated.h"
 
 //팀타입설정 Enum
@@ -63,6 +64,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	ETeamType TeamType;
 
+	//IGenericTeamAgentInterface 인터페이스 구현
+	//virtual FGenericTeamId GetGenericTeamId() const override;
+	//팀별 태도 결정
+	//virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
+	//FGenericTeamId TeamID;
 
 #pragma region virtual function with properties
 	
