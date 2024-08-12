@@ -69,6 +69,7 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 
 	//팀타입 초기화
 	TeamType = ETeamType::FRIENDLY;
+	//TeamID = FGenericTeamId(1);
 
 	//AI Perception Component 초기화
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
@@ -438,6 +439,20 @@ void AKNormalZombieEnemy::EnemyDead()
 		Destroy();
 	}
 }
+
+//FGenericTeamId AKNormalZombieEnemy::GetGenericTeamId() const
+//{
+//	Super::GetGenericTeamId;
+//
+//	return FGenericTeamId();
+//}
+//
+//ETeamAttitude::Type AKNormalZombieEnemy::GetTeamAttitudeTowards(const AActor& Other) const
+//{
+//	Super:GetTeamAttitudeTowards(Other);
+//
+//	return ETeamAttitude::Type();
+//}
 
 //Player암살 이벤트 시 메시 고정
 FTransform AKNormalZombieEnemy::GetAttackerTransform()

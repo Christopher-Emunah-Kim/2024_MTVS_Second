@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/KBaseEnemy.h"
+#include "GenericTeamAgentInterface.h"
 #include "KBossZombieEnemy.generated.h"
 
 /**
@@ -52,6 +53,11 @@ public:
 	virtual void EnemyTakeDamage() override;
 
     virtual void EnemyDead() override;
+
+	////IGenericTeamAgentInterface 인터페이스 구현
+	//virtual FGenericTeamId GetGenericTeamId() const override;
+	////팀별 태도 결정
+	//virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	//=======================================================================================
 	// Instance, Variables

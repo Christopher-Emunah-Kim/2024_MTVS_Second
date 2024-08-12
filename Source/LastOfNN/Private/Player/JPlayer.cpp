@@ -80,6 +80,7 @@ AJPlayer::AJPlayer()
 
 	// 팀 타입 설정 (플레이어는 적)
 	TeamType = ETeamType::ENEMY;
+	//TeamID = FGenericTeamId(0);
 
 	//GrabEnemy초기화
 	GrabbedEnemy = nullptr;
@@ -148,6 +149,12 @@ void AJPlayer::CameraShake()
 		//CameraManager->PlayWorldCameraShake(GetWorld(), CamShake, GetActorLocation(), 0.0f, 5.0f, 1.0f);
 	}
 }
+
+//FGenericTeamId AJPlayer::GetGenericTeamId() const
+//{
+//	return TeamID;
+//}
+
 
 void AJPlayer::BeginPlay()
 {
