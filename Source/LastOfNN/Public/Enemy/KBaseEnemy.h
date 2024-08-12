@@ -76,7 +76,7 @@ public:
 	virtual void EnemyIDLE();
 	//대기시간
 	UPROPERTY(EditDefaultsOnly, Category = "FSM")
-	float IdleDelayTime = 2.0f;
+	float IdleDelayTime = 0.5f;
 	//경과시간
 	float CurrentTime = 0;
 
@@ -129,6 +129,9 @@ public:
 	//시야 감지 위치
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	FVector ShownLocation;
+	//시야 감지 범위
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
+	float EnemySightDetectionRadius;
 
 	//=======================================================================================
 	// 

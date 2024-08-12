@@ -119,7 +119,7 @@ void AKBaseEnemy::EnemyIDLE()
 		//이동상태로 전환/애니메이션 상태 동기화
 		EnemySetState(EEnemyState::MOVE);
 		//속도를 걷기속도로 설정
-		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
@@ -132,10 +132,20 @@ void AKBaseEnemy::EnemyIDLE()
 }
 
 
-
+//감지처리 통합함수(BeginPlay바인딩 목적)
 void AKBaseEnemy::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	if ( FSMComponent->CurrentState != EEnemyState::MOVE )
+		return;
 
+	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
+	{
+		OnEnemyNoiseHeard(Actor, Stimulus);
+	}
+	else if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
+	{
+		OnEnemySightVision(TArray<AActor*>{ Actor });
+	}
 }
 
 void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
@@ -157,67 +167,49 @@ void AKBaseEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulus)
 
 			//어그로 수치 초기화
 			EnemyAttentionDegree = 0;
+			return;
 		}
 	}
 }
 
 void AKBaseEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
 {
-	////UpdatedActor배열에 있는 각 Actor에 대한 반복
-	//for ( AActor* Actor : UpdatedActors )
-	//{
-	//	
-	//	FActorPerceptionBlueprintInfo Info;
-	//	//AIPeceprtionComp를 통해 특정 Actor에 대한 인식을 가져옴
-	//	AIPerceptionComp->GetActorsPerception(Actor, Info);
+	//UpdatedActor배열에 있는 각 Actor에 대한 반복
+	for ( AActor* Actor : UpdatedActors )
+	{
 
-	//	// JPlayer 타입의 액터인지 확인
-	//	if ( AJPlayer* Player = Cast<AJPlayer>(Actor) )
-	//	{
-	//		
-	//		//Info구조체의 LastSensedStimuli 배열을 탐색
-	//		for ( const FAIStimulus& Stimulus : Info.LastSensedStimuli )
-	//		{
-	//			//자극이 성공적으로 인식되고, 그 타입이 Ai_Sight인지 체크
-	//			//if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type.Name == TEXT("Default__AISense_Sight") )
-	//			if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
-	//			{
-	//				
-	//				// 매초 33.4f씩 증가시키기 위해 DeltaTime을 활용
-	//				//EnemyAttentionDegree += 100.0f * GetWorld()->GetDeltaSeconds(); 
-	//				EnemyAttentionDegree += Stimulus.Strength;
+		FActorPerceptionBlueprintInfo Info;
+		//AIPeceprtionComp를 통해 특정 Actor에 대한 인식을 가져옴
+		AIPerceptionComp->GetActorsPerception(Actor, Info);
 
-	//				GEngine->AddOnScreenDebugMessage(2, 2, FColor::Red, FString::Printf(TEXT("OnEnemySightVision called with stimulus: Vision(%f)"), EnemyAttentionDegree));
+		// JPlayer 타입의 액터인지 확인
+		if ( AJPlayer* Player = Cast<AJPlayer>(Actor) )
+		{
 
-	//				if ( EnemyAttentionDegree > AttentionThreshold ) // 특정 강도 기준
-	//				{
-	//					// bShoutMoveToSight가 true가 되며, ShownLocation에 플레이어 위치를 저장
-	//					if ( !bShoutMoveToSight )
-	//					{
-	//						bShoutMoveToSight = true;
-	//						EnemySetState(EEnemyState::MOVE);
-	//						ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
-	//						ai->MoveToLocation(ShownLocation); //위치로 이동(근데 이걸 여기서?)
-	//						EnemyAttentionDegree = 0; //어그로 수치 초기화
-	//						//GetWorld()->GetTimerManager().SetTimer(EnemySeePlayerTimerHandle, this, &AKBaseEnemy::EnemyMove, 3.0f, false);
-	//					}
-	//					else
-	//					{
-	//						// 이미 타이머가 돌아가고 있다면 위치 업데이트
-	//						//ShownLocation = Player->GetActorLocation();
-	//					}
-	//				}
-	//				else
-	//				{
-	//					// 플레이어가 시야에서 벗어나면 타이머 초기화
-	//					//bShoutMoveToSight = false;
-	//					//GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
-	//					//EnemyAttentionDegree = 0.0f; // 어그로 수치 초기화
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
+			//Info구조체의 LastSensedStimuli 배열을 탐색
+			for ( const FAIStimulus& Stimulus : Info.LastSensedStimuli )
+			{
+				//자극이 성공적으로 인식되고, 그 타입이 Ai_Sight인지 체크
+				//if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type.Name == TEXT("Default__AISense_Sight") )
+				if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
+				{
+					if ( !bShoutMoveToSight )
+					{
+						bShoutMoveToSight = true;
+						ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
+						EnemySetState(EEnemyState::MOVE);
+						break;
+
+					}
+				}
+			}
+		}
+		//아니면 다시 초기화
+		else
+		{
+			bShoutMoveToSight = false;
+		}
+	}
 }
 
 void AKBaseEnemy::EnemyMove() { }
