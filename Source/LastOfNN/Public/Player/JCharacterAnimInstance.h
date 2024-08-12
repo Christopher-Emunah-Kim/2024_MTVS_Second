@@ -94,7 +94,10 @@ public:
 	bool GetChangingWeapon();
 
 	void PlayShotgunMontage();
+
+	bool bChangeSpringArmComp = false;
 private:
+
 	UFUNCTION()
 	void AnimNotify_NextAttackCheck();	
 	UFUNCTION()
@@ -103,8 +106,11 @@ private:
 	void AnimNotify_StopMove();	
 	UFUNCTION()
 	void AnimNotify_Move();
+
 	UFUNCTION()
 	void AnimNotify_MoveCamera();
-	
+	UFUNCTION()
+	void AnimNotify_CameraBack();
 
 };
+

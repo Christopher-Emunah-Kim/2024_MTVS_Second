@@ -373,16 +373,7 @@ void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 
 	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped && !bIsAttacking )
 	{
-		SpringArmComp->AttachToComponent(
-				GetCapsuleComponent(),
-				FAttachmentTransformRules::KeepRelativeTransform
-		);
-		SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
-		SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
-		CameraComp->SetupAttachment(SpringArmComp);
-		SpringArmComp->bEnableCameraLag = false;
-		CameraComp->SetFieldOfView(90);
-		UE_LOG(LogTemp, Error, TEXT("BATT"));
+		UE_LOG(LogTemp, Error, TEXT("QWER"));
 	}
 }
 
@@ -417,7 +408,17 @@ void AJPlayer::Tick(float DeltaTime)
 
 	CameraComp->FieldOfView = FMath::Lerp(CameraComp->FieldOfView, TargetFOV, DeltaTime * 5);
 
+	if ( CharacterAnimInstance->bChangeSpringArmComp )
+	{
+		SetCameraForBatAction(DeltaTime);
+	}
+	if ( bSprintArmCompBack )
+	{
+		SetCameraBackForBatAction(DeltaTime);
+	}
 	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("Player HP : %f"), HealthPoints));
+	UE_LOG(LogTemp, Log, TEXT("SpringArm Location: %s"), *SpringArmComp->GetRelativeLocation().ToString());
+	UE_LOG(LogTemp, Log, TEXT("Initial SpringArm Location: %s"), *CameraInitialPostion.ToString());
 }
 
 // Called to bind functionality to input
@@ -770,25 +771,59 @@ void AJPlayer::AfterTakeDown()
 		Subsystem->AddMappingContext(IMC_Joel, 0);
 	}
 }
-void AJPlayer::SetCameraBack()
+void AJPlayer::SetCameraBackForBatAction(float DeltaTime)
 {
-	CameraComp->SetActive(true);
-	FieldCamera->GetRootComponent()->SetActive(false);
-	PlayerController->SetViewTargetWithBlend(CameraComp->GetOwner(), 0.5f);
+	UE_LOG(LogTemp, Error, TEXT("BATT2"));
+	FVector InitialLocation = SpringArmComp->GetComponentLocation();
+	FVector RootLocation = CameraInitialPostion;
+	FVector NewLocation = FMath::Lerp(InitialLocation, RootLocation, DeltaTime * 10);
+	SpringArmComp->SetWorldLocation(NewLocation);
+	TargetFOV = 90;
+	//스프링암이 목표 위치에 거의 도달했는지 확인
+	if ( FVector::Dist(NewLocation, RootLocation) < 10.0f ) 
+	{
+		// 목표 위치에 도달했으므로 스프링암을 소켓에 부착
+		SpringArmComp->AttachToComponent(
+			GetCapsuleComponent(),
+			FAttachmentTransformRules::KeepRelativeTransform
+		);
+		UE_LOG(LogTemp, Error, TEXT("BATT33"));
+	}
+	SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
+	SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
+	SpringArmComp->TargetArmLength = 200;
+	bSprintArmCompBack = false;
+	//CameraComp->SetupAttachment(SpringArmComp);
+	//SpringArmComp->bEnableCameraLag = false;
+	//CameraComp->SetFieldOfView(90);
+	UE_LOG(LogTemp, Error, TEXT("BATT"));
 }
-void AJPlayer::SetCameraForBatAction()
+
+void AJPlayer::SetCameraForBatAction(float DeltaTime)
 {
 	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
 	{
-		FVector SocketOffset(-55.f, -145.5f, -27.f); // 소켓에서 약간 위쪽으로 오프셋
-		FRotator SocketRotation(14.5f, 42.f, -194.5f);
-		FieldCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightForeArm"));
-		FieldCamera->SetActorRelativeLocation(SocketOffset);
-		FieldCamera->SetActorRelativeRotation(SocketRotation);
-		CameraComp->SetActive(false);
-		FieldCamera->GetRootComponent()->SetActive(true);
-		PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
+		//FVector SocketOffset(-55.f, -145.5f, -27.f); // 소켓에서 약간 위쪽으로 오프셋
+		//FRotator SocketRotation(14.5f, 42.f, -194.5f);
+		
+		FVector InitialLocation = SpringArmComp->GetComponentLocation();
+		CameraInitialPostion = InitialLocation;
+		FVector BoneLocation = GetMesh()->GetBoneLocation(TEXT("mixamorig_RightShoulder"));
+		FVector NewLocation = FMath::Lerp(InitialLocation, BoneLocation, DeltaTime * 10);
+		SpringArmComp->SetWorldLocation(NewLocation);
+		TargetFOV = 75;
+		//스프링암이 목표 위치에 거의 도달했는지 확인
+		if ( FVector::Dist(NewLocation, BoneLocation) < 1.0f ) // 거리를 적절하게 조정하세요
+		{
+			// 목표 위치에 도달했으므로 스프링암을 소켓에 부착
+			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_RightShoulder"));
+			SpringArmComp->SetRelativeLocation(FVector::ZeroVector);
+			SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
+			UE_LOG(LogTemp, Error, TEXT("beadcf"));
+			CharacterAnimInstance->bChangeSpringArmComp = false;
+		}
 	}
+	//CharacterAnimInstance->bChangeSpringArmComp = false;
 }
 
 void AJPlayer::SetStateEquipGun()

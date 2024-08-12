@@ -122,8 +122,10 @@ public:
 	FTimerHandle TakeDownTimer;
 	FTimerHandle SetCameraBackTimer;
 
-	void SetCameraBack();
-	void SetCameraForBatAction();
+	void SetCameraBackForBatAction(float DeltaTime);
+	void SetCameraForBatAction(float DeltaTime);
+	bool bSprintArmCompBack = false;
+	FVector CameraInitialPostion;
 	//상태변경함수
 	void SetStateEquipGun();
 	void SetStateEquipThrowWeapon();

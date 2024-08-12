@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/TimelineComponent.h"
 
 UJCharacterAnimInstance::UJCharacterAnimInstance()
 {
@@ -163,8 +164,15 @@ void UJCharacterAnimInstance::AnimNotify_Move()
 
 void UJCharacterAnimInstance::AnimNotify_MoveCamera()
 {
-	Player->SpringArmComp->bEnableCameraLag = true;
-	Player->SpringArmComp->AttachToComponent(Player->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_RightShoulder"));
-	Player->CameraComp->SetFieldOfView(60);
-	//Player->SpringArmComp->bUsePawnControlRotation = true;
+	bChangeSpringArmComp = true;
 }
+
+void UJCharacterAnimInstance::AnimNotify_CameraBack()
+{
+	if ( AnimCharacterEquipState == ECharacterEquipState::ECES_BatEquipped || Player->bIsAttacking == false )
+	{
+		Player->bSprintArmCompBack = true;
+		UE_LOG(LogTemp, Error, TEXT("ADSFBZCXV"));
+	}
+}
+
