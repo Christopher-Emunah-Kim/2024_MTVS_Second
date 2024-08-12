@@ -138,6 +138,9 @@ void AKBaseEnemy::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	if ( FSMComponent->CurrentState != EEnemyState::MOVE )
 		return;
 
+	//if ( Cast<AJPlayer>(Actor) == nullptr )
+	//	return;
+
 	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
 	{
 		OnEnemyNoiseHeard(Actor, Stimulus);

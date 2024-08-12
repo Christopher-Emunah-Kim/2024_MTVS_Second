@@ -104,7 +104,7 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 		SightConfig->SightRadius = EnemySightDetectionRadius; // 시야 반경 설정
 		SightConfig->LoseSightRadius = SightConfig->SightRadius + 500.0f; // 시야 상실 반경
 		SightConfig->PeripheralVisionAngleDegrees = 60.0f; // 원뿔형 시야 각도
-		SightConfig->SetMaxAge(10.0f); // 시야 정보 유지 시간
+		SightConfig->SetMaxAge(3.0f); // 시야 정보 유지 시간
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
