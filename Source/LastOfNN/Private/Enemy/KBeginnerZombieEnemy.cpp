@@ -96,9 +96,9 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 
 	if ( SightConfig )
 	{
-		SightConfig->SightRadius = 1000.0f; // 시야 반경 설정
+		SightConfig->SightRadius = 2000.0f; // 시야 반경 설정
 		SightConfig->LoseSightRadius = SightConfig->SightRadius + 500.0f; // 시야 상실 반경
-		SightConfig->PeripheralVisionAngleDegrees = 45.0f; // 원뿔형 시야 각도
+		SightConfig->PeripheralVisionAngleDegrees = 120.0f; // 원뿔형 시야 각도
 		SightConfig->SetMaxAge(4.0f); // 시야 정보 유지 시간
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -132,7 +132,7 @@ void AKBeginnerZombieEnemy::BeginPlay()
 	//소리감지처리함수 바인딩
 	if ( AIPerceptionComp )
 	{
-		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBeginnerZombieEnemy::OnEnemyNoiseHeard);
+		AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AKBeginnerZombieEnemy::OnTargetPerceptionUpdated);
 		UE_LOG(LogTemp, Warning, TEXT("Perception Component 초기화 완료"));
 
 		if ( HearingConfig )
@@ -140,7 +140,14 @@ void AKBeginnerZombieEnemy::BeginPlay()
 			HearingConfig->HearingRange = EnemySoundDetectionRadius;
 			AIPerceptionComp->ConfigureSense(*HearingConfig);
 		}
+
+		if ( SightConfig )
+		{
+			SightConfig->SightRadius = 2000.0f;
+			AIPerceptionComp->ConfigureSense(*SightConfig);
+		}
 	}
+
 	//데미지처리함수 바인딩
 	if ( RightAttackSphere )
 	{
@@ -194,6 +201,90 @@ void AKBeginnerZombieEnemy::OnEnemyNoiseHeard(AActor* Actor, FAIStimulus Stimulu
 void AKBeginnerZombieEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
 {
 	Super::OnEnemySightVision(UpdatedActors);
+
+	GEngine->AddOnScreenDebugMessage(9, 1, FColor::Red, TEXT("DEBUG DEBUG DEBUG DEBUG"));
+
+	//UpdatedActor배열에 있는 각 Actor에 대한 반복
+	for ( AActor* Actor : UpdatedActors )
+	{
+
+		FActorPerceptionBlueprintInfo Info;
+		//AIPeceprtionComp를 통해 특정 Actor에 대한 인식을 가져옴
+		AIPerceptionComp->GetActorsPerception(Actor, Info);
+
+		// JPlayer 타입의 액터인지 확인
+		if ( AJPlayer* Player = Cast<AJPlayer>(Actor) )
+		{
+
+			//Info구조체의 LastSensedStimuli 배열을 탐색
+			for ( const FAIStimulus& Stimulus : Info.LastSensedStimuli )
+			{
+				//자극이 성공적으로 인식되고, 그 타입이 Ai_Sight인지 체크
+				//if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type.Name == TEXT("Default__AISense_Sight") )
+				if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
+				{
+					if ( !bShoutMoveToSight )
+					{
+						bShoutMoveToSight = true;
+						ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
+						EnemySetState(EEnemyState::MOVE);
+						//ai->MoveToLocation(ShownLocation); //위치로 이동(근데 이걸 여기서?)
+						//EnemyAttentionDegree = 0; //어그로 수치 초기화
+						//GetWorld()->GetTimerManager().SetTimer(EnemySeePlayerTimerHandle, this, &AKBaseEnemy::EnemyMove, 3.0f, false);
+					}
+				
+				}
+
+					//// 매초 33.4f씩 증가시키기 위해 DeltaTime을 활용
+					////EnemyAttentionDegree += 100.0f * GetWorld()->GetDeltaSeconds(); 
+					//EnemyAttentionDegree += Stimulus.Strength;
+
+					//GEngine->AddOnScreenDebugMessage(2, 2, FColor::Red, FString::Printf(TEXT("OnEnemySightVision called with stimulus: Vision(%f)"), EnemyAttentionDegree));
+
+					//if ( EnemyAttentionDegree > AttentionThreshold ) // 특정 강도 기준
+					//{
+					//	// bShoutMoveToSight가 true가 되며, ShownLocation에 플레이어 위치를 저장
+					//	if ( !bShoutMoveToSight )
+					//	{
+					//		bShoutMoveToSight = true;
+					//		EnemySetState(EEnemyState::MOVE);
+					//		ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
+					//		ai->MoveToLocation(ShownLocation); //위치로 이동(근데 이걸 여기서?)
+					//		EnemyAttentionDegree = 0; //어그로 수치 초기화
+					//		//GetWorld()->GetTimerManager().SetTimer(EnemySeePlayerTimerHandle, this, &AKBaseEnemy::EnemyMove, 3.0f, false);
+					//	}
+					//	else
+					//	{
+					//		// 이미 타이머가 돌아가고 있다면 위치 업데이트
+					//		//ShownLocation = Player->GetActorLocation();
+					//	}
+					//}
+					//else
+					//{
+					//	// 플레이어가 시야에서 벗어나면 타이머 초기화
+					//	//bShoutMoveToSight = false;
+					//	//GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
+					//	//EnemyAttentionDegree = 0.0f; // 어그로 수치 초기화
+					//}
+				
+			}
+		}
+	}
+}
+
+
+void AKBeginnerZombieEnemy::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	Super::OnTargetPerceptionUpdated(Actor, Stimulus);
+
+	if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>() )
+	{
+		OnEnemyNoiseHeard(Actor, Stimulus);
+	}
+	else if ( Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
+	{
+		OnEnemySightVision(TArray<AActor*>{ Actor });
+	}
 }
 
 void AKBeginnerZombieEnemy::EnemyMove()
@@ -228,6 +319,7 @@ void AKBeginnerZombieEnemy::EnemyMove()
 			// 타이머/체크 초기화
 			GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
 			bShoutMoveToSight = false;
+			EnemyAttentionDegree = 0; //어그로 수치 초기화
 		}
 	}
 	//소리에 의해 이동하는 경우
@@ -261,7 +353,23 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	}
 	else if ( target )
 	{
-		EnemyRandomMove();
+		//EnemyRandomMove();
+		
+		
+		//랜덤하게 이동
+		auto RanResult = ai->MoveToLocation(EnemyRandomPos);
+		//속도를 걷기속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+		//UE_LOG(LogTemp, Warning, TEXT("EnemySpeed : %f"), GetCharacterMovement()->MaxWalkSpeed);
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//목적지에 도착하면
+		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
+		{
+			//새로운 랜덤위치 가져오기
+			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+		}
 	}
 	else
 	{

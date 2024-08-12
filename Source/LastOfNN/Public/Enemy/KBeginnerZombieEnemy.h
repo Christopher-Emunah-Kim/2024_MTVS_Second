@@ -34,6 +34,8 @@ public:
 
 	virtual void OnEnemySightVision(const TArray<AActor*>& UpdatedActors) override;
 
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus) override; 
+
     virtual void EnemyMove() override;
 
 	void EnemyRandomMove(); //Enemy 랜덤이동함수
