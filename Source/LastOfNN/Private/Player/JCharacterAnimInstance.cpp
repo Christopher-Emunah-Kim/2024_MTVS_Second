@@ -169,10 +169,5 @@ void UJCharacterAnimInstance::AnimNotify_MoveCamera()
 
 void UJCharacterAnimInstance::AnimNotify_CameraBack()
 {
-	if ( AnimCharacterEquipState == ECharacterEquipState::ECES_BatEquipped || Player->bIsAttacking == false )
-	{
-		Player->bSprintArmCompBack = true;
-		UE_LOG(LogTemp, Error, TEXT("ADSFBZCXV"));
-	}
 }
 

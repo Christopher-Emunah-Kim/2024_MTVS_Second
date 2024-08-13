@@ -32,7 +32,6 @@ void UPlayerLockOn::LockOnTarget()
 	{
 		FHitResult HitResult;
 
-
 		Player = Cast<AJPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		FVector StartLocation = Player->GetActorLocation();
 

@@ -371,9 +371,14 @@ void AJPlayer::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	}
 	CharacterAnimInstance->bChangingWeapon = false;
 
-	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped && !bIsAttacking )
+	if ( CharacterEquipState == ECharacterEquipState::ECES_BatEquipped && CharacterAnimInstance->bChangeSpringArmComp == false )
 	{
-		UE_LOG(LogTemp, Error, TEXT("QWER"));
+			bSprintArmCompBack = true;
+			UE_LOG(LogTemp, Error, TEXT("ADSFBZCXV"));
+	}
+	else
+	{
+		bSprintArmCompBack = false;
 	}
 }
 
@@ -419,6 +424,8 @@ void AJPlayer::Tick(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("Player HP : %f"), HealthPoints));
 	UE_LOG(LogTemp, Log, TEXT("SpringArm Location: %s"), *SpringArmComp->GetRelativeLocation().ToString());
 	UE_LOG(LogTemp, Log, TEXT("Initial SpringArm Location: %s"), *CameraInitialPostion.ToString());
+	UE_LOG(LogTemp, Log, TEXT("SpringArmComp Parent: %s"), *SpringArmComp->GetAttachParent()->GetName());
+
 }
 
 // Called to bind functionality to input
@@ -776,7 +783,7 @@ void AJPlayer::SetCameraBackForBatAction(float DeltaTime)
 	UE_LOG(LogTemp, Error, TEXT("BATT2"));
 	FVector InitialLocation = SpringArmComp->GetComponentLocation();
 	FVector RootLocation = CameraInitialPostion;
-	FVector NewLocation = FMath::Lerp(InitialLocation, RootLocation, DeltaTime * 10);
+	FVector NewLocation = FMath::Lerp(InitialLocation, RootLocation, DeltaTime * 40);
 	SpringArmComp->SetWorldLocation(NewLocation);
 	TargetFOV = 90;
 	//스프링암이 목표 위치에 거의 도달했는지 확인
@@ -785,14 +792,14 @@ void AJPlayer::SetCameraBackForBatAction(float DeltaTime)
 		// 목표 위치에 도달했으므로 스프링암을 소켓에 부착
 		SpringArmComp->AttachToComponent(
 			GetCapsuleComponent(),
-			FAttachmentTransformRules::KeepRelativeTransform
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale
 		);
-		UE_LOG(LogTemp, Error, TEXT("BATT33"));
+		UE_LOG(LogTemp, Error, TEXT("루트에 붙임"));
+		bSprintArmCompBack = false;
 	}
 	SpringArmComp->SetRelativeLocation(FVector(0, 40, 80));
 	SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
 	SpringArmComp->TargetArmLength = 200;
-	bSprintArmCompBack = false;
 	//CameraComp->SetupAttachment(SpringArmComp);
 	//SpringArmComp->bEnableCameraLag = false;
 	//CameraComp->SetFieldOfView(90);
@@ -809,7 +816,7 @@ void AJPlayer::SetCameraForBatAction(float DeltaTime)
 		FVector InitialLocation = SpringArmComp->GetComponentLocation();
 		CameraInitialPostion = InitialLocation;
 		FVector BoneLocation = GetMesh()->GetBoneLocation(TEXT("mixamorig_RightShoulder"));
-		FVector NewLocation = FMath::Lerp(InitialLocation, BoneLocation, DeltaTime * 10);
+		FVector NewLocation = FMath::Lerp(InitialLocation, BoneLocation, DeltaTime * 40);
 		SpringArmComp->SetWorldLocation(NewLocation);
 		TargetFOV = 75;
 		//스프링암이 목표 위치에 거의 도달했는지 확인
@@ -819,7 +826,7 @@ void AJPlayer::SetCameraForBatAction(float DeltaTime)
 			SpringArmComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("mixamorig_RightShoulder"));
 			SpringArmComp->SetRelativeLocation(FVector::ZeroVector);
 			SpringArmComp->SetRelativeRotation(FRotator::ZeroRotator);
-			UE_LOG(LogTemp, Error, TEXT("beadcf"));
+			UE_LOG(LogTemp, Error, TEXT("본에 붙임"));
 			CharacterAnimInstance->bChangeSpringArmComp = false;
 		}
 	}
