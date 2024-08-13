@@ -291,6 +291,14 @@ void AKBossZombieEnemy::EnemySpecialAttack()
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		//보스 수류탄 공격 애니메이션 몽타주 재생
 		anim->PlayBossEnemyGrenadeAnim(TEXT("ThrowGrenade"));
+
+		//SFX재생
+		check(BossGrenadeSFXFactory)
+			if ( false == AudioComp->IsPlaying() )
+			{
+				AudioComp->SetSound(BossGrenadeSFXFactory);
+				AudioComp->Play();
+			}
 		//수류탄공격여부 비활성화
 		isBossCanThrowGrenade = false;
 		// 대기 시간 초기화

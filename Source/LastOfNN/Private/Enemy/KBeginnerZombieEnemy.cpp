@@ -458,6 +458,14 @@ void AKBeginnerZombieEnemy::EnemySpecialAttack()
 		anim->PlayEnemyGrabAnim(FName(*SectionName));
 	}
 
+	//SFX재생
+	check(GrabSFXFactory)
+		if ( false == AudioComp->IsPlaying() )
+		{
+			AudioComp->SetSound(GrabSFXFactory);
+			AudioComp->Play();
+		}
+
 	// Player에게 Grab 상태 알림 및 QTE 이벤트 시작
 	if ( target && !bIsPlayerGrabbed )
 	{
@@ -541,6 +549,14 @@ void AKBeginnerZombieEnemy::EnemyExecuted()
 	Super::EnemyExecuted();
 
 	ai->StopMovement();
+
+	//SFX재생
+	check(ExcecutedSFXFactory)
+		if ( false == AudioComp->IsPlaying() )
+		{
+			AudioComp->SetSound(ExcecutedSFXFactory);
+			AudioComp->Play();
+		}
 }
 
 void AKBeginnerZombieEnemy::EnemyDead()

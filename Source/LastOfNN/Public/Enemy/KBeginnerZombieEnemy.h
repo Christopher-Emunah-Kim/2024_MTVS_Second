@@ -73,4 +73,12 @@ public:
 	FTimerHandle ExcecuteTimer;
 	//플레이어에게 암살위치정보 전달
 	FTransform GetAttackerTransform();
+
+	//SPECIL Attack SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* GrabSFXFactory;
+
+	//암살 당할 시 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* ExcecutedSFXFactory;
 };
