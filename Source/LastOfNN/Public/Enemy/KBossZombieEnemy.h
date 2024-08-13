@@ -54,6 +54,7 @@ public:
 
     virtual void EnemyDead() override;
 
+
 	////IGenericTeamAgentInterface 인터페이스 구현
 	//virtual FGenericTeamId GetGenericTeamId() const override;
 	////팀별 태도 결정

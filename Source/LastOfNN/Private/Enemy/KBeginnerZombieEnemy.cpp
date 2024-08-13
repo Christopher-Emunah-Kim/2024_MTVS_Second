@@ -30,9 +30,9 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 
 	//데미지처리를 위한 충돌체 손에 붙이기
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("LeftHand"));
-	LeftAttackSphere->SetSphereRadius(50.f);
+	LeftAttackSphere->SetSphereRadius(10.f);
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
-	RightAttackSphere->SetSphereRadius(50.f);
+	RightAttackSphere->SetSphereRadius(10.f);
 
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));
@@ -115,7 +115,7 @@ AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 		AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
 	}
 	//시야감지 이동여부 초기화
-	bShoutMoveToSight = false;
+	bShouldMoveToSight = false;
 
 }
 
@@ -154,6 +154,7 @@ void AKBeginnerZombieEnemy::BeginPlay()
 	{
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBeginnerZombieEnemy::EnemyOverlapDamage);
 	}
+
 }
 
 void AKBeginnerZombieEnemy::Tick(float DeltaTime)
@@ -214,7 +215,7 @@ void AKBeginnerZombieEnemy::EnemyMove()
 	FVector EnemyDestination;
 
 	//시야에 의해 이동하는 경우
-	if ( bShoutMoveToSight && target->GetCharaterState() != ECharacterState::ECS_Crouching )
+	if ( bShouldMoveToSight && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 	{
 		ShownLocation = target->GetActorLocation();
 		//목표위치방향
@@ -238,7 +239,7 @@ void AKBeginnerZombieEnemy::EnemyMove()
 			anim->bEnemyAttackPlay = true;
 			// 타이머/체크 초기화
 			GetWorld()->GetTimerManager().ClearTimer(EnemySeePlayerTimerHandle);
-			bShoutMoveToSight = false;
+			bShouldMoveToSight = false;
 			EnemyAttentionDegree = 0; //어그로 수치 초기화
 		}
 	}

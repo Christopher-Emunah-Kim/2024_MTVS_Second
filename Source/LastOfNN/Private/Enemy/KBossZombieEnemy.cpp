@@ -17,6 +17,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
 
 AKBossZombieEnemy::AKBossZombieEnemy()
 {
@@ -33,9 +34,9 @@ AKBossZombieEnemy::AKBossZombieEnemy()
 
 	//데미지처리를 위한 충돌체 손에 붙이기
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_LeftHand"));
-	LeftAttackSphere->SetSphereRadius(50.f);
+	LeftAttackSphere->SetSphereRadius(10.f);
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("mixamorig_RightHand"));
-	RightAttackSphere->SetSphereRadius(50.f);
+	RightAttackSphere->SetSphereRadius(10.f);
 
 	//애니메이션 BP 할당
 	ConstructorHelpers::FClassFinder<UAnimInstance> tempClass(TEXT("/Script/Engine.AnimBlueprint'/Game/BluePrints/Animation/Enemy/ABP_BossZombieEnemyAnim.ABP_BossZombieEnemyAnim_C'"));
@@ -80,6 +81,14 @@ void AKBossZombieEnemy::BeginPlay()
 	{
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBossZombieEnemy::EnemyOverlapDamage);
 	}
+
+	//Sound Attenuation 데이터로드
+	EnemyAttenuation = LoadObject<USoundAttenuation>(nullptr, TEXT("/Script/Engine.SoundAttenuation'/Game/BluePrints/Effects/SFX/EnemyAttenuation.EnemyAttenuation'"));
+	//소리3D 설정
+	AudioComp->AttenuationSettings = EnemyAttenuation;
+	//기본상태는 재생안함
+	AudioComp->Stop();
+
 }
 
 void AKBossZombieEnemy::Tick(float DeltaTime)
@@ -172,6 +181,7 @@ void AKBossZombieEnemy::EnemyRandomMove()
 	//if ( FindingResult.Result == ENavigationQueryResult::Success && target->GetCharaterState() != ECharacterState::ECS_Crouching )
 	if ( FindingResult.Result == ENavigationQueryResult::Success )
 	{
+		
 		//속도를 뛰기속도로 변경
 		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed;
 		//BlendSpace Anim에 액터의 속도 할당
@@ -179,6 +189,14 @@ void AKBossZombieEnemy::EnemyRandomMove()
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 		//타깃에게 이동
 		ai->MoveToLocation(EnemyDestination);
+
+		//SFX재생
+		check(ChaseSFXFactory)
+			if ( false == AudioComp->IsPlaying() )
+			{
+				AudioComp->SetSound(ChaseSFXFactory);
+				AudioComp->Play();
+			}
 
 		//타깃과 가까워지면 공격상태 전환
 		//공격범위 안에 들어오면
@@ -236,6 +254,14 @@ void AKBossZombieEnemy::EnemyAttack()
 		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, TEXT("Attack!!"));
 		// 대기 시간 초기화
 		CurrentTime = 0;
+
+		//SFX재생
+		check(AttackSFXFactory)
+			if ( false == AudioComp->IsPlaying() )
+			{
+				AudioComp->SetSound(AttackSFXFactory);
+				AudioComp->Play();
+			}
 	}
 
 	//근접공격거리 공격범위를 벗어나고, 원거리 공격상태가 아니라면 이동상태 전환
@@ -270,13 +296,6 @@ void AKBossZombieEnemy::EnemySpecialAttack()
 		// 대기 시간 초기화
 		CurrentTime = 0;
 	}
-	
-	////속도를 0으로 만들고
-	//GetCharacterMovement()->MaxWalkSpeed = 0;
-	//ai->StopMovement();
-	////BlendSpace Anim에 액터의 속도 할당
-	//anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
-	//anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 }
 
 void AKBossZombieEnemy::EnemyOverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -332,6 +351,7 @@ void AKBossZombieEnemy::EnemyDead()
 		Destroy();
 	}
 }
+
 
 //FGenericTeamId AKBossZombieEnemy::GetGenericTeamId() const
 //{

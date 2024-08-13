@@ -38,9 +38,9 @@ AKNormalZombieEnemy::AKNormalZombieEnemy()
 	}
 	//데미지처리를 위한 충돌체 손에 붙이기
 	LeftAttackSphere->SetupAttachment(GetMesh(), TEXT("LeftHand"));
-	LeftAttackSphere->SetSphereRadius(200.f);
+	LeftAttackSphere->SetSphereRadius(10.f);
 	RightAttackSphere->SetupAttachment(GetMesh(), TEXT("RightHand"));
-	RightAttackSphere->SetSphereRadius(200.f);
+	RightAttackSphere->SetSphereRadius(10.f);
 
 	//암살 이벤트를 위한 충돌체 세팅
 	AssassinBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AssassinBox"));

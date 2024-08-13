@@ -7,6 +7,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
 #include "Enemy/KEnemyAnim.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "NavigationSystem.h"  
@@ -41,6 +42,12 @@ AKBaseEnemy::AKBaseEnemy()
 	//LeftAttackSphere->SetSphereRadius(200.f);
 	//LeftAttackSphere->SetCollisionProfileName(TEXT("NoCollision"));
 	LeftAttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//Sound Component 세팅
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComp->SetupAttachment(RootComponent);
+	
+
 }
 
 // Called when the game starts or when spawned
@@ -61,6 +68,13 @@ void AKBaseEnemy::BeginPlay()
 	//AAIController 할당
 	ai = Cast<AAIController>(GetController());
 
+	//Sound Attenuation 데이터로드
+	EnemyAttenuation = LoadObject<USoundAttenuation>(nullptr, TEXT("/Script/Engine.SoundAttenuation'/Game/BluePrints/Effects/SFX/EnemyAttenuation.EnemyAttenuation'"));
+	//소리3D 설정
+	AudioComp->AttenuationSettings = EnemyAttenuation;
+	//기본상태는 재생안함
+	AudioComp->Stop();
+
 	//데미지처리함수 바인딩
 	if ( RightAttackSphere )
 	{
@@ -70,6 +84,7 @@ void AKBaseEnemy::BeginPlay()
 	{
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AKBaseEnemy::EnemyOverlapDamage);
 	}
+
 }
 
 // Called every frame
@@ -119,6 +134,11 @@ bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radiu
 
 void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 {
+	//사운드 재생중인건 멈춤
+	if ( AudioComp->IsPlaying() )
+	{
+		AudioComp->Stop();
+	}
 	//상태 전환
 	FSMComponent->CurrentState = newstate;
 	//애니메이션 상태 동기화
@@ -129,6 +149,7 @@ void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 		ai->StopMovement();
 	}
 }
+
 
 void AKBaseEnemy::EnemyIDLE()
 {
@@ -150,6 +171,14 @@ void AKBaseEnemy::EnemyIDLE()
 
 		//랜덤위치값 최초설정
 		GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
+	}
+	
+	//SFX재생
+	check(IdleMoveSFXFactory)
+	if ( false == AudioComp->IsPlaying() )
+	{
+		AudioComp->SetSound(IdleMoveSFXFactory);
+		AudioComp->Play();
 	}
 }
 
@@ -218,9 +247,9 @@ void AKBaseEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
 				//if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type.Name == TEXT("Default__AISense_Sight") )
 				if ( Stimulus.WasSuccessfullySensed() && Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>() )
 				{
-					if ( !bShoutMoveToSight )
+					if ( !bShouldMoveToSight )
 					{
-						bShoutMoveToSight = true;
+						bShouldMoveToSight = true;
 						ShownLocation = Player->GetActorLocation(); // 플레이어 위치 저장
 						EnemySetState(EEnemyState::MOVE);
 						break;
@@ -232,7 +261,7 @@ void AKBaseEnemy::OnEnemySightVision(const TArray<AActor*>& UpdatedActors)
 		//아니면 다시 초기화
 		else
 		{
-			bShoutMoveToSight = false;
+			bShouldMoveToSight = false;
 		}
 	}
 }
@@ -263,6 +292,7 @@ float AKBaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	
 	OnEnemyDamageProcess(FinalDamage);
+
 	return FinalDamage;
 }
 
@@ -297,19 +327,39 @@ void AKBaseEnemy::OnEnemyDamageProcess(float damage)
 	}
 	else
 	{
+		
 		//죽음상태 전환
 		EnemySetState(EEnemyState::DEAD);
 		//충돌체비활성화
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		//죽음애니메이션 재생
 		anim->PlayEnemyTDamageAnim(TEXT("EnemyDie"));
+
 	}
 	//이땐 AI길찾기 기능 정지시켜두기
 	//ai->StopMovement();
 }
 
-void AKBaseEnemy::EnemyTakeDamage() { }
+void AKBaseEnemy::EnemyTakeDamage() 
+{
+	//SFX재생
+	check(TDamageSFXFactory)
+	if ( false == AudioComp->IsPlaying() )
+	{
+		AudioComp->SetSound(TDamageSFXFactory);
+		AudioComp->Play();
+	}
+}
 
 void AKBaseEnemy::EnemyExecuted() { }
 
-void AKBaseEnemy::EnemyDead() { }
+void AKBaseEnemy::EnemyDead() 
+{ 
+	//SFX재생
+	check(DeathSFXFactory)
+	if ( false == AudioComp->IsPlaying() )
+	{
+		AudioComp->SetSound(DeathSFXFactory);
+		AudioComp->Play();
+	}
+}

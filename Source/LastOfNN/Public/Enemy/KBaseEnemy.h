@@ -70,24 +70,46 @@ public:
 	//virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	//FGenericTeamId TeamID;
-
-#pragma region virtual function with properties
 	
 	//기본 가상함수 및 필요 속성
 	
 	//State Setting과 Animation동기화 처리
 	virtual void EnemySetState(EEnemyState newstate);
 
-	//=======================================================================================
-    //**대기상태처리함수
-	virtual void EnemyIDLE();
-	//대기시간
-	UPROPERTY(EditDefaultsOnly, Category = "FSM")
-	float IdleDelayTime = 0.5f;
-	//경과시간
-	float CurrentTime = 0;
 
 	//=======================================================================================
+#pragma region SFX
+	
+	//Sound Attenuation 설정인스턴스
+	class USoundAttenuation* EnemyAttenuation;
+
+	//Sound Component
+	class UAudioComponent* AudioComp;
+
+	//IDLEMOVE 공통 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* IdleMoveSFXFactory;
+
+	//Chase 공통 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* ChaseSFXFactory;
+
+	//ATTACK 공통 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* AttackSFXFactory;
+
+	//TDamage 공통 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* TDamageSFXFactory;
+
+	//Death 공통 SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* DeathSFXFactory;
+
+
+#pragma endregion
+	//=======================================================================================
+#pragma region AI Perception
 	//** AI Perception
 	
 	//주의도 임계값
@@ -132,7 +154,7 @@ public:
 	FTimerHandle EnemySeePlayerTimerHandle;
 	//시야 감지에 의한 위치이동여부
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
-	bool bShoutMoveToSight = false;
+	bool bShouldMoveToSight = false;
 	//시야 감지 위치
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	FVector ShownLocation;
@@ -140,7 +162,21 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIPerception")
 	float EnemySightDetectionRadius;
 
+#pragma endregion
 	//=======================================================================================
+#pragma region IDLE State
+
+    //**대기상태처리함수
+	virtual void EnemyIDLE();
+	//대기시간
+	UPROPERTY(EditDefaultsOnly, Category = "FSM")
+	float IdleDelayTime = 0.5f;
+	//경과시간
+	float CurrentTime = 0;
+
+#pragma endregion
+	//=======================================================================================
+#pragma region Move State
 	// 
 	//**이동상태처리함수
     virtual void EnemyMove();
@@ -159,8 +195,10 @@ public:
 	//랜덤위치가져오기 함수
 	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
 
+#pragma endregion
 	//=======================================================================================
-	
+#pragma region Attack State
+
 	//**공격상태처리함수
     virtual void EnemyAttack();
 	UFUNCTION()
@@ -192,7 +230,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
 	bool bIsPlayerGrabbed = false;
 
+#pragma endregion
 	//=======================================================================================
+#pragma region TDamage State
+
 	//피격알림이벤트함수
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -213,14 +254,16 @@ public:
 	//암살상태처리함수
 	virtual void EnemyExecuted();
 
+#pragma endregion
 	//=======================================================================================
+#pragma region Death State
+
 	//**죽음상태처리함수
     virtual void EnemyDead();
 	//죽음 후 메시 내려가는 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FSM")
     float DieDownfallSpeed = 50.0f;
 
-
-
 #pragma endregion
+
 };
