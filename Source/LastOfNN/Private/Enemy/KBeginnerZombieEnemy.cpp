@@ -21,6 +21,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/AudioComponent.h"
 
 AKBeginnerZombieEnemy::AKBeginnerZombieEnemy()
 {
@@ -125,6 +126,13 @@ void AKBeginnerZombieEnemy::BeginPlay()
 
 	//초기속도를 걷기로 설정
 	GetCharacterMovement()->MaxWalkSpeed = EnemyWalkSpeed;
+
+	//Sound Attenuation 데이터로드
+	EnemyAttenuation = LoadObject<USoundAttenuation>(nullptr, TEXT("/Script/Engine.SoundAttenuation'/Game/BluePrints/Effects/SFX/EnemyAttenuation.EnemyAttenuation'"));
+	//소리3D 설정
+	AudioComp->AttenuationSettings = EnemyAttenuation;
+	//기본상태는 재생안함
+	AudioComp->Stop();
 
 	//AI Perception 감지처리함수 바인딩
 	if ( AIPerceptionComp )
@@ -339,6 +347,14 @@ void AKBeginnerZombieEnemy::EnemyRandomMove()
 		//타깃에게 이동
 		ai->MoveToLocation(EnemyDestination);
 
+		//SFX재생
+		check(ChaseSFXFactory)
+			if ( false == AudioComp->IsPlaying() )
+			{
+				AudioComp->SetSound(ChaseSFXFactory);
+				AudioComp->Play();
+			}
+
 		//타깃과 가까워지면 공격상태 전환
 		//공격범위 안에 들어오면
 		if ( targetdistance < EnemyAttackRange && target->GetCharaterState() != ECharacterState::ECS_Crouching )
@@ -397,6 +413,14 @@ void AKBeginnerZombieEnemy::EnemyAttack()
 
 			//공격 애니메이션 재생 활성화
 			anim->bEnemyAttackPlay = true;
+
+			//SFX재생
+			check(AttackSFXFactory)
+				if ( false == AudioComp->IsPlaying() )
+				{
+					AudioComp->SetSound(AttackSFXFactory);
+					AudioComp->Play();
+				}
 		}
 		// 대기 시간 초기화
 		CurrentTime = 0;
