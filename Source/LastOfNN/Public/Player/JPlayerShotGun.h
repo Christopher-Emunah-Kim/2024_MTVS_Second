@@ -40,4 +40,7 @@ public:
 
 	class AJPlayer* Player;
 
+	UPROPERTY(EditAnywhere)
+	class USoundBase* ShotGunSound; 
+
 };

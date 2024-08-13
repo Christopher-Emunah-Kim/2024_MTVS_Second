@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Perception/AISense_Hearing.h"
+#include "../../../../Plugins/FX/Niagara/Source/Niagara/Public/NiagaraFunctionLibrary.h"
 
 // Sets default values
 APlayerGun::APlayerGun()
@@ -40,6 +41,8 @@ void APlayerGun::PullTrigger()
 		AController* OwnerController = GetWorld()->GetFirstPlayerController();
 		Hit.GetActor()->TakeDamage(GunDamage, DamageEvent, OwnerController, this);
 		UE_LOG(LogTemp, Error, TEXT("%f, %s"), GunDamage, *HitActor->GetName());
+		UGameplayStatics::PlaySound2D(this, HitSound);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), Hiteffect, Hit.ImpactPoint);
 	}
 	else
 	{
@@ -104,10 +107,11 @@ void APlayerGun::Tick(float DeltaTime)
 
 void APlayerGun::MakeSound()
 {
+	UGameplayStatics::PlaySound2D(this, GunSound);
 	// 소리 자극 발생시키기
 	FVector NoiseLocation = GetActorLocation();
 	float Loudness = 50.5f;  // 소리 강도 (예시 값)
-	UGameplayStatics::PlaySoundAtLocation(this, LandingSound, NoiseLocation); // 착지 소리 재생
+	UGameplayStatics::PlaySoundAtLocation(this, GunSound, NoiseLocation); // 착지 소리 재생
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), NoiseLocation, Loudness, this, 10.0f, TEXT("ObjectLanding"));
 }
 

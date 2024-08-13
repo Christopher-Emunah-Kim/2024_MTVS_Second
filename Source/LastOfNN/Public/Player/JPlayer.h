@@ -278,6 +278,11 @@ public:
 	/*virtual FGenericTeamId GetGenericTeamId() const override;
 	FGenericTeamId TeamID;*/
 
+	UPROPERTY(EditAnywhere)
+	class USoundBase* PunchSound;
+
+	UPROPERTY(EditAnywhere)
+	class USoundBase* ShoutSound;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -47,5 +47,9 @@ public:
 	//소리내기 관련
 	void MakeSound();
 	UPROPERTY(EditAnywhere)
-	USoundBase* LandingSound;
+	USoundBase* GunSound;	
+	UPROPERTY(EditAnywhere)
+	USoundBase* HitSound;
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* Hiteffect;
 };

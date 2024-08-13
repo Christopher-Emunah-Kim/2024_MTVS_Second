@@ -41,6 +41,7 @@ void AJPlayerShotGun::Tick(float DeltaTime)
 
 void AJPlayerShotGun::PullTrigger()
 {
+	UGameplayStatics::PlaySound2D(this, ShotGunSound);
 	if ( CurrentBulletNum == 0 )
 	{
 		return;

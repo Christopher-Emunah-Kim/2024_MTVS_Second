@@ -118,6 +118,7 @@ void AJBurningField::Tick(float DeltaTime)
 
 void AJBurningField::MakeSound()
 {
+	UGameplayStatics::PlaySound2D(this, LandingSound);
 	// 소리 자극 발생시키기
 	FVector NoiseLocation = GetActorLocation();
 	float Loudness = 102.f;  // 소리 강도 (예시 값)

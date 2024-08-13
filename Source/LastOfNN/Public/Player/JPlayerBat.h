@@ -26,6 +26,11 @@ public:
 	TArray<AActor*> HitActors;
 	FTimerHandle TimeDilationHandle;
 
+	UPROPERTY(EditAnywhere)
+	class USoundBase* PipeSound;	
+	UPROPERTY(EditAnywhere)
+	class USoundBase* HitSound;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
