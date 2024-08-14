@@ -19,6 +19,8 @@
 #include "Components/SceneComponent.h"
 #include "Components/AudioComponent.h"
 #include <Enemy/KBossZombieEnemy.h>
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/CapsuleComponent.h"
 
 //=======================================================================================
 //이 좀비는 이름만 Normal이지 사실 Clicker임 ㅋㅋ
@@ -260,6 +262,10 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 		{
 			//AI의 길찾기 기능을 정지한다.
 			//ai->StopMovement();
+			 
+			//카메라 회전값 복원
+			bUseControllerRotationYaw = true;
+			GetCharacterMovement()->bOrientRotationToMovement = false;
 			//공격상태 전환 / 애니메이션 상태 동기화
 			EnemySetState(EEnemyState::ATTACK);
 			//공격 애니메이션 재생 활성화
@@ -278,6 +284,9 @@ void AKNormalZombieEnemy::EnemyRandomMove()
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//자연스럽게 메시회전
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		//목적지에 도착하면
 		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
 		{
@@ -321,6 +330,25 @@ void AKNormalZombieEnemy::EnemyAttack()
 					AudioComp->SetSound(AttackSFXFactory);
 					AudioComp->Play();
 				}
+
+			//공격시 메시 회전
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+
+			bUseControllerRotationYaw = false; //회전하게 하기(이거 꺼야 회전함) -> 나중에 다시 true로 돌려놓기
+			FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), target->GetActorLocation());//서로 바라보는 방향
+
+			UKismetSystemLibrary::MoveComponentTo(
+			GetCapsuleComponent(),   // 이동할 컴포넌트
+			GetActorLocation(),  //목표위치(현재위치에서 회전)
+			rot,         // 목표 회전
+			false,  //바로 빠져나와서                            
+			true,	//천천히 돌아감
+			0.5f,    //1초동안                       
+			false, // 텔레포트하지 않음
+			EMoveComponentAction::Type::Move,
+			LatentInfo
+			);
 		}
 		// 대기 시간 초기화
 		CurrentTime = 0;
@@ -377,6 +405,25 @@ void AKNormalZombieEnemy::EnemySpecialAttack()
 			bIsPlayerGrabbed = true;
 			// Player의 Grab 상태 시작 및 QTE 이벤트 시작
 			Player->StartGrabbedState(this);
+
+			//Grab Event시 메시 회전
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+
+			bUseControllerRotationYaw = false; //회전하게 하기(이거 꺼야 회전함) -> 나중에 다시 true로 돌려놓기
+			FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), target->GetActorLocation());//서로 바라보는 방향
+
+			UKismetSystemLibrary::MoveComponentTo(
+			GetCapsuleComponent(),   // 이동할 컴포넌트
+			GetActorLocation(),  //목표위치(현재위치에서 회전)
+			rot,         // 목표 회전
+			false,  //바로 빠져나와서                            
+			true,	//천천히 돌아감
+			1.f,    //1초동안                       
+			false, // 텔레포트하지 않음
+			EMoveComponentAction::Type::Move,
+			LatentInfo
+			);
 		}
 	}
 
