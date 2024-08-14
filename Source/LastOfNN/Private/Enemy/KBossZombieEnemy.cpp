@@ -18,6 +18,8 @@
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/AudioComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/CapsuleComponent.h"
 
 AKBossZombieEnemy::AKBossZombieEnemy()
 {
@@ -205,6 +207,11 @@ void AKBossZombieEnemy::EnemyRandomMove()
 		{
 			//AI의 길찾기 기능을 정지한다.
 			//ai->StopMovement();
+			
+			//카메라 회전값 복원
+			bUseControllerRotationYaw = true;
+			GetCharacterMovement()->bOrientRotationToMovement = false;
+
 			//공격상태전환 /애니메이션 동기화 
 			EnemySetState(EEnemyState::ATTACK);
 			//공격 애니메이션 재생 활성화
@@ -222,6 +229,9 @@ void AKBossZombieEnemy::EnemyRandomMove()
 		//BlendSpace Anim에 액터의 속도 할당
 		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
 		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+		//자연스럽게 메시회전
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		//목적지에 도착하면
 		if ( RanResult == EPathFollowingRequestResult::AlreadyAtGoal || RanResult == EPathFollowingRequestResult::Failed )
 		{
@@ -262,6 +272,26 @@ void AKBossZombieEnemy::EnemyAttack()
 				AudioComp->SetSound(AttackSFXFactory);
 				AudioComp->Play();
 			}
+
+		//공격시 메시 회전
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+
+		bUseControllerRotationYaw = false; //회전하게 하기(이거 꺼야 회전함) -> 나중에 다시 true로 돌려놓기
+		FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), target->GetActorLocation());//서로 바라보는 방향
+
+		UKismetSystemLibrary::MoveComponentTo(
+		GetCapsuleComponent(),   // 이동할 컴포넌트
+		GetActorLocation(),  //목표위치(현재위치에서 회전)
+		rot,         // 목표 회전
+		false,  //바로 빠져나와서                            
+		true,	//천천히 돌아감
+		0.5f,    //0.5초동안                       
+		false, // 텔레포트하지 않음
+		EMoveComponentAction::Type::Move,
+		LatentInfo
+		);
+
 	}
 
 	//근접공격거리 공격범위를 벗어나고, 원거리 공격상태가 아니라면 이동상태 전환
@@ -299,6 +329,26 @@ void AKBossZombieEnemy::EnemySpecialAttack()
 				AudioComp->SetSound(BossGrenadeSFXFactory);
 				AudioComp->Play();
 			}
+
+		//수류탄 던질때 메시 회전
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+
+		bUseControllerRotationYaw = false; //회전하게 하기(이거 꺼야 회전함) -> 나중에 다시 true로 돌려놓기
+		FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), target->GetActorLocation());//서로 바라보는 방향
+
+		UKismetSystemLibrary::MoveComponentTo(
+		GetCapsuleComponent(),   // 이동할 컴포넌트
+		GetActorLocation(),  //목표위치(현재위치에서 회전)
+		rot,         // 목표 회전
+		false,  //바로 빠져나와서                            
+		true,	//천천히 돌아감
+		0.7f,    //0.7초동안                       
+		false, // 텔레포트하지 않음
+		EMoveComponentAction::Type::Move,
+		LatentInfo
+		);
+
 		//수류탄공격여부 비활성화
 		isBossCanThrowGrenade = false;
 		// 대기 시간 초기화

@@ -143,6 +143,8 @@ void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 	FSMComponent->CurrentState = newstate;
 	//애니메이션 상태 동기화
 	anim->EnemyAnimState = newstate;
+	//카메라에 강제로 돌리려고 한거있으면 초기화
+	bUseControllerRotationYaw = true;
 	//다음상태가 이동상태가 아니라면 Ai한테 멈추라고 지시한다.
 	if ( newstate != EEnemyState::MOVE )
 	{
