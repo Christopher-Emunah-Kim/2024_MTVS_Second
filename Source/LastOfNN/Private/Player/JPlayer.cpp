@@ -39,6 +39,7 @@
 #include "Player/JPlayerShotGun.h"
 #include "Enemy/KBeginnerZombieEnemy.h"
 #include <Perception/AISense_Sight.h>
+#include "JPlayerWidget.h"
 
 
 ETeamType AJPlayer::GetTeamType() const
@@ -186,6 +187,8 @@ void AJPlayer::BeginPlay()
 	Inventory->AddToViewport();
 	Inventory->SetVisibility(ESlateVisibility::Hidden);
 
+	PlayerUI = CreateWidget<UJPlayerWidget>(GetWorld(), PlayerUIFactory);
+	PlayerUI->AddToViewport();
 
 	if ( Box )
 	{
@@ -254,6 +257,9 @@ void AJPlayer::BeginPlay()
 
 	//카메라액터 얻어오기
 	FieldCamera = Cast<ACameraActor>(UGameplayStatics::GetActorOfClass(this, ACameraActor::StaticClass()));
+
+	//체력 초기화
+	PlayerUI->SetHpBar(HealthPoints, MAXHP);
 }
 
 void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -323,9 +329,10 @@ float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	bIsAttacking = false;
 	bInventoryOn = false;
 	CharacterAnimInstance->bChangingWeapon = false;
+	PlayerUI->SetHpBar(HealthPoints, MAXHP);
+
 	if ( HealthPoints <= 0 ) //체력이 0이하가 되면 
 	{	
-
 		DetachFromControllerPendingDestroy(); //컨트롤러 떼버림
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision); //캡슐컴포넌트 떼어내서
 		CharacterAnimInstance->PlayDieMontage();
@@ -851,6 +858,7 @@ void AJPlayer::SetStateEquipGun()
 	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_GunEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Visible);
+	PlayerUI->SetPistolEquipped();
 }
 void AJPlayer::SetStateEquipThrowWeapon()
 {
@@ -870,6 +878,7 @@ void AJPlayer::SetStateEquipThrowWeapon()
 	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_ThrowWeaponEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+	PlayerUI->SetFireBottleEquipped();
 }
 void AJPlayer::SetStateUnEquipped()
 {
@@ -881,6 +890,7 @@ void AJPlayer::SetStateUnEquipped()
 	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+	PlayerUI->SetVisibility(ESlateVisibility::Hidden);
 }
 void AJPlayer::SetStateBatEquipped()
 {
@@ -900,6 +910,7 @@ void AJPlayer::SetStateBatEquipped()
 	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_BatEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+	PlayerUI->SetBatEquipped();
 }
 void AJPlayer::SetStateShotgunEquipped()
 {
@@ -955,8 +966,8 @@ void AJPlayer::StartGrabbedState(AActor* Enemy)
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 
-	bUseControllerRotationYaw = false;	
-	FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), GrabbedEnemy->GetActorLocation());
+	bUseControllerRotationYaw = false; //회전하게 하기(이거 꺼야 회전함) -> 나중에 다시 true로 돌려놓기
+	FRotator rot = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), GrabbedEnemy->GetActorLocation());//서로 바라보는 방향
   
 	UKismetSystemLibrary::MoveComponentTo(
 	GetCapsuleComponent(),              // 이동할 컴포넌트
@@ -973,7 +984,7 @@ void AJPlayer::StartGrabbedState(AActor* Enemy)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if ( this )
 	{
-		GetController()->SetControlRotation(rot);
+		//GetController()->SetControlRotation(rot);
 
 		// 저항 애니메이션 재생 (블루프린트에서 설정된 ResistanceMontage)
 		if ( CharacterAnimInstance )

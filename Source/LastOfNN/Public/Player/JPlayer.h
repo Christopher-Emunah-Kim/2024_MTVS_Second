@@ -208,8 +208,13 @@ public:
 	TSubclassOf<class UJGunWidget> GunUIFactory;
 
 	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<class UInventoryWidget> InventoryUIFactory;	
+	TSubclassOf<class UInventoryWidget> InventoryUIFactory;		
 	
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UJPlayerWidget> PlayerUIFactory;
+	
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UJGunWidget* GunWidget;
 	
@@ -218,6 +223,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UInventoryWidget* Inventory;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UJPlayerWidget* PlayerUI;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
