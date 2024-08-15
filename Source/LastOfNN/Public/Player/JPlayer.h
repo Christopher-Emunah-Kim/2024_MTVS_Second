@@ -25,6 +25,8 @@ class LASTOFNN_API AJPlayer : public ACharacter
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void MakeNewPlayerUI();
 
 	// AI Perception Stimuli Source Component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
@@ -136,14 +138,14 @@ public:
 	UCameraComponent* GetCamera();
 
 	//총 기
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	APlayerGun* Gun;
 
 	UPlayerLockOn* LockOnComp;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerGun> GunClass;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	class AJPlayerShotGun* Shotgun;
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -291,6 +293,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USoundBase* ShoutSound;
+
+	UFUNCTION(BlueprintCallable)
+	void TransferWeaponState(AJPlayer* FromPlayer, AJPlayer* ToPlayer);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -33,6 +33,8 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* PistolBullet;	
 
+	class AJPlayerShotGun* Shotgun;
+	class APlayerGun* Pistol;
 
 	virtual void NativeConstruct();
 
@@ -47,4 +49,6 @@ public:
 
 	class AJPlayer* Player;
 
+	UFUNCTION(BlueprintCallable)
+	void SetBulletNums();
 };

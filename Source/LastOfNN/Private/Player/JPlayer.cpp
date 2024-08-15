@@ -42,6 +42,31 @@
 #include "JPlayerWidget.h"
 
 
+void AJPlayer::MakeNewPlayerUI()
+{
+	if ( PlayerUI )
+	{
+		PlayerUI->RemoveFromParent();
+	}
+	PlayerUI = CreateWidget<UJPlayerWidget>(GetWorld(), PlayerUIFactory);
+	PlayerUI->AddToViewport();
+	if ( Inventory )
+	{
+		Inventory->RemoveFromParent();
+	}
+	Inventory = CreateWidget<UInventoryWidget>(GetWorld(), InventoryUIFactory);
+	Inventory->AddToViewport();
+	Inventory->SetVisibility(ESlateVisibility::Hidden);
+
+	GunWidget = CreateWidget<UJGunWidget>(GetWorld(), GunUIFactory);
+	GunWidget->AddToViewport();
+	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	PlayerUI->SetHpBar(HealthPoints, MAXHP);
+
+	PlayerController = Cast<APlayerController>(GetController());
+}
+
 ETeamType AJPlayer::GetTeamType() const
 {
 	return TeamType;
@@ -157,14 +182,51 @@ void AJPlayer::CameraShake()
 //}
 
 
+void AJPlayer::TransferWeaponState(AJPlayer* FromPlayer, AJPlayer* ToPlayer)
+{
+	if ( FromPlayer && ToPlayer )
+	{
+		// 플레이어1의 샷건과 피스톨 상태를 가져옵니다.
+		AJPlayerShotGun* FromShotgun = Cast<AJPlayerShotGun>(FromPlayer->Shotgun);
+		AJPlayerShotGun* ToShotgun = Cast<AJPlayerShotGun>(ToPlayer->Shotgun);
+		ToPlayer->HealthPoints =  FromPlayer->HealthPoints;
+		if ( FromShotgun && ToShotgun )
+		{
+			int32 OldBulletNum = ToShotgun->CurrentBulletNum;
+			int32 NewBulletNum = FromShotgun->CurrentBulletNum;
+
+			ToShotgun->CurrentBulletNum = NewBulletNum;
+
+			UE_LOG(LogTemp, Error, TEXT("Shotgun BulletNum before: %d, after: %d"), OldBulletNum, NewBulletNum);
+		}
+
+		// 피스톨 상태 복사
+		APlayerGun* FromPistol = Cast<APlayerGun>(FromPlayer->Gun);
+		APlayerGun* ToPistol = Cast<APlayerGun>(ToPlayer->Gun);
+
+		if ( FromPistol && ToPistol )
+		{
+			int32 OldBulletNum = ToPistol->CurrentBulletNum;
+			int32 NewBulletNum = FromPistol->CurrentBulletNum;
+
+			ToPistol->CurrentBulletNum = NewBulletNum;
+
+			UE_LOG(LogTemp, Error, TEXT("Pistol BulletNum before: %d, after: %d"), OldBulletNum, NewBulletNum);
+		}
+	}
+}
+
 void AJPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
-	if (Subsystem)
+	if ( PC )
 	{
-		Subsystem->AddMappingContext(IMC_Joel, 0);
+		Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+		if ( Subsystem )
+		{
+			Subsystem->AddMappingContext(IMC_Joel, 0);
+		}
 	}
 	//LockOnComp->SetTargetLockTrue();
 	CharacterMovement = GetCharacterMovement();
@@ -173,6 +235,21 @@ void AJPlayer::BeginPlay()
 	// 소리 발생 소스로 등록
 	PerceptionStimuliSource->RegisterWithPerceptionSystem();
 	AttackEndComboState();
+
+	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
+	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
+	Gun->SetActorHiddenInGame(true);
+
+	Bat = GetWorld()->SpawnActor<AJPlayerBat>(BatClass);
+	Bat->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHand"));
+	Bat->SetActorHiddenInGame(true);
+	Bat->SetActorEnableCollision(false);
+	Bat->SetOwner(this);
+
+	Shotgun = GetWorld()->SpawnActor<AJPlayerShotGun>(ShotGunClass);
+	Shotgun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("ShotgunSocket"));
+	Shotgun->SetActorHiddenInGame(true);
+	Shotgun->SetActorEnableCollision(false);
 
 	_QTEUI = CreateWidget<UKEnemyQTEWidget>(GetWorld(), QTEUIFactory);
 	_QTEUI->AddToViewport();
@@ -203,21 +280,7 @@ void AJPlayer::BeginPlay()
 		LeftAttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::OverlapDamage);
 	}
 
-	Gun = GetWorld()->SpawnActor<APlayerGun>(GunClass);
-	Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GunSocket"));
-	Gun->SetActorHiddenInGame(true);
-
-
-	Bat = GetWorld()->SpawnActor<AJPlayerBat>(BatClass);
-	Bat->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("mixamorig_RightHand"));
-	Bat->SetActorHiddenInGame(true);
-	Bat->SetActorEnableCollision(false);
-	Bat->SetOwner(this);
-
-	Shotgun = GetWorld()->SpawnActor<AJPlayerShotGun>(ShotGunClass);
-	Shotgun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("ShotgunSocket"));
-	Shotgun->SetActorHiddenInGame(true);
-	Shotgun->SetActorEnableCollision(false);
+	
 
 	//FSM얻어오기
 	AActor* EnemyActor = UGameplayStatics::GetActorOfClass(this, AKNormalZombieEnemy::StaticClass());
@@ -429,9 +492,6 @@ void AJPlayer::Tick(float DeltaTime)
 		SetCameraBackForBatAction(DeltaTime);
 	}
 	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("Player HP : %f"), HealthPoints));
-	UE_LOG(LogTemp, Log, TEXT("SpringArm Location: %s"), *SpringArmComp->GetRelativeLocation().ToString());
-	UE_LOG(LogTemp, Log, TEXT("Initial SpringArm Location: %s"), *CameraInitialPostion.ToString());
-	UE_LOG(LogTemp, Log, TEXT("SpringArmComp Parent: %s"), *SpringArmComp->GetAttachParent()->GetName());
 
 }
 
@@ -512,6 +572,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 		CharacterAnimInstance->PlayGunShotMontage();
 		CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Shot"));
 		Gun->PullTrigger();
+		PlayerUI->SetPistolBulletNum();
 		CameraShake();
 	}
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_UnEquipped || CharacterEquipState == ECharacterEquipState::ECES_BatEquipped )
@@ -539,6 +600,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 		if ( Shotgun->CurrentBulletNum == 0 ) return;
 		CharacterAnimInstance->PlayShotgunMontage();
 		Shotgun->PullTrigger();
+		PlayerUI->SetShotGunBulletNum();
 	}
 }
 void AJPlayer::Zoom(const FInputActionValue& Value)
@@ -603,6 +665,7 @@ void AJPlayer::InventoryOn(const FInputActionValue& Value)
 	if ( bInventoryOn )
 	{
 		Inventory->SetVisibility(ESlateVisibility::Visible);
+		Inventory->SetBulletNums();
 		PlayerController->bShowMouseCursor = true;
 	}
 	else
@@ -890,7 +953,6 @@ void AJPlayer::SetStateUnEquipped()
 	Shotgun->SetActorHiddenInGame(true);
 	CharacterEquipState = ECharacterEquipState::ECES_UnEquipped;
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
-	PlayerUI->SetVisibility(ESlateVisibility::Hidden);
 }
 void AJPlayer::SetStateBatEquipped()
 {
@@ -928,6 +990,7 @@ void AJPlayer::SetStateShotgunEquipped()
 	Bat->SetActorHiddenInGame(true);
 	Bat->SetActorEnableCollision(false);
 	Shotgun->SetActorHiddenInGame(false);
+	PlayerUI->SetShotGunEquipped();
 }
 void AJPlayer::GunSuperMode()
 {
@@ -955,6 +1018,7 @@ void AJPlayer::MoveFieldCamera()
 	CameraComp->SetActive(false);
 	FieldCamera->GetRootComponent()->SetActive(true);
 	PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
+
 }
 
 void AJPlayer::StartGrabbedState(AActor* Enemy)
