@@ -587,6 +587,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 			CharacterAnimInstance->PlayGunShotMontage();
 			CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Reload"));
 			Gun->ReLoad();
+			PlayerUI->SetPistolBulletNum();
 			return;
 		}
 		CharacterAnimInstance->PlayGunShotMontage();
@@ -617,7 +618,12 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
 	{
 		if ( CharaterState == ECharacterState::ECS_Crouching ) return;
-		if ( Shotgun->CurrentBulletNum == 0 ) return;
+		if ( Shotgun->CurrentBulletNum == 0 )
+		{
+			Shotgun->ReLoad();
+			PlayerUI->SetShotGunBulletNum();
+			return;
+		}
 		CharacterAnimInstance->PlayShotgunMontage();
 		Shotgun->PullTrigger();
 		PlayerUI->SetShotGunBulletNum();
