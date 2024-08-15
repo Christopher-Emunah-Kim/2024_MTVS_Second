@@ -64,7 +64,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* EquipMontage;	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* ShotgunMontage;
+	UAnimMontage* ShotgunMontage;	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Resist, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* FallingMontage;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
@@ -96,6 +98,8 @@ public:
 	void PlayShotgunMontage();
 
 	bool bChangeSpringArmComp = false;
+
+	void PlayFallingMontage();
 private:
 
 	UFUNCTION()

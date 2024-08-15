@@ -6,6 +6,10 @@
 #include "Components/VerticalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/Widget.h"
+#include "Player/JPlayerShotGun.h"
+#include "Player/JPlayer.h"
+#include "Player/PlayerGun.h"
+#include "Kismet/GameplayStatics.h"
 
 void UJPlayerWidget::NativeConstruct()
 {
@@ -15,6 +19,10 @@ void UJPlayerWidget::NativeConstruct()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+
+	Player = Cast<AJPlayer>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	ShotGunGun = Cast<AJPlayerShotGun>(Player->Shotgun); //Shotgun은 이미지
+	PlayerPistol = Cast<APlayerGun>(Player->Gun);
 }
 
 void UJPlayerWidget::SetHpBar(float Hp, float MaxHp)
@@ -36,6 +44,8 @@ void UJPlayerWidget::SetShotGunEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+
+	SetShotGunBulletNum();
 }
 
 void UJPlayerWidget::SetPistolEquipped()
@@ -44,6 +54,8 @@ void UJPlayerWidget::SetPistolEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Visible);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+
+	SetPistolBulletNum();
 }
 
 void UJPlayerWidget::SetFireBottleEquipped()
@@ -52,6 +64,29 @@ void UJPlayerWidget::SetFireBottleEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Visible);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UJPlayerWidget::SetPistolBulletNum()
+{
+	if ( PlayerPistol && PistolBullet )
+	{
+		PistolBullet->SetText(FText::AsNumber(PlayerPistol->CurrentBulletNum));
+	}
+}
+
+void UJPlayerWidget::SetShotGunBulletNum()
+{
+	if ( ShotGunGun && ShotGunBullet )
+	{
+		ShotGunBullet->SetText(FText::AsNumber(ShotGunGun->CurrentBulletNum));
+	}
+}
+
+void UJPlayerWidget::PlayerChange(AJPlayer* NewPlayer)
+{
+	Player = NewPlayer;
+	ShotGunGun = Cast<AJPlayerShotGun>(Player->Shotgun);
+	PlayerPistol = Cast<APlayerGun>(Player->Gun);
 }
 
 

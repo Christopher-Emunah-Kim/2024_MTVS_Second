@@ -59,5 +59,15 @@ public:
 	void SetFireBottleEquipped();
 
 
+	class AJPlayer* Player;
 
+	class AJPlayerShotGun* ShotGunGun;
+
+	class APlayerGun* PlayerPistol;
+
+	void SetPistolBulletNum();
+	void SetShotGunBulletNum();
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerChange(AJPlayer* NewPlayer);
 };
