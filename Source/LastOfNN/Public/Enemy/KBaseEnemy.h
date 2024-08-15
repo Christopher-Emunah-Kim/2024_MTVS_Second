@@ -164,7 +164,7 @@ public:
 
 #pragma endregion
 	//=======================================================================================
-#pragma region IDLE State
+#pragma region Default IDLE State
 
     //**대기상태처리함수
 	virtual void EnemyIDLE();
@@ -176,7 +176,7 @@ public:
 
 #pragma endregion
 	//=======================================================================================
-#pragma region Move State
+#pragma region Move, Rush State
 	// 
 	//**이동상태처리함수
     virtual void EnemyMove();
@@ -194,6 +194,9 @@ public:
 	FVector EnemyRandomPos;
 	//랜덤위치가져오기 함수
 	bool GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest);
+
+	//**Rush상태처리함수
+	virtual void EnemyRush();
 
 #pragma endregion
 	//=======================================================================================

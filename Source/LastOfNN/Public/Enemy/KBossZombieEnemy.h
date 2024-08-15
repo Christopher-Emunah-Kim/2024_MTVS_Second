@@ -38,6 +38,8 @@ public:
 
 	void EnemyRandomMove(); //Boss랜덤이동함수
 
+	virtual void EnemyRush() override;
+
     virtual void EnemyAttack() override;
 
 	virtual void EnemySpecialAttack() override;
@@ -77,5 +79,13 @@ public:
 	//SPECIL Attack SFX 변수
 	UPROPERTY(EditDefaultsOnly)
 	class USoundBase* BossGrenadeSFXFactory;
+
+	//RoarSFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* BossRoarSFXFactory;
+
+	//Rush SFX 변수
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* BossRushSFXFactory;
 
 };

@@ -36,6 +36,12 @@ void UKEnemyAnim::AnimNotify_AttackEnd()
 	}
 }
 
+void UKEnemyAnim::AnimNotify_DashStart()
+{
+	GEngine->AddOnScreenDebugMessage(9, 1, FColor::Red, TEXT("Dash Start"));
+	bBossCanRush = true;
+}
+
 void UKEnemyAnim::OnEndAnimation(FName sectionName, int32 anistate)
 {
 	
