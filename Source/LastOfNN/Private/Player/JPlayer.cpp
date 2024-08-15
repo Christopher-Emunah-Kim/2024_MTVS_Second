@@ -40,7 +40,14 @@
 #include "Enemy/KBeginnerZombieEnemy.h"
 #include <Perception/AISense_Sight.h>
 #include "JPlayerWidget.h"
+#include "Player/InteractionUI.h"
 
+
+void AJPlayer::SetStateReversed()
+{
+	CharaterState = ECharacterState::ECS_Reversed;
+
+}
 
 void AJPlayer::MakeNewPlayerUI()
 {
@@ -61,6 +68,10 @@ void AJPlayer::MakeNewPlayerUI()
 	GunWidget = CreateWidget<UJGunWidget>(GetWorld(), GunUIFactory);
 	GunWidget->AddToViewport();
 	GunWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	InteractionUI = CreateWidget<UInteractionUI>(GetWorld(), InteractionUIFactory);
+	InteractionUI->AddToViewport();
+	InteractionUI->SetVisibility(ESlateVisibility::Hidden);
 
 	PlayerUI->SetHpBar(HealthPoints, MAXHP);
 
@@ -267,6 +278,10 @@ void AJPlayer::BeginPlay()
 	PlayerUI = CreateWidget<UJPlayerWidget>(GetWorld(), PlayerUIFactory);
 	PlayerUI->AddToViewport();
 
+	InteractionUI = CreateWidget<UInteractionUI>(GetWorld(), InteractionUIFactory);
+	InteractionUI->AddToViewport();
+	InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+
 	if ( Box )
 	{
 		Box->OnComponentBeginOverlap.AddDynamic(this, &AJPlayer::ReadyToExcecute);
@@ -367,6 +382,11 @@ void AJPlayer::OverlapDamage(UPrimitiveComponent* OverlappedComponent, AActor* O
 		ActorPawn->TakeDamage(10, DamageEvent, ActorController, this);
 		UE_LOG(LogTemp, Log, TEXT("Applied 10 damage to %s"), *ActorPawn->GetName());
 	}
+}
+void AJPlayer::StartInteractionEvent()
+{
+	InteractionUI->SetVisibility(ESlateVisibility::Visible);
+	CurrentKeyPresses = 0;
 }
 float AJPlayer::GetKeyProcessPercent()
 {
@@ -1130,6 +1150,31 @@ void AJPlayer::HandleQTEInput()
 			GEngine->AddOnScreenDebugMessage(5, 1, FColor::Green, TEXT("Escaped from Grab!"));
 			GetController()->SetIgnoreMoveInput(false);
 		}
+	}
+	else if ( CharaterState == ECharacterState::ECS_Reversed )
+	{
+		CurrentKeyPresses++;
+		if ( CurrentKeyPresses >= 10)
+		{
+			//몽타주 재생하면서
+			//정상화
+			InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+
+			GetCapsuleComponent()->SetSimulatePhysics(false);
+			SetActorRotation(FRotator(0, 0, 0));
+
+			CharacterAnimInstance->PlayFallingMontage();
+
+			CharaterState = ECharacterState::ECS_UnGrabbed;
+
+			PlayerController->PlayerCameraManager->ViewPitchMin = -30;
+			PlayerController->PlayerCameraManager->ViewPitchMin = 30;
+		}
+	}
+	else
+	{
+		InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+		InteractionEnd = true;
 	}
 }
 

@@ -26,7 +26,10 @@ class LASTOFNN_API AJPlayer : public ACharacter
 
 public:
 	UFUNCTION(BlueprintCallable)
+	void SetStateReversed();
+	UFUNCTION(BlueprintCallable)
 	void MakeNewPlayerUI();
+
 
 	// AI Perception Stimuli Source Component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
@@ -213,7 +216,10 @@ public:
 	TSubclassOf<class UInventoryWidget> InventoryUIFactory;		
 	
 	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<class UJPlayerWidget> PlayerUIFactory;
+	TSubclassOf<class UJPlayerWidget> PlayerUIFactory;	
+	
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UInteractionUI> InteractionUIFactory;
 	
 
 
@@ -228,7 +234,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UJPlayerWidget* PlayerUI;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UInteractionUI* InteractionUI;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool InteractionEnd = false;
+
+	UFUNCTION(BlueprintCallable)
+	void StartInteractionEvent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEscapeSuccess;
