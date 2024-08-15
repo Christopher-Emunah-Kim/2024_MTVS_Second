@@ -40,6 +40,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
 	bool bBossThrowGrenade = false;
 
+	//Boss 돌진 시작할지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
+	bool bBossCanRush = false;
+
 	//수류탄 애니메이션 발사동작 notify
 	UFUNCTION()
 	void AnimNotify_GrenadeShoot();
@@ -47,6 +51,10 @@ public:
 	//각 공격 애니메이션 동작완료 notify
 	UFUNCTION()
 	void AnimNotify_AttackEnd();
+
+	//Boss Rush 애니메이션 동작 Notify
+	UFUNCTION()
+	void AnimNotify_DashStart();
 
 	// 애니메이션 end 노티파이 이벤트 함수
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)
@@ -63,6 +71,10 @@ public:
 	//Boss수류탄 애니메이션 몽타주 재생 함수
 	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
 	void PlayBossEnemyGrenadeAnim(FName sectionName);
+
+	//Boss돌진(Rush) 애니메이션 몽타주 재생 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
+	void PlayBossEnemyRushAnim(FName sectionName);
 
 	//죽음애니메이션 종료여부 판단
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)

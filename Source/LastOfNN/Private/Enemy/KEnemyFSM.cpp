@@ -80,6 +80,10 @@ void UKEnemyFSM::UpdateState()
         // Move 상태 행동 처리...
         BaseEnemy->EnemyMove();
         break;
+    case EEnemyState::RUSH:
+        // Rush 상태 행동 처리...
+        BaseEnemy->EnemyRush();
+        break;
     case EEnemyState::ATTACK:
         // Attack 상태 행동 처리...
         BaseEnemy->EnemyAttack();

@@ -11,6 +11,7 @@ enum class EEnemyState : uint8
 {
     IDLE UMETA(DisplayName = "Idle"),
     MOVE UMETA(DisplayName = "Move"),
+    RUSH UMETA(DisplayName = "Rush"),
     ATTACK UMETA(DisplayName = "Attack"),
     SPECIL UMETA(DisplayName = "SpecialAttack"),
     TAKEDAMAGE UMETA(DisplayName = "TakeDamage"),

@@ -118,6 +118,8 @@ void AKBossZombieEnemy::EnemyMove()
 	{
 		//(우선순위) 보스 특수 공격(수류탄) 발동을 위한 상태 변경 조건 설정
 		float DistanceToTarget = FVector::Distance(target->GetActorLocation(), GetActorLocation());
+		//(후순위) 돌진처리를 할 확률 계산
+		float RushProbability = FMath::FRand();
 		//근거리 공격범위 밖이고, 원거리 공격범위 안이면
 		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= EnemySpecialAttackRange) 
 		{
@@ -140,8 +142,42 @@ void AKBossZombieEnemy::EnemyMove()
 				CurrentTime = 0;
 				return;
 			}
-		}
+			//특수공격을 안하면 20%확률로 돌진
+			else if ( RushProbability <= 0.2f )
+			{
+				//속도를 0으로 만들고
+				GetCharacterMovement()->MaxWalkSpeed = 0;
+				//ai->StopMovement();
+				//BlendSpace Anim에 액터의 속도 할당
+				anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+				anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
 
+				//Roar 애니메이션 재생
+				anim->PlayBossEnemyRushAnim(TEXT("RoarStart"));
+
+				//IDLE SFX재생 종료
+				AudioComp->Stop();
+
+				//SFX재생
+				check(BossRoarSFXFactory)
+					if ( false == AudioComp->IsPlaying() )
+					{
+						AudioComp->SetSound(BossRoarSFXFactory);
+						AudioComp->Play();
+					}
+
+				// 일정 시간이 지나면 상태를 Rush로 돌림
+				FTimerHandle RushTimerHandle;
+				GetWorldTimerManager().SetTimer(RushTimerHandle, [this]()
+				{
+					EnemySetState(EEnemyState::RUSH);
+					UE_LOG(LogTemp, Error, TEXT("Rush Ready"));
+				}, 2.1f, false);
+
+				//EnemySetState(EEnemyState::RUSH);
+				
+			}
+		}
 		//기본적으로 랜덤 지역 이동
 		//(기본 Attack으로의 전환도 여기서 처리)
 		EnemyRandomMove();
@@ -238,6 +274,42 @@ void AKBossZombieEnemy::EnemyRandomMove()
 			//새로운 랜덤위치 가져오기
 			GetRandomPositionInNavMesh(GetActorLocation(), 500, EnemyRandomPos);
 		}
+	}
+}
+
+void AKBossZombieEnemy::EnemyRush()
+{
+	//Notify로 bBossCanRush가 True여야 작동
+	if ( anim->bBossCanRush )
+	{
+		//돌진애니메이션 재생
+		anim->PlayBossEnemyRushAnim(TEXT("DashStart"));
+
+		//SFX재생
+		check(BossRushSFXFactory)
+			if ( false == AudioComp->IsPlaying() )
+			{
+				AudioComp->SetSound(BossRushSFXFactory);
+				AudioComp->Play();
+			}
+
+		// 돌진속도 설정
+		GetCharacterMovement()->MaxWalkSpeed = EnemyRunSpeed * 2.5; // 돌진 속도
+
+		//BlendSpace Anim에 액터의 속도 할당
+		anim->EnemyVSpeed = FVector::DotProduct(GetActorRightVector(), GetVelocity());
+		anim->EnemyHSpeed = FVector::DotProduct(GetActorForwardVector(), GetVelocity());
+
+		ai->MoveToLocation(target->GetActorLocation());
+		GEngine->AddOnScreenDebugMessage(4, 1, FColor::Red, TEXT("BossEnemy is Rushing towards the player!!"));
+
+		// 일정 시간이 지나면 상태를 MOVE로 되돌림
+		FTimerHandle RushEndTimerHandle;
+		GetWorldTimerManager().SetTimer(RushEndTimerHandle, [this]()
+		{
+				EnemySetState(EEnemyState::MOVE);
+				anim->bBossCanRush = false;
+		}, 2.0f, false);
 	}
 }
 

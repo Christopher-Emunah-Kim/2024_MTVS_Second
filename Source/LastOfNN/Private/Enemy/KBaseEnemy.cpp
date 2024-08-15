@@ -132,6 +132,8 @@ bool AKBaseEnemy::GetRandomPositionInNavMesh(FVector centerLocation, float radiu
 	return result;
 }
 
+void AKBaseEnemy::EnemyRush() { }
+
 void AKBaseEnemy::EnemySetState(EEnemyState newstate)
 {
 	//사운드 재생중인건 멈춤
