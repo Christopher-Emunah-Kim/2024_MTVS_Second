@@ -25,6 +25,11 @@ class LASTOFNN_API AJPlayer : public ACharacter
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void SetStateReversed();
+	UFUNCTION(BlueprintCallable)
+	void MakeNewPlayerUI();
+
 
 	// AI Perception Stimuli Source Component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
@@ -136,14 +141,14 @@ public:
 	UCameraComponent* GetCamera();
 
 	//총 기
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	APlayerGun* Gun;
 
 	UPlayerLockOn* LockOnComp;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerGun> GunClass;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	class AJPlayerShotGun* Shotgun;
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -211,7 +216,10 @@ public:
 	TSubclassOf<class UInventoryWidget> InventoryUIFactory;		
 	
 	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<class UJPlayerWidget> PlayerUIFactory;
+	TSubclassOf<class UJPlayerWidget> PlayerUIFactory;	
+	
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UInteractionUI> InteractionUIFactory;
 	
 
 
@@ -226,7 +234,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UJPlayerWidget* PlayerUI;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UInteractionUI* InteractionUI;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool InteractionEnd = false;
+
+	UFUNCTION(BlueprintCallable)
+	void StartInteractionEvent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEscapeSuccess;
@@ -291,6 +306,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USoundBase* ShoutSound;
+
+	UFUNCTION(BlueprintCallable)
+	void TransferWeaponState(AJPlayer* FromPlayer, AJPlayer* ToPlayer);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -142,6 +142,11 @@ void UJCharacterAnimInstance::PlayShotgunMontage()
 	Montage_JumpToSection(TEXT("Shoot"));
 }
 
+void UJCharacterAnimInstance::PlayFallingMontage()
+{
+	Montage_Play(FallingMontage);
+}
+
 void UJCharacterAnimInstance::AnimNotify_NextAttackCheck()
 {
 	OnNextAttackCheck.Broadcast();
