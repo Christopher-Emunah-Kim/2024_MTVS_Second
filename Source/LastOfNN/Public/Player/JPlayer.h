@@ -278,7 +278,7 @@ public:
 	//체력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HP")
 	float HealthPoints;
-	float MAXHP = 100;
+	float MAXHP = 300;
 
 	//향상된 입력
 	class UEnhancedInputLocalPlayerSubsystem* Subsystem;
@@ -287,6 +287,7 @@ public:
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 	//카메라 줌
+	UPROPERTY(EditAnywhere ,BlueprintReadWrite)
 	float TargetFOV = 90;
 
 	void StopForAttack(); 
