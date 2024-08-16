@@ -43,4 +43,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USoundBase* ShotGunSound; 
 
+	void ReLoad();
+
 };

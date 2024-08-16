@@ -19,6 +19,7 @@ void UJPlayerWidget::NativeConstruct()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+	HpBar->SetVisibility(ESlateVisibility::Hidden);
 
 	Player = Cast<AJPlayer>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	ShotGunGun = Cast<AJPlayerShotGun>(Player->Shotgun); //Shotgun은 이미지
@@ -36,6 +37,7 @@ void UJPlayerWidget::SetBatEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Visible);
+	HpBar->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UJPlayerWidget::SetShotGunEquipped()
@@ -44,7 +46,7 @@ void UJPlayerWidget::SetShotGunEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
-
+	HpBar->SetVisibility(ESlateVisibility::Visible);
 	SetShotGunBulletNum();
 }
 
@@ -54,7 +56,7 @@ void UJPlayerWidget::SetPistolEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Hidden);
 	PistolBox->SetVisibility(ESlateVisibility::Visible);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
-
+	HpBar->SetVisibility(ESlateVisibility::Visible);
 	SetPistolBulletNum();
 }
 
@@ -64,6 +66,7 @@ void UJPlayerWidget::SetFireBottleEquipped()
 	FireBottleBox->SetVisibility(ESlateVisibility::Visible);
 	PistolBox->SetVisibility(ESlateVisibility::Hidden);
 	BatBox->SetVisibility(ESlateVisibility::Hidden);
+	HpBar->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UJPlayerWidget::SetPistolBulletNum()
