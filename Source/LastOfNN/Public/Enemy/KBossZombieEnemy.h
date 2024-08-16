@@ -76,10 +76,13 @@ public:
 	bool isBossCanThrowGrenade = false;
 	
 	//Boss 수류탄 발사주기
-	float BossGrenadeDelayTime = 7.0f;
+	float BossGrenadeDelayTime = 8.0f;
 
 	//Boss Rush 발사주기
-	float BossRushDelayTime = 6.0f;
+	float BossRushDelayTime = 4.0f;
+
+	//공격종류 상태 변수
+	bool BossGrenadeRushCheck = false;
 
 	//SPECIL Attack SFX 변수
 	UPROPERTY(EditDefaultsOnly)

@@ -47,7 +47,11 @@ public:
 
 	//Boss 수류탄 이펙트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
-	class UNiagaraSystem* BossGrenadeVFX;
+	class UNiagaraSystem* BossGrenadeVFX2;
+
+	//Boss수류탄 이펙트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	class UParticleSystem* BossGrenadeVFX;
 
 	//Boss가 호출할 발사함수
 	void BossThrowGrenade(const FVector& ShootDirection);

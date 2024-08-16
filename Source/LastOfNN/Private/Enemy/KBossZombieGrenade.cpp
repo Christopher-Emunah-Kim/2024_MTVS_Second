@@ -104,10 +104,16 @@ void AKBossZombieGrenade::GrenadeOnHit(UPrimitiveComponent* OverlappedComponent,
 	{
 		GEngine->AddOnScreenDebugMessage(7, 1, FColor::Green, FString::Printf(TEXT("Overlapped Actor : %s"), *OtherActor->GetName()));
 		//나이아가라 이펙트 생성
+		if ( BossGrenadeVFX2 )
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BossGrenadeVFX2, GetActorLocation());
+		}
+		//파티클 이펙트 생성
 		if ( BossGrenadeVFX )
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BossGrenadeVFX, GetActorLocation());
-		}
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BossGrenadeVFX, GetActorLocation());
+		};
+
 
 		// 충돌체에 겹친 액터가 Player이면 데미지 적용
 		if ( OtherActor && OtherActor->IsA(AJPlayer::StaticClass()) )
