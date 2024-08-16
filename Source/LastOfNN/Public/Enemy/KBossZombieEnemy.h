@@ -39,6 +39,8 @@ public:
 	void EnemyRandomMove(); //Boss랜덤이동함수
 
 	virtual void EnemyRush() override;
+	
+	void BossRushMove(); //Boss Rush할때 이동함수
 
     virtual void EnemyAttack() override;
 
@@ -75,6 +77,9 @@ public:
 	
 	//Boss 수류탄 발사주기
 	float BossGrenadeDelayTime = 7.0f;
+
+	//Boss Rush 발사주기
+	float BossRushDelayTime = 6.0f;
 
 	//SPECIL Attack SFX 변수
 	UPROPERTY(EditDefaultsOnly)
