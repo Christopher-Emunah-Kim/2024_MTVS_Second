@@ -76,6 +76,9 @@ public:
 	//Boss 수류탄 발사주기
 	float BossGrenadeDelayTime = 7.0f;
 
+	//Boss Rush 발사주기
+	float BossRushDelayTime = 5.0f;
+
 	//SPECIL Attack SFX 변수
 	UPROPERTY(EditDefaultsOnly)
 	class USoundBase* BossGrenadeSFXFactory;
