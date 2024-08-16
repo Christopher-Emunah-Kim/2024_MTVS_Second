@@ -101,3 +101,8 @@ void AJPlayerShotGun::PullTrigger()
 	CurrentBulletNum--;
 }
 
+void AJPlayerShotGun::ReLoad()
+{
+	CurrentBulletNum = MaxBulletNum;
+}
+
