@@ -124,9 +124,10 @@ void AKBossZombieEnemy::EnemyMove()
 		if ( DistanceToTarget > EnemyAttackRange && DistanceToTarget <= EnemySpecialAttackRange) 
 		{
 			//특수공격 쿨타임이 지나면
-			//if ( 0.2f < AttackProbability && AttackProbability <= 0.6f && CurrentTime > BossGrenadeDelayTime )
-			if( CurrentTime > BossGrenadeDelayTime )
+			//if ( 0.2f < AttackProbability && AttackProbability <= 0.4f && CurrentTime > BossGrenadeDelayTime )
+			if( CurrentTime > BossGrenadeDelayTime && false == BossGrenadeRushCheck )
 			{
+				BossGrenadeRushCheck = true;
 				//속도를 0으로 만들고
 				GetCharacterMovement()->MaxWalkSpeed = 0;
 				//ai->StopMovement();
@@ -144,25 +145,16 @@ void AKBossZombieEnemy::EnemyMove()
 				return;
 			}
 			//특수공격을 안하면 20%확률로 돌진
-			else if ( AttackProbability <= 0.2f && CurrentTime > BossRushDelayTime )
+			//else if ( AttackProbability <= 0.2f)
+			else if ( AttackProbability <= 0.2f && CurrentTime > BossRushDelayTime && true == BossGrenadeRushCheck)
 			{
-				
+				BossGrenadeRushCheck = false;
 				EnemySetState(EEnemyState::RUSH);
 				UE_LOG(LogTemp, Error, TEXT("Rush Ready"));
 				
+				AttackProbability = 0;
 				CurrentTime = 0;
 				return;
-				// 일정 시간이 지나면 상태를 Rush로 돌림
-				/*FTimerHandle RushTimerHandle;
-				GetWorldTimerManager().SetTimer(RushTimerHandle, [this]()
-				{
-					EnemySetState(EEnemyState::RUSH);
-					UE_LOG(LogTemp, Error, TEXT("Rush Ready"));
-
-					CurrentTime = 0;
-				}, 2.1f, false);*/
-
-				
 			}
 		}
 		//기본적으로 랜덤 지역 이동
@@ -333,11 +325,6 @@ void AKBossZombieEnemy::BossRushMove()
 		CurrentTime = 0;
 	}, 2.0f, false);
 
-
-	/*if ( target->GetActorLocation().Size() < 300.0f )
-	{
-		EnemySetState(EEnemyState::MOVE);
-	}*/
 }
 
 void AKBossZombieEnemy::EnemyAttack()
