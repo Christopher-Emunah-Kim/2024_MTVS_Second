@@ -412,6 +412,7 @@ float AJPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	bIsAttacking = false;
 	bInventoryOn = false;
 	CharacterAnimInstance->bChangingWeapon = false;
+
 	PlayerUI->SetHpBar(HealthPoints, MAXHP);
 
 	if ( HealthPoints <= 0 ) //체력이 0이하가 되면 
@@ -567,8 +568,18 @@ void AJPlayer::Look(const FInputActionValue& Value)
 	if ( bIsGrabbed || bInventoryOn )	return;
 
 	FVector2D LV = Value.Get<FVector2D>();
-	AddControllerPitchInput(-LV.Y);
-	AddControllerYawInput(LV.X);
+	if ( CharaterState == ECharacterState::ECS_Reversed )
+	{
+		AddControllerPitchInput(LV.Y);
+		AddControllerYawInput(-LV.X);
+		UE_LOG(LogTemp, Warning, TEXT("%f , %f"), LV.Y , LV.X);
+	}
+	else
+	{
+		AddControllerPitchInput(-LV.Y);
+		AddControllerYawInput(LV.X);
+		UE_LOG(LogTemp, Warning, TEXT("%f , %f"), LV.Y, LV.X);
+	}
 }
 void AJPlayer::Fire(const FInputActionValue& Value)
 {
@@ -587,6 +598,7 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 			CharacterAnimInstance->PlayGunShotMontage();
 			CharacterAnimInstance->PlayGunShotMontageSection(TEXT("Reload"));
 			Gun->ReLoad();
+			PlayerUI->SetPistolBulletNum();
 			return;
 		}
 		CharacterAnimInstance->PlayGunShotMontage();
@@ -617,7 +629,12 @@ void AJPlayer::Fire(const FInputActionValue& Value)
 	else if ( CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
 	{
 		if ( CharaterState == ECharacterState::ECS_Crouching ) return;
-		if ( Shotgun->CurrentBulletNum == 0 ) return;
+		if ( Shotgun->CurrentBulletNum == 0 )
+		{
+			Shotgun->ReLoad();
+			PlayerUI->SetShotGunBulletNum();
+			return;
+		}
 		CharacterAnimInstance->PlayShotgunMontage();
 		Shotgun->PullTrigger();
 		PlayerUI->SetShotGunBulletNum();
@@ -648,6 +665,11 @@ void AJPlayer::Zoom(const FInputActionValue& Value)
 void AJPlayer::ZoomOut(const FInputActionValue& Value)
 {
 	if ( bIsGrabbed ) return;
+	if ( CharaterState == ECharacterState::ECS_Reversed )
+	{
+		TargetFOV = 60;
+		return;
+	}
 	/*SpringArmComp->SetRelativeLocation(FVector(-72, 270, 80));*/
 	if ( CharacterEquipState == ECharacterEquipState::ECES_GunEquipped || CharacterEquipState == ECharacterEquipState::ECES_ThrowWeaponEquipped ||
 		CharacterEquipState == ECharacterEquipState::ECES_ShotgunEquipped )
@@ -1038,7 +1060,6 @@ void AJPlayer::MoveFieldCamera()
 	CameraComp->SetActive(false);
 	FieldCamera->GetRootComponent()->SetActive(true);
 	PlayerController->SetViewTargetWithBlend(FieldCamera, 1.f);
-
 }
 
 void AJPlayer::StartGrabbedState(AActor* Enemy)
@@ -1163,12 +1184,17 @@ void AJPlayer::HandleQTEInput()
 			GetCapsuleComponent()->SetSimulatePhysics(false);
 			SetActorRotation(FRotator(0, 0, 0));
 
+			CharacterAnimInstance->Montage_Stop(0.2f);
 			CharacterAnimInstance->PlayFallingMontage();
 
 			CharaterState = ECharacterState::ECS_UnGrabbed;
 
 			PlayerController->PlayerCameraManager->ViewPitchMin = -30;
 			PlayerController->PlayerCameraManager->ViewPitchMin = 30;
+
+			CameraComp->SetRelativeRotation(FRotator(0, 0, 0));
+
+			TargetFOV = 90;
 		}
 	}
 	else
