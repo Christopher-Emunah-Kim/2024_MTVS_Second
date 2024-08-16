@@ -31,8 +31,8 @@ AKBossZombieGrenade::AKBossZombieGrenade()
 
 	ProjectileComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComp"));
 	ProjectileComp->SetUpdatedComponent(CollisionComp);
-	ProjectileComp->InitialSpeed = 800.0f;
-	ProjectileComp->MaxSpeed = 1000.0f;
+	ProjectileComp->InitialSpeed = 1000.0f;
+	ProjectileComp->MaxSpeed = 1300.0f;
 	ProjectileComp->ProjectileGravityScale = 1.0f;
 	ProjectileComp->bRotationFollowsVelocity = true;
 	ProjectileComp->bShouldBounce = true;
