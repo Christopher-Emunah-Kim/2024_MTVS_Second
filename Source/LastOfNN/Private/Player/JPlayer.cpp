@@ -1197,6 +1197,7 @@ void AJPlayer::HandleQTEInput()
 			TargetFOV = 90;
 		}
 	}
+
 	else
 	{
 		InteractionUI->SetVisibility(ESlateVisibility::Hidden);
