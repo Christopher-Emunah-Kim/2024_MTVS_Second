@@ -325,11 +325,6 @@ void AKBossZombieEnemy::BossRushMove()
 		CurrentTime = 0;
 	}, 2.0f, false);
 
-
-	/*if ( target->GetActorLocation().Size() < 300.0f )
-	{
-		EnemySetState(EEnemyState::MOVE);
-	}*/
 }
 
 void AKBossZombieEnemy::EnemyAttack()
