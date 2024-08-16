@@ -41,9 +41,9 @@ void UKEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     //실행창에 현재 상태 출력하기
-    FString logMsg = UEnum::GetValueAsString(CurrentState);
+    //FString logMsg = UEnum::GetValueAsString(CurrentState);
     //GEngine->AddOnScreenDebugMessage(0,1, FColor::Blue, logMsg);
-    DrawDebugString(GetWorld(), BaseEnemy->GetActorLocation(), logMsg, 0, FColor::Yellow, 0, true, 1);
+    //DrawDebugString(GetWorld(), BaseEnemy->GetActorLocation(), logMsg, 0, FColor::Yellow, 0, true, 1);
 
     // QTE 이벤트가 진행 중이면 모든 Enemy의 상태를 IDLE로 유지 -> Player->GetIsGrabbed()로 잠깐 바꿈
     if ( Player->GetIsGrabbed() && CurrentState != EEnemyState::SPECIL )

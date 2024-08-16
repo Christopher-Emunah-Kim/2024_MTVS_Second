@@ -28,7 +28,7 @@ AJPlayerBat::AJPlayerBat()
 	HitCapsule->SetRelativeLocation(FVector(61.189181f, -31.936999f, 13.889282f));
 	HitCapsule->SetRelativeRotation(FRotator(-82, 10, 334));
 	HitCapsule->SetWorldScale3D(FVector(1, 1, 1.6f));
-	HitCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 
 }
